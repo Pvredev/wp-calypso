@@ -21,6 +21,7 @@ import { getSelectedSiteId } from 'state/ui/selectors';
 import { getEditorPostId } from 'state/ui/editor/selectors';
 import { getEditedPost } from 'state/posts/selectors';
 import { getPublishButtonStatus } from 'post-editor/editor-publish-button';
+import { isEditedPostPrivate, isPrivateEditedPostPasswordValid } from 'state/posts/selectors';
 
 class EditorConfirmationSidebar extends React.Component {
 	static propTypes = {
@@ -29,6 +30,8 @@ class EditorConfirmationSidebar extends React.Component {
 		onPublish: React.PropTypes.func,
 		post: React.PropTypes.object,
 		savedPost: React.PropTypes.object,
+		isPrivatePost: React.PropTypes.bool,
+		isPrivatePostPasswordValid: React.PropTypes.bool,
 		setPostDate: React.PropTypes.func,
 		setStatus: React.PropTypes.func,
 		site: React.PropTypes.object,
@@ -62,9 +65,10 @@ class EditorConfirmationSidebar extends React.Component {
 
 		const publishButtonStatus = getPublishButtonStatus( this.props.site, this.props.post, this.props.savedPost );
 		const buttonLabel = this.getPublishButtonLabel( publishButtonStatus );
+		const enabled = ! this.props.isPrivatePost || this.props.isPrivatePostPasswordValid;
 
 		return (
-			<Button onClick={ this.closeAndPublish }>{ buttonLabel }</Button>
+			<Button disabled={ ! enabled } onClick={ this.closeAndPublish }>{ buttonLabel }</Button>
 		);
 	}
 
@@ -144,20 +148,6 @@ class EditorConfirmationSidebar extends React.Component {
 		);
 	}
 
-	renderPublishDateComponent() {
-		const postDate = this.props.post && this.props.post.date
-			? this.props.post.date
-			: null;
-
-		return (
-			<EditorPublishDate
-				post={ this.props.post }
-				postDate={ postDate }
-				setPostDate={ this.props.setPostDate }
-			/>
-		);
-	}
-
 	render() {
 		const isSidebarActive = this.props.status === 'open';
 		const isOverlayActive = this.props.status !== 'closed';
@@ -201,7 +191,10 @@ class EditorConfirmationSidebar extends React.Component {
 									} )
 							}
 						</div>
-						{ this.renderPublishDateComponent() }
+						<EditorPublishDate
+							post={ this.props.post }
+							setPostDate={ this.props.setPostDate }
+						/>
 						<div className="editor-confirmation-sidebar__privacy-control">
 							{ this.renderPrivacyControl() }
 						</div>
@@ -218,11 +211,15 @@ export default connect(
 		const siteId = getSelectedSiteId( state );
 		const postId = getEditorPostId( state );
 		const post = getEditedPost( state, siteId, postId );
+		const isPrivatePost = isEditedPostPrivate( state, siteId, postId );
+		const isPrivatePostPasswordValid = isPrivateEditedPostPasswordValid( state, siteId, postId );
 
 		return {
 			siteId,
 			postId,
-			post
+			post,
+			isPrivatePost,
+			isPrivatePostPasswordValid
 		};
 	},
 	{ editPost }

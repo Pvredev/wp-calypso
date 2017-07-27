@@ -395,6 +395,7 @@ export const PostEditor = React.createClass( {
 						setPostDate={ this.setPostDate }
 						onSave={ this.onSave }
 						isPostPrivate={ utils.isPrivate( this.state.post ) }
+						confirmationSidebarStatus={ this.state.confirmationSidebar }
 						/>
 					{ this.props.isSitePreviewable
 						? <EditorPreview
@@ -675,9 +676,9 @@ export const PostEditor = React.createClass( {
 	},
 
 	getPreviewUrl: function() {
-		const { post, previewAction, previewUrl } = this.state;
+		const { isPostPublishPreview, post, previewAction, previewUrl } = this.state;
 
-		if ( previewAction === 'view' ) {
+		if ( previewAction === 'view' || isPostPublishPreview ) {
 			return post.URL;
 		}
 

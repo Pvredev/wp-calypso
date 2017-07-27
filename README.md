@@ -1,5 +1,5 @@
 [![DeepScan Grade](https://deepscan.io/api/projects/230/branches/408/badge/grade.svg)](https://deepscan.io/dashboard/#view=project&pid=230&bid=408)
-# Calypso [![DeepScan Grade]
+# Calypso
 
 Calypso is the new WordPress.com front-end – a beautiful redesign of the WordPress dashboard using a single-page web application, powered by the WordPress.com REST API. Calypso is built for reading, writing, and managing all of your WordPress sites in one place.
 

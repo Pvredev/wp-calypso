@@ -1,36 +1,32 @@
 /**
  * External dependencies
  */
-var assert = require( 'assert' ),
-	ReactDom = require( 'react-dom' ),
-	React = require( 'react' ),
-	TestUtils = require( 'react-addons-test-utils' ),
-	uniq = require( 'lodash/uniq' );
+import assert from 'assert';
+import ReactDom from 'react-dom';
+import React from 'react';
+import TestUtils from 'react-addons-test-utils';
+import { shallow } from 'enzyme';
+import { uniq } from 'lodash';
 
 /**
  * Internal dependencies
  */
-var FormToggle = require( 'components/forms/form-toggle' ),
-	CompactFormToggle = require( 'components/forms/form-toggle/compact' );
+import FormToggle from '../';
+import CompactFormToggle from '../compact';
 
 /**
  * Module variables
  */
-var Wrapper = React.createClass( {
-	render: function() {
-		return <div>{ this.props.children }</div>;
-	}
-} );
+
+const Wrapper = ( { children } ) => (
+  <div>{ children }</div>
+);
 
 describe( 'index', function() {
-	require( 'test/helpers/use-fake-dom' )();
 	describe( 'rendering', function() {
 		it( 'should have is-compact class', function() {
-			var toggle = TestUtils.renderIntoDocument( <CompactFormToggle /> ),
-				toggleInput = TestUtils.scryRenderedDOMComponentsWithClass( toggle, 'form-toggle' );
-
-			assert( 0 < toggleInput.length, 'a form toggle was rendered' );
-			assert( toggleInput[ 0 ].className.indexOf( 'is-compact' ) >= 0, 'is-compact class exists' );
+			const toggle = shallow( <CompactFormToggle /> );
+			assert( toggle.hasClass( 'is-compact' ) );
 		} );
 	} );
 } );
@@ -43,17 +39,13 @@ describe( 'FormToggle', function() {
 
 	describe( 'rendering', function() {
 		it( 'should have form-toggle class', function() {
-			var toggle = TestUtils.renderIntoDocument( <FormToggle /> ),
-				toggleInput = TestUtils.scryRenderedDOMComponentsWithClass( toggle, 'form-toggle' );
-
-			assert( 0 < toggleInput.length, 'a form toggle was rendered' );
+			const toggle = shallow( <FormToggle /> );
+			assert( toggle.find( '.form-toggle' ).length === 1 );
 		} );
 
 		it( 'should not have is-compact class', function() {
-			var toggle = TestUtils.renderIntoDocument( <FormToggle /> ),
-				toggleInput = TestUtils.scryRenderedDOMComponentsWithClass( toggle, 'is-compact' );
-
-			assert( 0 === toggleInput.length, 'no form toggle with is-compact class' );
+			const toggle = shallow( <FormToggle /> );
+			assert( toggle.find( '.is-compact' ).length === 0 );
 		} );
 
 		it( 'should be checked when checked is true', function() {

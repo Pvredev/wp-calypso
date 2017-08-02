@@ -65,6 +65,7 @@
 		"me/notifications": true,
 		"me/trophies": false,
 		"notifications2beta": true,
+		"notifications/link-to-reader": true,
 		"nps-survey/devdocs": false,
 		"nps-survey/dev-trigger": false,
 		"nps-survey/notice": true,
@@ -90,7 +91,6 @@
 		"reader/search": true,
 		"resume-editing": true,
 		"republicize": true,
-		"restore-last-location": true,
 		"rubberband-scroll-disable": false,
 		"server-side-rendering": true,
 		"settings/security/monitor": true,
@@ -117,7 +117,6 @@
 		"woocommerce/extension-settings-payments": true,
 		"woocommerce/extension-settings-shipping": true,
 		"woocommerce/extension-settings-tax": true,
-		"woocommerce/extension-stats": true,
 		"wpcom-user-bootstrap": true
 	},
 	"siftscience_key": "e00e878351",

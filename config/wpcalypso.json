@@ -112,6 +112,7 @@
 		"settings/theme-setup": true,
 		"signup/domain-first-flow": true,
 		"signup/social": true,
+		"standalone-site-preview": true,
 		"support-user": true,
 		"sync-handler": true,
 		"ui/first-view": true,
@@ -132,7 +133,6 @@
 		"woocommerce/extension-settings-payments": true,
 		"woocommerce/extension-settings-shipping": true,
 		"woocommerce/extension-settings-tax": true,
-		"woocommerce/extension-stats": true,
 		"wpcom-user-bootstrap": true
 	},
 	"siftscience_key": "e00e878351",

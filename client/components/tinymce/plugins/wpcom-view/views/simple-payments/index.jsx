@@ -6,6 +6,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
+import { get } from 'lodash';
 
 /**
  * Internal dependecies
@@ -16,34 +17,38 @@ import { getSimplePayments } from 'state/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import formatCurrency from 'lib/format-currency';
 import QuerySimplePayments from 'components/data/query-simple-payments';
+import QueryMedia from 'components/data/query-media';
+import { getMediaItem } from 'state/selectors';
 
 class SimplePaymentsView extends Component {
 	render() {
-		const { productId, product, siteId } = this.props;
+		const { translate, productId, product, siteId } = this.props;
 
 		if ( ! product ) {
 			return ( <QuerySimplePayments siteId={ siteId } productId={ productId } /> );
 		}
 
-		const { title, description, price, currency } = product;
+		const { productImage } = this.props;
+		const { title, description, price, currency, multiple, featuredImageId: productImageId } = product;
 
-		// TODO: add from product.
-		const imageUrl = 'https://cldup.com/nKM0_KspYE.png';
-
-		// TODO: make proper icon and store on some proper place.
-		const paypalButtonImageUrl = 'https://cldup.com/DoIAwrACBs.png';
+		// TODO: product.multiple should be normalized to a boolean value
+		// see https://github.com/Automattic/wp-calypso/pull/16772#discussion_r130579768
+		const multipleIsEnabled = multiple === '1';
 
 		return (
 			<div className="wpview-content wpview-type-simple-payments">
+				{ productImageId && <QueryMedia siteId={ siteId } mediaId={ productImageId } /> }
 				<div className="wpview-type-simple-payments__wrapper">
+				{ productImage &&
 					<div className="wpview-type-simple-payments__image-part">
 						<figure className="wpview-type-simple-payments__image-figure">
 							<img
 								className="wpview-type-simple-payments__image"
-								src={ imageUrl }
+								src={ productImage.URL }
 							/>
 						</figure>
 					</div>
+				}
 					<div className="wpview-type-simple-payments__text-part">
 						<div className="wpview-type-simple-payments__title">
 							{ title }
@@ -55,6 +60,7 @@ class SimplePaymentsView extends Component {
 							{ formatCurrency( price, currency ) }
 						</div>
 						<div className="wpview-type-simple-payments__pay-part">
+							{ multipleIsEnabled &&
 							<div className="wpview-type-simple-payments__pay-quantity">
 								<input
 									className="wpview-type-simple-payments__pay-quantity-input"
@@ -63,11 +69,12 @@ class SimplePaymentsView extends Component {
 									readOnly
 								/>
 							</div>
+							}
 							<div className="wpview-type-simple-payments__pay-paypal-button-wrapper">
-								<img
-									className="wpview-type-simple-payments__pay-paypal-button"
-									src={ paypalButtonImageUrl }
-								/>
+								<div className="wpview-type-simple-payments__pay-paypal-button-content">
+									<span className="wpview-type-simple-payments__pay-paypal-button-text">{ translate( 'Pay with' ) }</span>
+									<span className="wpview-type-simple-payments_paypal-logo" />
+								</div>
 							</div>
 						</div>
 					</div>
@@ -84,12 +91,14 @@ SimplePaymentsView = connect( ( state, props ) => {
 
 	const { id: productId = null } = shortcodeData;
 	const siteId = getSelectedSiteId( state );
+	const product = getSimplePayments( state, siteId, productId );
 
 	return {
 		shortcodeData,
 		productId,
 		siteId,
-		product: getSimplePayments( state, siteId, productId ),
+		product,
+		productImage: getMediaItem( state, siteId, get( product, 'featuredImageId' ) ),
 	};
 } )( localize( SimplePaymentsView ) );
 

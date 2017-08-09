@@ -17,7 +17,7 @@ import {
 	replyComment,
 	unlikeComment,
 } from 'state/comments/actions';
-import { createNotice, removeNotice } from 'state/notices/actions';
+import { removeNotice, successNotice } from 'state/notices/actions';
 import { getNotices } from 'state/notices/selectors';
 import CommentDetail from 'blocks/comment-detail';
 import CommentDetailPlaceholder from 'blocks/comment-detail/comment-detail-placeholder';
@@ -25,7 +25,7 @@ import CommentNavigation from '../comment-navigation';
 import EmptyContent from 'components/empty-content';
 import Pagination from 'components/pagination';
 import QuerySiteCommentsTree from 'components/data/query-site-comments-tree';
-import { getSiteCommentsTree } from 'state/selectors';
+import { getSiteCommentsTree, isCommentsTreeInitialized } from 'state/selectors';
 import {
 	bumpStat,
 	composeAnalytics,
@@ -34,8 +34,6 @@ import {
 } from 'state/analytics/actions';
 
 const COMMENTS_PER_PAGE = 20;
-const LOADING_TIMEOUT = 2000;
-let loadingTimeoutRef;
 
 export class CommentList extends Component {
 	static propTypes = {
@@ -54,7 +52,6 @@ export class CommentList extends Component {
 	};
 
 	state = {
-		isLoading: true,
 		isBulkEdit: false,
 		// TODO: replace with [] when adding back Bulk Actions
 		lastUndo: null,
@@ -63,24 +60,6 @@ export class CommentList extends Component {
 		// TODO: replace {} with [] after persistedComments is merged
 		selectedComments: {},
 	};
-
-	scheduleLoadingTimeout() {
-		clearTimeout( loadingTimeoutRef );
-		loadingTimeoutRef = setTimeout( () => {
-			this.setState( {
-				isLoading: false
-			} );
-		}, LOADING_TIMEOUT );
-	}
-
-	componentDidMount() {
-		this.scheduleLoadingTimeout();
-	}
-
-	componentWillUnmount() {
-		clearTimeout( loadingTimeoutRef );
-	}
-
 	componentWillReceiveProps( nextProps ) {
 		if ( this.props.status !== nextProps.status ) {
 			this.setState( {
@@ -88,15 +67,7 @@ export class CommentList extends Component {
 				page: 1,
 				persistedComments: [],
 				selectedComments: {},
-				isLoading: true,
 			} );
-			this.scheduleLoadingTimeout();
-		}
-		if ( this.props.siteId !== nextProps.siteId ) {
-			this.setState( {
-				isLoading: true
-			} );
-			this.scheduleLoadingTimeout();
 		}
 	}
 
@@ -132,7 +103,7 @@ export class CommentList extends Component {
 		const defaultLine = translate( 'Your queue is clear.' );
 
 		return get( {
-			unapproved: [ translate( 'No new comments yet.' ), defaultLine ],
+			unapproved: [ translate( 'No pending comments.' ), defaultLine ],
 			approved: [ translate( 'No approved comments.' ), defaultLine ],
 			spam: [ translate( 'No spam comments.' ), defaultLine ],
 			trash: [ translate( 'No deleted comments.' ), defaultLine ],
@@ -180,7 +151,7 @@ export class CommentList extends Component {
 			this.setCommentStatus( parentComment, 'approved', { doPersist: true, showNotice: false } );
 		}
 
-		this.props.createNotice( 'is-success', noticeMessage, noticeOptions );
+		this.props.successNotice( noticeMessage, noticeOptions );
 		this.props.replyComment( commentText, postId, parentCommentId, { alsoApprove } );
 	}
 
@@ -242,15 +213,15 @@ export class CommentList extends Component {
 	showBulkNotice = ( newStatus, selectedComments ) => {
 		const { translate } = this.props;
 
-		const [ type, message ] = get( {
-			approved: [ 'is-success', translate( 'All selected comments approved.' ) ],
-			unapproved: [ 'is-info', translate( 'All selected comments unapproved.' ) ],
-			spam: [ 'is-warning', translate( 'All selected comments marked as spam.' ) ],
-			trash: [ 'is-error', translate( 'All selected comments moved to trash.' ) ],
-			'delete': [ 'is-error', translate( 'All selected comments deleted permanently.' ) ],
-		}, newStatus, [ null, null ] );
+		const message = get( {
+			approved: translate( 'All selected comments approved.' ),
+			unapproved: translate( 'All selected comments unapproved.' ),
+			spam: translate( 'All selected comments marked as spam.' ),
+			trash: translate( 'All selected comments moved to trash.' ),
+			'delete': translate( 'All selected comments deleted permanently.' ),
+		}, newStatus );
 
-		if ( ! type ) {
+		if ( ! message ) {
 			return;
 		}
 
@@ -266,7 +237,7 @@ export class CommentList extends Component {
 			}
 		);
 
-		this.props.createNotice( type, message, options );
+		this.props.successNotice( message, options );
 	}
 
 	showNotice = ( comment, newStatus, options = { doPersist: false } ) => {
@@ -278,14 +249,14 @@ export class CommentList extends Component {
 			status: previousStatus,
 		} = comment;
 
-		const [ type, message ] = get( {
-			approved: [ 'is-success', translate( 'Comment approved.' ) ],
-			unapproved: [ 'is-info', translate( 'Comment unapproved.' ) ],
-			spam: [ 'is-warning', translate( 'Comment marked as spam.' ) ],
-			trash: [ 'is-error', translate( 'Comment moved to trash.' ) ],
-		}, newStatus, [ null, null ] );
+		const message = get( {
+			approved: translate( 'Comment approved.' ),
+			unapproved: translate( 'Comment unapproved.' ),
+			spam: translate( 'Comment marked as spam.' ),
+			trash: translate( 'Comment moved to trash.' ),
+		}, newStatus );
 
-		if ( ! type ) {
+		if ( ! message ) {
 			return;
 		}
 
@@ -310,7 +281,7 @@ export class CommentList extends Component {
 			},
 		};
 
-		this.props.createNotice( type, message, noticeOptions );
+		this.props.successNotice( message, noticeOptions );
 	}
 
 	toggleBulkEdit = () => this.setState( { isBulkEdit: ! this.state.isBulkEdit } );
@@ -328,8 +299,12 @@ export class CommentList extends Component {
 		this.props.likeComment( commentId, postId, { alsoApprove } );
 
 		if ( alsoApprove ) {
+			const updatedComment = {
+				...comment,
+				isLiked: true,
+			};
 			this.props.removeNotice( `comment-notice-${ commentId }` );
-			this.setCommentStatus( comment, 'approved' );
+			this.setCommentStatus( updatedComment, 'approved' );
 			this.updatePersistedComments( commentId );
 		}
 	}
@@ -379,12 +354,12 @@ export class CommentList extends Component {
 
 	render() {
 		const {
+			isLoading,
 			siteId,
 			siteFragment,
 			status,
 		} = this.props;
 		const {
-			isLoading,
 			isBulkEdit,
 			page,
 			selectedComments,
@@ -462,8 +437,10 @@ export class CommentList extends Component {
 
 const mapStateToProps = ( state, { siteId, status } ) => {
 	const comments = map( getSiteCommentsTree( state, siteId, status ), 'commentId' );
+	const isLoading = ! isCommentsTreeInitialized( state, siteId, status );
 	return {
 		comments,
+		isLoading,
 		notices: getNotices( state ),
 		siteId,
 	};
@@ -483,7 +460,7 @@ const mapDispatchToProps = ( dispatch, { siteId } ) => ( {
 		changeCommentStatus( siteId, postId, commentId, status )
 	) ),
 
-	createNotice: ( status, text, options ) => dispatch( createNotice( status, text, options ) ),
+	successNotice: ( text, options ) => dispatch( successNotice( text, options ) ),
 
 	deleteComment: ( commentId, postId ) => dispatch( withAnalytics(
 		composeAnalytics(

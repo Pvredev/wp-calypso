@@ -129,16 +129,7 @@ export class CommentDetail extends Component {
 		}
 	}
 
-	toggleLike = () => {
-		const { commentIsLiked, commentStatus, toggleCommentLike } = this.props;
-		const shouldPersist = 'unapproved' === commentStatus && ! commentIsLiked;
-
-		toggleCommentLike( getCommentStatusAction( this.props ) );
-
-		if ( shouldPersist ) {
-			this.setState( { isExpanded: false } );
-		}
-	}
+	toggleLike = () => this.props.toggleCommentLike( getCommentStatusAction( this.props ) );
 
 	toggleSelected = () => {
 		const { commentId, toggleCommentSelected } = this.props;
@@ -199,7 +190,6 @@ export class CommentDetail extends Component {
 			parentCommentAuthorAvatarUrl,
 			parentCommentAuthorDisplayName,
 			parentCommentContent,
-			parentCommentUrl,
 			postAuthorDisplayName,
 			postId,
 			postTitle,
@@ -263,10 +253,10 @@ export class CommentDetail extends Component {
 				{ isExpanded &&
 					<div className="comment-detail__content">
 						<CommentDetailPost
+							commentId={ commentId }
 							parentCommentAuthorAvatarUrl={ parentCommentAuthorAvatarUrl }
 							parentCommentAuthorDisplayName={ parentCommentAuthorDisplayName }
 							parentCommentContent={ parentCommentContent }
-							parentCommentUrl={ parentCommentUrl }
 							postAuthorDisplayName={ postAuthorDisplayName }
 							postTitle={ postTitle }
 							postUrl={ postUrl }
@@ -338,7 +328,6 @@ const mapStateToProps = ( state, ownProps ) => {
 		parentCommentAuthorAvatarUrl: get( parentComment, 'author.avatar_URL' ),
 		parentCommentAuthorDisplayName: get( parentComment, 'author.name' ),
 		parentCommentContent,
-		parentCommentUrl: get( parentComment, 'URL', '' ),
 		postAuthorDisplayName: get( comment, 'post.author.name' ), // TODO: not available in the current data structure
 		postId,
 		postTitle,

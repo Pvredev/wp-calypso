@@ -1,7 +1,8 @@
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { reduxForm } from 'redux-form';
 import { localize } from 'i18n-calypso';
@@ -19,12 +20,13 @@ import ReduxFormTextarea from 'components/redux-forms/redux-form-textarea';
 import ReduxFormTextInput from 'components/redux-forms/redux-form-text-input';
 import SectionHeader from 'components/section-header';
 import { getSelectedSiteSlug } from 'state/ui/selectors';
+import { settingsPath } from '../../../app/util';
 
 const form = 'extensions.zoninator.newZone';
 
 const ZoneCreator = ( { siteSlug, translate } ) => (
 	<div>
-		<HeaderCake backHref={ `/extensions/zoninator/${ siteSlug }` }>
+		<HeaderCake backHref={ `${ settingsPath }/${ siteSlug }` }>
 			{ translate( 'Add a zone' ) }
 		</HeaderCake>
 

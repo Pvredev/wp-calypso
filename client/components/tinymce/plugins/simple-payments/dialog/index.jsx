@@ -38,6 +38,8 @@ import {
 import { FEATURE_SIMPLE_PAYMENTS } from 'lib/plans/constants';
 import { hasFeature, getSitePlanSlug } from 'state/sites/plans/selectors';
 import UpgradeNudge from 'my-sites/upgrade-nudge';
+import TrackComponentView from 'lib/analytics/track-component-view';
+import { recordTracksEvent } from 'state/analytics/actions';
 
 // Utility function for checking the state of the Payment Buttons list
 const isEmptyArray = a => Array.isArray( a ) && a.length === 0;
@@ -213,11 +215,23 @@ class SimplePaymentsDialog extends Component {
 		if ( activeTab === 'list' ) {
 			productId = Promise.resolve( this.state.selectedPaymentId );
 		} else {
-			productId = dispatch( createPaymentButton( siteId ) ).then( newProduct => newProduct.ID );
+			productId = dispatch( createPaymentButton( siteId ) ).then( newProduct => {
+				dispatch(
+					recordTracksEvent( 'calypso_simple_payments_button_create', {
+						price: newProduct.price,
+						currency: newProduct.currency,
+						id: newProduct.ID,
+					} )
+				);
+				return newProduct.ID;
+			} );
 		}
 
 		productId
-			.then( id => this.props.onInsert( { id } ) )
+			.then( id => {
+				this.props.onInsert( { id } );
+				dispatch( recordTracksEvent( 'calypso_simple_payments_button_insert', { id } ) );
+			} )
 			.catch( () => this.showError( translate( 'The payment button could not be inserted.' ) ) )
 			.then( () => this.setIsSubmitting( false ) );
 	};
@@ -247,21 +261,30 @@ class SimplePaymentsDialog extends Component {
 	handleTrash = paymentId => {
 		const { translate } = this.props;
 		const areYouSure = translate(
-			'Are you sure you want to permanently delete this payment button?'
+			'Are you sure you want to delete this item? It will be disabled and removed from all locations where it currently appears.'
 		);
-		accept( areYouSure, accepted => {
-			if ( ! accepted ) {
-				return;
+		accept(
+			areYouSure,
+			accepted => {
+				if ( ! accepted ) {
+					return;
+				}
+
+				this.setIsSubmitting( true );
+
+				const { siteId, dispatch } = this.props;
+
+				dispatch( recordTracksEvent( 'calypso_simple_payments_button_delete', { id: paymentId } ) );
+				dispatch( trashPaymentButton( siteId, paymentId ) )
+					.catch( () => this.showError( translate( 'The payment button could not be deleted.' ) ) )
+					.then( () => this.setIsSubmitting( false ) );
+			},
+			translate( 'Delete' ),
+			null,
+			{
+				isScary: true,
 			}
-
-			this.setIsSubmitting( true );
-
-			const { siteId, dispatch } = this.props;
-
-			dispatch( trashPaymentButton( siteId, paymentId ) )
-				.catch( () => this.showError( translate( 'The payment button could not be deleted.' ) ) )
-				.then( () => this.setIsSubmitting( false ) );
-		} );
+		);
 	};
 
 	getActionButtons() {
@@ -320,6 +343,7 @@ class SimplePaymentsDialog extends Component {
 				] }
 				additionalClassNames="editor-simple-payments-modal"
 			>
+				<TrackComponentView eventName="calypso_simple_payments_dialog_view" />
 				<Navigation activeTab={ 'list' } paymentButtons={ [] } onChangeTabs={ noop } />
 				{ content }
 			</Dialog>
@@ -389,6 +413,7 @@ class SimplePaymentsDialog extends Component {
 				buttons={ this.getActionButtons() }
 				additionalClassNames="editor-simple-payments-modal"
 			>
+				<TrackComponentView eventName="calypso_simple_payments_dialog_view" />
 				<QuerySimplePayments siteId={ siteId } />
 
 				{ ( ! currencyCode || shouldQuerySitePlans ) && <QuerySitePlans siteId={ siteId } /> }

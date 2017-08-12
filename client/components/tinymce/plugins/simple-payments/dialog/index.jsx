@@ -7,7 +7,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
-import { find, isNumber, pick, noop } from 'lodash';
+import { find, isNumber, pick, noop, get } from 'lodash';
 
 /**
  * Internal dependencies
@@ -23,7 +23,7 @@ import Notice from 'components/notice';
 import Navigation from './navigation';
 import ProductForm, { getProductFormValues, isProductFormValid, isProductFormDirty } from './form';
 import ProductList from './list';
-import { getCurrentUserCurrencyCode } from 'state/current-user/selectors';
+import { getCurrentUserCurrencyCode, getCurrentUserEmail } from 'state/current-user/selectors';
 import { getCurrencyDefaults } from 'lib/format-currency';
 import wpcom from 'lib/wp';
 import accept from 'lib/accept';
@@ -40,6 +40,7 @@ import { hasFeature, getSitePlanSlug } from 'state/sites/plans/selectors';
 import UpgradeNudge from 'my-sites/upgrade-nudge';
 import TrackComponentView from 'lib/analytics/track-component-view';
 import { recordTracksEvent } from 'state/analytics/actions';
+import EmptyContent from 'components/empty-content';
 
 // Utility function for checking the state of the Payment Buttons list
 const isEmptyArray = a => Array.isArray( a ) && a.length === 0;
@@ -161,16 +162,19 @@ class SimplePaymentsDialog extends Component {
 	// or the default values for a new one.
 	getInitialFormFields( paymentId ) {
 		const { initialFields } = this.constructor;
+		const { paymentButtons, currentUserEmail } = this.props;
 
 		if ( isNumber( paymentId ) ) {
-			const editedPayment = find( this.props.paymentButtons, p => p.ID === paymentId );
+			const editedPayment = find( paymentButtons, p => p.ID === paymentId );
 			if ( editedPayment ) {
 				// Pick only the fields supported by the form -- drop the rest
 				return pick( editedPayment, Object.keys( initialFields ) );
 			}
 		}
 
-		return initialFields;
+		const initialEmail = get( paymentButtons, '0.email', currentUserEmail );
+
+		return { ...initialFields, email: initialEmail };
 	}
 
 	isDirectEdit() {
@@ -330,7 +334,7 @@ class SimplePaymentsDialog extends Component {
 		return buttons;
 	}
 
-	renderEmptyDialog( content ) {
+	renderEmptyDialog( content, disableNavigation = false ) {
 		const { onClose, translate, showDialog } = this.props;
 		return (
 			<Dialog
@@ -344,7 +348,8 @@ class SimplePaymentsDialog extends Component {
 				additionalClassNames="editor-simple-payments-modal"
 			>
 				<TrackComponentView eventName="calypso_simple_payments_dialog_view" />
-				<Navigation activeTab={ 'list' } paymentButtons={ [] } onChangeTabs={ noop } />
+				{ ! disableNavigation &&
+					<Navigation activeTab={ 'list' } paymentButtons={ [] } onChangeTabs={ noop } /> }
 				{ content }
 			</Dialog>
 		);
@@ -386,23 +391,23 @@ class SimplePaymentsDialog extends Component {
 
 		if ( ! shouldQuerySitePlans && ! planHasSimplePaymentsFeature ) {
 			return this.renderEmptyDialog(
-				<div className="editor-simple-payments-modal__nudge-wrapper">
-					<div className="editor-simple-payments-modal__nudge-title">
-						{ translate( 'Insert payment button' ) }
-					</div>
-					<div className="editor-simple-payments-modal__nudge-subtitle">
-						{ translate( 'To insert Payment Button to your site, upgrade your plan.' ) }
-					</div>
-					<UpgradeNudge
-						className="editor-simple-payments-modal__nudge-nudge"
-						title={ translate( 'Upgrade to a Premium Plan!' ) }
-						message={ translate(
-							'And get simple payments, advanced social media, your own domain, and more.'
-						) }
-						feature={ FEATURE_SIMPLE_PAYMENTS }
-						shouldDisplay={ this.returnTrue }
-					/>
-				</div>
+				<EmptyContent
+					illustration="/calypso/images/illustrations/type-e-Commerce.svg"
+					illustrationWidth={ 300 }
+					title={ translate( 'Want to add a payment button to your site?' ) }
+					action={
+						<UpgradeNudge
+							className="editor-simple-payments-modal__nudge-nudge"
+							title={ translate( 'Upgrade your plan!' ) }
+							message={ translate(
+								'Get simple payments, advanced social media tools, your own domain, and more.'
+							) }
+							feature={ FEATURE_SIMPLE_PAYMENTS }
+							shouldDisplay={ this.returnTrue }
+						/>
+					}
+				/>,
+				true
 			);
 		}
 
@@ -459,5 +464,6 @@ export default connect( ( state, { siteId } ) => {
 			isJetpackSite( state, siteId ) && ! isJetpackMinimumVersion( state, siteId, '5.2' ),
 		planHasSimplePaymentsFeature: hasFeature( state, siteId, FEATURE_SIMPLE_PAYMENTS ),
 		formCanBeSubmitted: isProductFormValid( state ) && isProductFormDirty( state ),
+		currentUserEmail: getCurrentUserEmail( state ),
 	};
 } )( localize( SimplePaymentsDialog ) );

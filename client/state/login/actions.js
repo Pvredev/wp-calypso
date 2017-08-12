@@ -2,7 +2,7 @@
  * External dependencies
  */
 import request from 'superagent';
-import { get } from 'lodash';
+import { get, omit } from 'lodash';
 import { translate } from 'i18n-calypso';
 
 /**
@@ -17,6 +17,9 @@ import {
 	LOGOUT_REQUEST,
 	LOGOUT_REQUEST_FAILURE,
 	LOGOUT_REQUEST_SUCCESS,
+	OAUTH2_CLIENT_DATA_REQUEST,
+	OAUTH2_CLIENT_DATA_REQUEST_FAILURE,
+	OAUTH2_CLIENT_DATA_REQUEST_SUCCESS,
 	SOCIAL_LOGIN_REQUEST,
 	SOCIAL_LOGIN_REQUEST_FAILURE,
 	SOCIAL_LOGIN_REQUEST_SUCCESS,
@@ -108,6 +111,7 @@ const getErrorFromWPCOMError = ( wpcomError ) => ( {
 	message: wpcomError.message,
 	code: wpcomError.error,
 	field: 'global',
+	...omit( wpcomError, [ 'error', 'message', 'field' ] )
 } );
 
 /**
@@ -328,6 +332,13 @@ export const connectSocialUser = ( socialInfo, redirectTo ) => dispatch => {
 	} );
 };
 
+export const createSocialUserFailed = ( service, token, error ) => ( {
+	type: SOCIAL_CREATE_ACCOUNT_REQUEST_FAILURE,
+	service,
+	token,
+	error: error.field ? error : getErrorFromWPCOMError( error )
+} );
+
 /**
  * Sends a two factor authentication recovery code to the 2FA user
  *
@@ -419,4 +430,25 @@ export const logoutUser = ( redirectTo ) => ( dispatch, getState ) => {
 
 			return Promise.reject( error );
 		} );
+};
+
+export const fetchOAuth2ClientData = ( clientId ) => dispatch => {
+	dispatch( {
+		type: OAUTH2_CLIENT_DATA_REQUEST
+	} );
+
+	return wpcom.undocumented().oauth2ClientId( clientId ).then( wpcomResponse => {
+		dispatch( { type: OAUTH2_CLIENT_DATA_REQUEST_SUCCESS, data: wpcomResponse } );
+
+		return wpcomResponse;
+	}, wpcomError => {
+		const error = getErrorFromWPCOMError( wpcomError );
+
+		dispatch( {
+			type: OAUTH2_CLIENT_DATA_REQUEST_FAILURE,
+			error,
+		} );
+
+		return Promise.reject( error );
+	} );
 };

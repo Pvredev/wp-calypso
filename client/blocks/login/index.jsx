@@ -19,6 +19,7 @@ import {
 	isTwoFactorEnabled,
 	getLinkingSocialUser,
 	getLinkingSocialService,
+	getOAuth2ClientData,
 } from 'state/login/selectors';
 import { recordTracksEvent } from 'state/analytics/actions';
 import VerificationCodeForm from './two-factor-authentication/verification-code-form';
@@ -33,6 +34,7 @@ const user = userFactory();
 
 class Login extends Component {
 	static propTypes = {
+		oauth2ClientData: PropTypes.object,
 		privateSite: PropTypes.bool,
 		recordTracksEvent: PropTypes.func.isRequired,
 		redirectTo: PropTypes.string,
@@ -112,6 +114,7 @@ class Login extends Component {
 
 	renderHeader() {
 		const {
+			oauth2ClientData,
 			privateSite,
 			socialConnect,
 			translate,
@@ -131,6 +134,12 @@ class Login extends Component {
 			} );
 		} else if ( privateSite ) {
 			headerText = translate( 'This is a private WordPress.com site.' );
+		} else if ( oauth2ClientData ) {
+			headerText = translate( 'Howdy! Log in to %(clientTitle)s with your WordPress.com account.', {
+				args: {
+					clientTitle: oauth2ClientData.title
+				}
+			} );
 		}
 
 		return (
@@ -222,6 +231,7 @@ export default connect(
 		twoFactorNotificationSent: getTwoFactorNotificationSent( state ),
 		linkingSocialUser: getLinkingSocialUser( state ),
 		linkingSocialService: getLinkingSocialService( state ),
+		oauth2ClientData: getOAuth2ClientData( state ),
 	} ), {
 		recordTracksEvent,
 	}

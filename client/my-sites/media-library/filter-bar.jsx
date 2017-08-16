@@ -9,6 +9,7 @@ import {
 	noop,
 	pull,
 } from 'lodash';
+import PropTypes from 'prop-types';
 
 /**
  * Internal dependencies
@@ -23,17 +24,18 @@ import TitleItem from './title-item';
 
 export class MediaLibraryFilterBar extends Component {
 	static propTypes = {
-		basePath: React.PropTypes.string,
-		enabledFilters: React.PropTypes.arrayOf( React.PropTypes.string ),
-		filter: React.PropTypes.string,
-		filterRequiresUpgrade: React.PropTypes.bool,
-		search: React.PropTypes.string,
-		source: React.PropTypes.string,
-		site: React.PropTypes.object,
-		onFilterChange: React.PropTypes.func,
-		onSearch: React.PropTypes.func,
-		translate: React.PropTypes.func,
-		post: React.PropTypes.bool
+		basePath: PropTypes.string,
+		enabledFilters: PropTypes.arrayOf( PropTypes.string ),
+		filter: PropTypes.string,
+		filterRequiresUpgrade: PropTypes.bool,
+		search: PropTypes.string,
+		source: PropTypes.string,
+		site: PropTypes.object,
+		onFilterChange: PropTypes.func,
+		onSearch: PropTypes.func,
+		translate: PropTypes.func,
+		post: PropTypes.bool,
+		isConnected: PropTypes.bool,
 	};
 
 	static defaultProps ={
@@ -43,7 +45,8 @@ export class MediaLibraryFilterBar extends Component {
 		onSearch: noop,
 		translate: identity,
 		source: '',
-		post: false
+		post: false,
+		isConnected: true,
 	};
 
 	getSearchPlaceholderText() {
@@ -133,7 +136,7 @@ export class MediaLibraryFilterBar extends Component {
 	}
 
 	renderSearchSection() {
-		if ( this.props.filterRequiresUpgrade ) {
+		if ( this.props.filterRequiresUpgrade || ! this.props.isConnected ) {
 			return null;
 		}
 

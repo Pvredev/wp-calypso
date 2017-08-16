@@ -4,8 +4,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import createFragment from 'react-addons-create-fragment';
-import { groupBy, head, mapValues, noop, some, toArray, values } from 'lodash';
+import { groupBy, head, mapValues, noop, values } from 'lodash';
 import { translate } from 'i18n-calypso';
+import PropTypes from 'prop-types';
 import page from 'page';
 
 /**
@@ -28,51 +29,36 @@ import { getSiteSlug } from 'state/sites/selectors';
 import MediaLibraryHeader from './header';
 import MediaLibraryExternalHeader from './external-media-header';
 import MediaLibraryList from './list';
-import { requestKeyringConnections } from 'state/sharing/keyring/actions';
-import {
-	isKeyringConnectionsFetching,
-	getKeyringConnections,
-} from 'state/sharing/keyring/selectors';
+import InlineConnection from 'my-sites/sharing/connections/inline-connection';
+import { isKeyringConnectionsFetching } from 'state/sharing/keyring/selectors';
 
-const isConnected = props => some( props.connectedServices, item => item.service === props.source );
+class MediaLibraryContent extends React.Component {
+	static propTypes = {
+		site: PropTypes.object,
+		mediaValidationErrors: PropTypes.object,
+		filter: PropTypes.string,
+		filterRequiresUpgrade: PropTypes.bool,
+		search: PropTypes.string,
+		source: PropTypes.string,
+		containerWidth: PropTypes.number,
+		single: PropTypes.bool,
+		scrollable: PropTypes.bool,
+		onAddMedia: PropTypes.func,
+		onMediaScaleChange: PropTypes.func,
+		onEditItem: PropTypes.func,
+		postId: PropTypes.number,
+		isConnected: PropTypes.bool,
+	};
 
-const MediaLibraryContent = React.createClass( {
-	propTypes: {
-		site: React.PropTypes.object,
-		mediaValidationErrors: React.PropTypes.object,
-		filter: React.PropTypes.string,
-		filterRequiresUpgrade: React.PropTypes.bool,
-		search: React.PropTypes.string,
-		source: React.PropTypes.string,
-		containerWidth: React.PropTypes.number,
-		single: React.PropTypes.bool,
-		scrollable: React.PropTypes.bool,
-		onAddMedia: React.PropTypes.func,
-		onMediaScaleChange: React.PropTypes.func,
-		onEditItem: React.PropTypes.func,
-		postId: React.PropTypes.number
-	},
+	static defaultProps = {
+		mediaValidationErrors: Object.freeze( {} ),
+		onAddMedia: noop,
+		source: '',
+	}
 
-	getDefaultProps: function() {
-		return {
-			mediaValidationErrors: Object.freeze( {} ),
-			onAddMedia: noop,
-			source: '',
-		};
-	},
-
-	componentWillMount: function() {
-		if ( ! this.props.isRequesting && this.props.source !== '' && this.props.connectedServices.length === 0 ) {
-			// Are we connected to anything yet?
-			this.props.requestKeyringConnections();
-		}
-	},
-
-	renderErrors: function() {
-		var errorTypes, notices;
-
-		errorTypes = values( this.props.mediaValidationErrors ).map( head );
-		notices = mapValues( groupBy( errorTypes ), ( occurrences, errorType ) => {
+	renderErrors() {
+		const errorTypes = values( this.props.mediaValidationErrors ).map( head );
+		const notices = mapValues( groupBy( errorTypes ), ( occurrences, errorType ) => {
 			let message, onDismiss;
 			const i18nOptions = {
 				count: occurrences.length,
@@ -160,7 +146,7 @@ const MediaLibraryContent = React.createClass( {
 		} );
 
 		return createFragment( notices );
-	},
+	}
 
 	renderTryAgain() {
 		return (
@@ -168,14 +154,14 @@ const MediaLibraryContent = React.createClass( {
 				{ translate( 'Retry' ) }
 			</NoticeAction>
 		);
-	},
+	}
 
-	retryList() {
+	retryList = () => {
 		MediaActions.sourceChanged( this.props.site.ID );
-	},
+	}
 
 	renderNoticeAction( upgradeNudgeName, upgradeNudgeFeature ) {
-		if ( !upgradeNudgeName ) {
+		if ( ! upgradeNudgeName ) {
 			return null;
 		}
 		const eventName = 'calypso_upgrade_nudge_impression';
@@ -192,34 +178,32 @@ const MediaLibraryContent = React.createClass( {
 				<TrackComponentView eventName={ eventName } eventProperties={ eventProperties } />
 			</NoticeAction>
 		);
-	},
+	}
 
 	recordPlansNavigation( tracksEvent, tracksData ) {
 		analytics.ga.recordEvent( 'Media', 'Clicked Upload Error Action' );
 		analytics.tracks.recordEvent( tracksEvent, tracksData );
-	},
+	}
 
-	goToSharing( ev ) {
+	goToSharing = ev => {
 		ev.preventDefault();
 		page( `/sharing/${ this.props.site.slug }` );
-	},
+	}
 
 	renderExternalMedia() {
 		const connectMessage = translate(
-			'To show Photos from Google, you need to connect your Google account. Do that from {{link}}your Sharing settings{{/link}}.', {
-				components: {
-					link: <a href={ `/sharing/${ this.props.site.slug }` } onClick={ this.goToSharing } />
-				}
-			}
+			'To show Photos from Google, you need to connect your Google account.'
 		);
 
 		return (
 			<div className="media-library__connect-message">
 				<p><img src="/calypso/images/sharing/google-photos-logo.svg" width="96" height="96" /></p>
 				<p>{ connectMessage }</p>
+
+				<InlineConnection serviceName="google_photos" />
 			</div>
 		);
-	},
+	}
 
 	getThumbnailType() {
 		if ( this.props.source !== '' ) {
@@ -231,14 +215,15 @@ const MediaLibraryContent = React.createClass( {
 		}
 
 		return MEDIA_IMAGE_PHOTON;
-	},
+	}
 
-	renderMediaList: function() {
-		if ( ! this.props.site || this.props.isRequesting ) {
+	renderMediaList() {
+		if ( ! this.props.site || ( this.props.isRequesting && ! this.hasRequested ) ) {
+			this.hasRequested = true;   // We only want to do this once
 			return <MediaLibraryList key="list-loading" filterRequiresUpgrade={ this.props.filterRequiresUpgrade } />;
 		}
 
-		if ( this.props.source !== '' && ! isConnected( this.props ) ) {
+		if ( this.props.source !== '' && ! this.props.isConnected ) {
 			return this.renderExternalMedia();
 		}
 
@@ -264,9 +249,13 @@ const MediaLibraryContent = React.createClass( {
 				</MediaLibrarySelectedData>
 			</MediaListData>
 		);
-	},
+	}
 
 	renderHeader() {
+		if ( ! this.props.isConnected ) {
+			return null;
+		}
+
 		if ( this.props.source !== '' ) {
 			return (
 				<MediaLibraryExternalHeader
@@ -294,9 +283,9 @@ const MediaLibraryContent = React.createClass( {
 		}
 
 		return null;
-	},
+	}
 
-	render: function() {
+	render() {
 		return (
 			<div className="media-library__content">
 				{ this.renderHeader() }
@@ -305,14 +294,9 @@ const MediaLibraryContent = React.createClass( {
 			</div>
 		);
 	}
-} );
+}
 
-export default connect( ( state, ownProps ) => {
-	return {
-		siteSlug: ownProps.site ? getSiteSlug( state, ownProps.site.ID ) : '',
-		connectedServices: toArray( getKeyringConnections( state ) ).filter( item => item.type === 'other' && item.status === 'ok' ),
-		isRequesting: isKeyringConnectionsFetching( state ),
-	};
-}, {
-	requestKeyringConnections,
-}, null, { pure: false } )( MediaLibraryContent );
+export default connect( ( state, ownProps ) => ( {
+	siteSlug: ownProps.site ? getSiteSlug( state, ownProps.site.ID ) : '',
+	isRequesting: isKeyringConnectionsFetching( state ),
+} ), null, null, { pure: false } )( MediaLibraryContent );

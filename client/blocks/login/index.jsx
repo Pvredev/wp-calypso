@@ -3,6 +3,7 @@
  */
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
+import Gridicon from 'gridicons';
 import { includes, capitalize } from 'lodash';
 import { localize } from 'i18n-calypso';
 import page from 'page';
@@ -17,9 +18,10 @@ import {
 	getRequestNotice,
 	getTwoFactorNotificationSent,
 	isTwoFactorEnabled,
-	getLinkingSocialUser,
-	getLinkingSocialService,
+	getSocialAccountIsLinking,
+	getSocialAccountLinkService,
 } from 'state/login/selectors';
+import { getOAuth2ClientData } from 'state/login/oauth2/selectors';
 import { recordTracksEvent } from 'state/analytics/actions';
 import VerificationCodeForm from './two-factor-authentication/verification-code-form';
 import WaitingTwoFactorNotificationApproval from './two-factor-authentication/waiting-notification-approval';
@@ -42,7 +44,7 @@ class Login extends Component {
 		twoFactorEnabled: PropTypes.bool,
 		twoFactorNotificationSent: PropTypes.string,
 		socialConnect: PropTypes.bool,
-		linkingSocialUser: PropTypes.string,
+		isLinking: PropTypes.bool,
 		linkingSocialService: PropTypes.string,
 	};
 
@@ -64,14 +66,14 @@ class Login extends Component {
 		}
 	};
 
-	handleValidUsernamePassword = () => {
+	handleValidLogin = () => {
 		if ( this.props.twoFactorEnabled ) {
 			page( login( {
 				isNative: true,
 				// If no notification is sent, the user is using the authenticator for 2FA by default
 				twoFactorAuthType: this.props.twoFactorNotificationSent.replace( 'none', 'authenticator' )
 			} ) );
-		} else if ( this.props.linkingSocialUser ) {
+		} else if ( this.props.isLinking ) {
 			page( login( {
 				isNative: true,
 				socialConnect: true,
@@ -82,7 +84,7 @@ class Login extends Component {
 	};
 
 	handleValid2FACode = () => {
-		if ( this.props.linkingSocialUser ) {
+		if ( this.props.isLinking ) {
 			page( login( {
 				isNative: true,
 				socialConnect: true,
@@ -121,7 +123,9 @@ class Login extends Component {
 			linkingSocialService,
 		} = this.props;
 
-		let headerText = translate( 'Log in to your account.' );
+		let headerText = translate( 'Log in to your account.' ),
+			preHeader = null,
+			postHeader = null;
 
 		if ( twoStepNonce ) {
 			headerText = translate( 'Two-Step Authentication' );
@@ -139,11 +143,29 @@ class Login extends Component {
 					clientTitle: oauth2ClientData.title
 				}
 			} );
+			if ( oauth2ClientData.name === 'woo' ) {
+				preHeader = (
+					<Gridicon icon="my-sites" size={ 72 } />
+				);
+				postHeader = (
+					<p>
+						{ translate( 'WooCommerce.com now uses WordPress.com Accounts. {{a}}Learn more about the benefits{{/a}}', {
+							components: {
+								a: <a href="https://woocommerce.com/2017/01/woocommerce-requires-wordpress-account/" />
+							}
+						} ) }
+					</p>
+				);
+			}
 		}
 
 		return (
-			<div className="login__form-header">
-				{ headerText }
+			<div className="login__form-header-wrapper">
+				{ preHeader }
+				<div className="login__form-header">
+					{ headerText }
+				</div>
+				{ postHeader }
 			</div>
 		);
 	}
@@ -198,12 +220,12 @@ class Login extends Component {
 
 		if ( socialConnect ) {
 			return (
-				<SocialConnectPrompt onSuccess={ this.rebootAfterLogin } />
+				<SocialConnectPrompt onSuccess={ this.handleValidLogin } />
 			);
 		}
 
 		return (
-			<LoginForm onSuccess={ this.handleValidUsernamePassword } privateSite={ privateSite } />
+			<LoginForm onSuccess={ this.handleValidLogin } privateSite={ privateSite } />
 		);
 	}
 
@@ -228,8 +250,9 @@ export default connect(
 		requestNotice: getRequestNotice( state ),
 		twoFactorEnabled: isTwoFactorEnabled( state ),
 		twoFactorNotificationSent: getTwoFactorNotificationSent( state ),
-		linkingSocialUser: getLinkingSocialUser( state ),
-		linkingSocialService: getLinkingSocialService( state ),
+		oauth2ClientData: getOAuth2ClientData( state ),
+		isLinking: getSocialAccountIsLinking( state ),
+		linkingSocialService: getSocialAccountLinkService( state ),
 	} ), {
 		recordTracksEvent,
 	}

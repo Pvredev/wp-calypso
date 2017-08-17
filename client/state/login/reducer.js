@@ -138,6 +138,19 @@ export const twoFactorAuth = createReducer( null, {
 		return null;
 	},
 	[ LOGIN_REQUEST_FAILURE ]: () => null,
+	[ SOCIAL_LOGIN_REQUEST ]: () => null,
+	[ SOCIAL_LOGIN_REQUEST_SUCCESS ]: ( state, { data } ) => {
+		if ( data ) {
+			const rest = omit( data, 'redirect_to' );
+
+			if ( ! isEmpty( rest ) ) {
+				return rest;
+			}
+		}
+
+		return null;
+	},
+	[ SOCIAL_LOGIN_REQUEST_FAILURE ]: () => null,
 	[ TWO_FACTOR_AUTHENTICATION_SEND_SMS_CODE_REQUEST_FAILURE ]: ( state, { twoStepNonce } ) =>
 		updateTwoStepNonce( state, { twoStepNonce, nonceType: 'sms' } ),
 	[ TWO_FACTOR_AUTHENTICATION_SEND_SMS_CODE_REQUEST_SUCCESS ]: ( state, { twoStepNonce } ) =>
@@ -174,29 +187,29 @@ export const socialAccount = createReducer( { isCreating: false, createError: nu
 		bearerToken,
 		createError: null,
 	} ),
-	[ SOCIAL_LOGIN_REQUEST_FAILURE ]: ( state, { error, authInfo } ) => ( {
+	[ SOCIAL_LOGIN_REQUEST_FAILURE ]: ( state, { error } ) => ( {
 		...state,
 		requestError: error,
-		email: error.email,
-		authInfo
 	} ),
 	[ USER_RECEIVE ]: state => ( { ...state, bearerToken: null, username: null, createError: null, } ),
 	[ LOGIN_REQUEST ]: state => ( { ...state, createError: null } ),
 } );
 
-export const socialAccountLink = createReducer( { isLinking: false }, {
-	[ SOCIAL_CREATE_ACCOUNT_REQUEST_FAILURE ]: ( state, { error, token, service } ) => {
-		if ( error.code === 'user_exists' ) {
-			return {
-				isLinking: true,
-				email: error.email,
-				token,
-				service,
-			};
-		}
+const userExistsErrorHandler = ( state, { error, authInfo } ) => {
+	if ( error.code === 'user_exists' ) {
+		return {
+			isLinking: true,
+			email: error.email,
+			authInfo,
+		};
+	}
 
-		return state;
-	},
+	return state;
+};
+
+export const socialAccountLink = createReducer( { isLinking: false }, {
+	[ SOCIAL_CREATE_ACCOUNT_REQUEST_FAILURE ]: userExistsErrorHandler,
+	[ SOCIAL_LOGIN_REQUEST_FAILURE ]: userExistsErrorHandler,
 	[ SOCIAL_CREATE_ACCOUNT_REQUEST_SUCCESS ]: () => ( { isLinking: false } ),
 	[ USER_RECEIVE ]: () => ( { isLinking: false } ),
 } );

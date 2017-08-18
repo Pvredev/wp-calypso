@@ -2,11 +2,12 @@
 /**
  * External dependencies
  */
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import debugFactory from 'debug';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
-import { filter, get, groupBy, includes, isEmpty, isNull, map } from 'lodash';
+import { get, groupBy, includes, isEmpty, isNull, map } from 'lodash';
 
 /**
  * Internal dependencies
@@ -14,6 +15,7 @@ import { filter, get, groupBy, includes, isEmpty, isNull, map } from 'lodash';
 import ActivityLogBanner from '../activity-log-banner';
 import ActivityLogConfirmDialog from '../activity-log-confirm-dialog';
 import ActivityLogDay from '../activity-log-day';
+import ActivityLogDayPlaceholder from '../activity-log-day/placeholder';
 import ActivityLogRewindToggle from './activity-log-rewind-toggle';
 import DatePicker from 'my-sites/stats/stats-date-picker';
 import EmptyContent from 'components/empty-content';
@@ -231,20 +233,20 @@ class ActivityLog extends Component {
 		const { isPressable, isRewindActive, logs, moment, translate, siteId, startDate } = this.props;
 
 		if ( isNull( logs ) ) {
-			return null;
+			return (
+				<section className="activity-log__wrapper" key="logs">
+					<ActivityLogDayPlaceholder />
+					<ActivityLogDayPlaceholder />
+					<ActivityLogDayPlaceholder />
+				</section>
+			);
 		}
 
 		const disableRestore = this.isRestoreInProgress();
 
 		const applySiteOffset = this.getSiteOffsetFunc();
 
-		const YEAR_MONTH = 'YYYY-MM';
-		const selectedMonthAndYear = moment( startDate ).format( YEAR_MONTH );
-		const logsForMonth = filter( logs, ( { ts_utc } ) => {
-			return applySiteOffset( moment.utc( ts_utc ) ).format( YEAR_MONTH ) === selectedMonthAndYear;
-		} );
-
-		if ( isEmpty( logsForMonth ) ) {
+		if ( isEmpty( logs ) ) {
 			return (
 				<EmptyContent
 					title={ translate( 'No activity for %s', {
@@ -255,9 +257,7 @@ class ActivityLog extends Component {
 		}
 
 		const logsGroupedByDay = map(
-			groupBy( logsForMonth, log =>
-				applySiteOffset( moment.utc( log.ts_utc ) ).endOf( 'day' ).valueOf()
-			),
+			groupBy( logs, log => applySiteOffset( moment.utc( log.ts_utc ) ).endOf( 'day' ).valueOf() ),
 			( daily_logs, tsEndOfSiteDay ) =>
 				<ActivityLogDay
 					applySiteOffset={ applySiteOffset }
@@ -302,14 +302,22 @@ class ActivityLog extends Component {
 	}
 
 	render() {
-		const { isPressable, isRewindActive, siteId, siteTitle, slug } = this.props;
+		const { isPressable, isRewindActive, moment, siteId, siteTitle, slug, startDate } = this.props;
 		const { requestedRestoreTimestamp, showRestoreConfirmDialog } = this.state;
 		const applySiteOffset = this.getSiteOffsetFunc();
+
+		const queryStart = applySiteOffset( moment.utc( startDate ) ).startOf( 'month' ).valueOf();
+		const queryEnd = applySiteOffset( moment.utc( startDate ) ).endOf( 'month' ).valueOf();
 
 		return (
 			<Main wideLayout>
 				<QueryRewindStatus siteId={ siteId } />
-				<QueryActivityLog siteId={ siteId } />
+				<QueryActivityLog
+					siteId={ siteId }
+					dateStart={ queryStart }
+					dateEnd={ queryEnd }
+					number={ 1000 }
+				/>
 				<QuerySiteSettings siteId={ siteId } />
 				<StatsFirstView />
 				<SidebarNavigation />

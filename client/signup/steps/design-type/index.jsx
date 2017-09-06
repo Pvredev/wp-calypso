@@ -17,7 +17,11 @@ import BlogImage from '../design-type-with-store/blog-image';
 import PageImage from '../design-type-with-store/page-image';
 import GridImage from '../design-type-with-store/grid-image';
 
+import { setDesignType } from 'state/signup/steps/design-type/actions';
+
 import { recordTracksEvent } from 'state/analytics/actions';
+
+import { getThemeForDesignType } from 'signup/utils';
 
 export class DesignTypeStep extends Component {
 	static propTypes = {
@@ -118,9 +122,13 @@ export class DesignTypeStep extends Component {
 	}
 
 	handleNextStep( designType ) {
+		const themeSlugWithRepo = getThemeForDesignType( designType );
+
+		this.props.setDesignType( designType );
+
 		this.props.recordTracksEvent( 'calypso_triforce_select_design', { category: designType } );
 
-		SignupActions.submitSignupStep( { stepName: this.props.stepName }, [], { designType } );
+		SignupActions.submitSignupStep( { stepName: this.props.stepName }, [], { designType, themeSlugWithRepo } );
 		this.props.goToNextStep();
 	}
 }
@@ -128,6 +136,7 @@ export class DesignTypeStep extends Component {
 export default connect(
 	null,
 	{
-		recordTracksEvent
+		recordTracksEvent,
+		setDesignType,
 	}
 )( localize( DesignTypeStep ) );

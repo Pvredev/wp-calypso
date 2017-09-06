@@ -155,13 +155,14 @@ export class MySitesSidebar extends Component {
 		}
 
 		const { site, isPreviewable } = this.props;
+		const siteUrl = site && site.URL || '';
 
 		return (
 			<SidebarItem
 				tipTarget="sitePreview"
 				label={ this.props.translate( 'View Site' ) }
 				className={ this.itemLinkClass( [ '/view' ], 'preview' ) }
-				link={ isPreviewable ? '/view' + this.props.siteSuffix : site.URL }
+				link={ isPreviewable ? '/view' + this.props.siteSuffix : siteUrl }
 				onNavigate={ this.onNavigate }
 				icon="computer"
 				preloadSectionName="preview"
@@ -224,20 +225,8 @@ export class MySitesSidebar extends Component {
 	}
 
 	plugins() {
-		const { site } = this.props;
-		const addPluginsLink = '/plugins/browse' + this.props.siteSuffix;
-		let pluginsLink = '/plugins' + this.props.siteSuffix;
-
-		// TODO: we can probably rip this out
-		if ( ! config.isEnabled( 'manage/plugins' ) ) {
-			if ( ! site ) {
-				return null;
-			}
-
-			if ( site.options ) {
-				pluginsLink = site.options.admin_url + 'plugins.php';
-			}
-		}
+		const pluginsLink = '/plugins' + this.props.siteSuffix;
+		const managePluginsLink = '/plugins/manage' + this.props.siteSuffix;
 
 		// checks for manage plugins capability across all sites
 		if ( ! this.props.canManagePlugins ) {
@@ -249,6 +238,12 @@ export class MySitesSidebar extends Component {
 			return null;
 		}
 
+		const manageButton = this.props.isJetpack || ( ! this.props.siteId && this.props.hasJetpackSites )
+			? <SidebarButton href={ managePluginsLink }>
+					{ this.props.translate( 'Manage' ) }
+				</SidebarButton>
+			: null;
+
 		return (
 			<SidebarItem
 				label={ this.props.translate( 'Plugins' ) }
@@ -258,9 +253,7 @@ export class MySitesSidebar extends Component {
 				icon="plugins"
 				preloadSectionName="plugins"
 			>
-				<SidebarButton href={ addPluginsLink }>
-					{ this.props.translate( 'Add' ) }
-				</SidebarButton>
+				{ manageButton }
 			</SidebarItem>
 		);
 	}
@@ -372,7 +365,9 @@ export class MySitesSidebar extends Component {
 				link={ storeLink }
 				onNavigate={ this.trackStoreClick }
 				icon="cart"
-			/>
+			>
+				<Gridicon className="sidebar__chevron-right" icon="chevron-right" />
+			</SidebarItem>
 		);
 	}
 

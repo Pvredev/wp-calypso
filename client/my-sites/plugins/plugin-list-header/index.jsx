@@ -18,8 +18,8 @@ import SelectDropdown from 'components/select-dropdown';
 import DropdownItem from 'components/select-dropdown/item';
 import DropdownSeparator from 'components/select-dropdown/separator';
 import BulkSelect from 'components/bulk-select';
-import Tooltip from 'components/tooltip';
 import analytics from 'lib/analytics';
+import { isEnabled } from 'config';
 
 // Constants help determine if the action bar should be a dropdown
 const MAX_ACTIONBAR_HEIGHT = 57;
@@ -29,7 +29,6 @@ export class PluginsListHeader extends PureComponent {
 
 	state = {
 		actionBarVisible: true,
-		addPluginTooltip: false
 	}
 
 	static defaultProps = {
@@ -80,14 +79,6 @@ export class PluginsListHeader extends PureComponent {
 		}, 1 );
 	}
 
-	showPluginTooltip = () => {
-		this.setState( { addPluginTooltip: true } );
-	}
-
-	hidePluginTooltip = () => {
-		this.setState( { addPluginTooltip: false } );
-	}
-
 	toggleBulkManagement = () => {
 		this.props.toggleBulkManagement();
 
@@ -100,8 +91,8 @@ export class PluginsListHeader extends PureComponent {
 		}
 	}
 
-	onBrowserLinkClick = () => {
-		analytics.ga.recordEvent( 'Plugins', 'Clicked Add New Plugins' );
+	onUploadLinkClick = () => {
+		analytics.ga.recordEvent( 'Plugins', 'Clicked Plugin Upload Link' );
 	}
 
 	unselectOrSelectAll = () => {
@@ -162,29 +153,24 @@ export class PluginsListHeader extends PureComponent {
 					</Button>
 				</ButtonGroup>
 			);
-			const browserUrl = '/plugins/browse' + ( this.props.selectedSiteSlug ? '/' + this.props.selectedSiteSlug : '' );
 
-			rightSideButtons.push(
-				<ButtonGroup key="plugin-list-header__buttons-browser">
-					<Button
-						compact
-						href={ browserUrl }
-						onClick={ this.onBrowserLinkClick }
-						className="plugin-list-header__browser-button"
-						onMouseEnter={ this.showPluginTooltip }
-						onMouseLeave={ this.hidePluginTooltip }
-						ref="addPluginButton"
-						aria-label={ translate( 'Browse all plugins', { context: 'button label' } ) }>
-						<Gridicon key="plus-icon" icon="plus-small" size={ 18 } /><Gridicon key="plugins-icon" icon="plugins" size={ 18 } />
-						<Tooltip
-							isVisible={ this.state.addPluginTooltip }
-							context={ this.refs && this.refs.addPluginButton }
-							position="bottom">
-							{ translate( 'Browse all plugins', { context: 'button tooltip' } ) }
-						</Tooltip>
-					</Button>
-				</ButtonGroup>
-			);
+			if ( isEnabled( 'manage/plugins/upload' ) ) {
+				const uploadUrl = '/plugins/upload' + ( this.props.selectedSiteSlug ? '/' + this.props.selectedSiteSlug : '' );
+
+				rightSideButtons.push(
+					<ButtonGroup key="plugin-list-header__buttons-upload">
+						<Button
+							compact
+							href={ uploadUrl }
+							onClick={ this.onUploadLinkClick }
+							aria-label={ translate( 'Upload Plugin' ) }
+						>
+							<Gridicon icon="cloud-upload" size={ 18 } />
+							{ translate( 'Upload Plugin' ) }
+						</Button>
+					</ButtonGroup>
+				);
+			}
 		} else {
 			const updateButton = (
 				<Button

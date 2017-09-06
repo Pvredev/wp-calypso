@@ -193,7 +193,12 @@ export const deleteComment = ( { dispatch, getState }, action ) => {
 	);
 };
 
-export const announceDeleteSuccess = ( { dispatch } ) => {
+export const announceDeleteSuccess = ( { dispatch }, { options } ) => {
+	const showSuccessNotice = get( options, 'showSuccessNotice', false );
+	if ( ! showSuccessNotice ) {
+		return;
+	}
+
 	dispatch(
 		successNotice(
 			translate( 'Comment deleted permanently.' ),
@@ -205,7 +210,7 @@ export const announceDeleteSuccess = ( { dispatch } ) => {
 	);
 };
 
-export const announceDeleteFailure = ( { dispatch, getState }, action ) => {
+export const announceDeleteFailure = ( { dispatch }, action ) => {
 	const { siteId, postId, comment } = action;
 
 	dispatch(

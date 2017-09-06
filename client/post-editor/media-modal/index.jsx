@@ -47,16 +47,17 @@ import VideoEditor from 'blocks/video-editor';
 import MediaModalDetail from './detail';
 import { withAnalytics, bumpStat, recordGoogleEvent } from 'state/analytics/actions';
 
-function areMediaActionsDisabled( modalView, mediaItems ) {
-	return some( mediaItems, item =>
-		MediaUtils.isItemBeingUploaded( item ) && (
-			// Transients can't be handled by the editor if they are being
-			// uploaded via an external URL
-			( ! MediaUtils.isTransientPreviewable( item ) ||
-			MediaUtils.getMimePrefix( item ) !== 'image' || modalView === ModalViews.GALLERY ||
-			item.external )
-		)
-	);
+function areMediaActionsDisabled( modalView, mediaItems, isParentReady ) {
+	return ! isParentReady( mediaItems ) ||
+		some( mediaItems, item =>
+			MediaUtils.isItemBeingUploaded( item ) && (
+				// Transients can't be handled by the editor if they are being
+				// uploaded via an external URL
+				MediaUtils.getMimePrefix( item ) !== 'image' ||
+				! MediaUtils.isTransientPreviewable( item ) ||
+				modalView === ModalViews.GALLERY
+			)
+		);
 }
 
 export class EditorMediaModal extends Component {
@@ -64,6 +65,7 @@ export class EditorMediaModal extends Component {
 		visible: PropTypes.bool,
 		mediaLibrarySelectedItems: PropTypes.arrayOf( PropTypes.object ),
 		onClose: PropTypes.func,
+		isParentReady: PropTypes.func,
 		site: PropTypes.object,
 		siteId: PropTypes.number,
 		labels: PropTypes.object,
@@ -80,6 +82,7 @@ export class EditorMediaModal extends Component {
 		visible: false,
 		mediaLibrarySelectedItems: Object.freeze( [] ),
 		onClose: noop,
+		isParentReady: () => true,
 		labels: Object.freeze( {} ),
 		setView: noop,
 		resetView: noop,
@@ -140,18 +143,49 @@ export class EditorMediaModal extends Component {
 		};
 	}
 
+	copyExternalAfterLoadingWordPressLibrary( selectedMedia, originalSource ) {
+		const { site } = this.props;
+
+		// Trigger the action to clear pointers/selected items
+		MediaActions.sourceChanged( site.ID );
+
+		// Change our state back to WordPress
+		this.setState( {
+			source: '',
+			search: undefined,
+		}, () => {
+			// Copy the selected item from the external source. Note we pass the actual media data as we need this to generate
+			// transient placeholders. This is done after the state changes so our transients and external items appear
+			// in the WordPress library that we've just switched to
+			MediaActions.addExternal( site.ID, selectedMedia, originalSource );
+		} );
+	}
+
+	copyExternal( selectedMedia, originalSource ) {
+		const { site } = this.props;
+		MediaActions.addExternal( site.ID, selectedMedia, originalSource );
+	}
+
 	confirmSelection = () => {
 		const { view, mediaLibrarySelectedItems } = this.props;
 
-		if ( areMediaActionsDisabled( view, mediaLibrarySelectedItems ) ) {
+		if ( areMediaActionsDisabled( view, mediaLibrarySelectedItems, this.props.isParentReady ) ) {
 			return;
 		}
 
 		if ( mediaLibrarySelectedItems.length && this.state.source !== '' ) {
 			const itemsWithTransientId = mediaLibrarySelectedItems.map(
-				( item ) => Object.assign( {}, item, { ID: uniqueId( 'media-' ) } )
+				( item ) => Object.assign( {}, item, { ID: uniqueId( 'media-' ), 'transient': true } )
 			);
-			this.copyExternal( itemsWithTransientId, this.state.source );
+			if ( itemsWithTransientId.length === 1 && MediaUtils.getMimePrefix( itemsWithTransientId[ 0 ] ) === 'image' ) {
+				this.copyExternal( itemsWithTransientId, this.state.source );
+				this.props.onClose( {
+					type: 'media',
+					items: itemsWithTransientId
+				} );
+			} else {
+				this.copyExternalAfterLoadingWordPressLibrary( itemsWithTransientId, this.state.source );
+			}
 		} else {
 			const value = mediaLibrarySelectedItems.length
 			? {
@@ -209,9 +243,11 @@ export class EditorMediaModal extends Component {
 
 		const confirmMessage = translate(
 			'Are you sure you want to delete this item? ' +
-			'It will be permanently removed from all other locations where it currently appears.',
+			'Deleted media will no longer appear anywhere on your website, including all posts, pages, and widgets. ' +
+			'This cannot be undone.',
 			'Are you sure you want to delete these items? ' +
-			'They will be permanently removed from all other locations where they currently appear.',
+			'Deleted media will no longer appear anywhere on your website, including all posts, pages, and widgets. ' +
+			'This cannot be undone.',
 			{ count: selectedCount }
 		);
 
@@ -351,24 +387,6 @@ export class EditorMediaModal extends Component {
 		}
 	};
 
-	copyExternal = ( selectedItems, originalSource ) => {
-		const { site } = this.props;
-
-		// Trigger the action to clear pointers/selected items
-		MediaActions.sourceChanged( site.ID );
-
-		// Change our state back to WordPress
-		this.setState( {
-			source: '',
-			search: undefined,
-		}, () => {
-			// Copy the selected item from the external source. Note we pass the actual media data as we need this to generate
-			// transient placeholders. This is done after the state changes so our transients and external items appear
-			// in the WordPress library that we've just switched to
-			MediaActions.addExternal( this.props.site.ID, selectedItems, originalSource );
-		} );
-	};
-
 	onSourceChange = source => {
 		MediaActions.sourceChanged( this.props.site.ID );
 		this.setState( { source, search: undefined } );
@@ -416,7 +434,7 @@ export class EditorMediaModal extends Component {
 		}
 
 		const selectedItems = this.props.mediaLibrarySelectedItems;
-		const isDisabled = areMediaActionsDisabled( this.props.view, selectedItems );
+		const isDisabled = areMediaActionsDisabled( this.props.view, selectedItems, this.props.isParentReady );
 		const buttons = [
 			{
 				action: 'cancel',
@@ -424,10 +442,19 @@ export class EditorMediaModal extends Component {
 			}
 		];
 
+		const getConfirmButtonLabelForExternal = ( ) => {
+			let label = this.props.translate( 'Insert' );
+			if ( selectedItems.length > 1 ||
+				( selectedItems.length === 1 && MediaUtils.getMimePrefix( selectedItems[ 0 ] ) !== 'image' ) ) {
+				label = this.props.translate( 'Copy to media library' );
+			}
+			return label;
+		};
+
 		if ( this.state.source !== '' ) {
 			buttons.push( {
 				action: 'confirm',
-				label: this.props.translate( 'Copy to media library' ),
+				label: this.props.labels.confirm || getConfirmButtonLabelForExternal(),
 				isPrimary: true,
 				disabled: isDisabled || 0 === selectedItems.length,
 				onClick: this.confirmSelection

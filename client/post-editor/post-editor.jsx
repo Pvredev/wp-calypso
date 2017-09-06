@@ -32,8 +32,6 @@ import utils from 'lib/posts/utils';
 import EditorPreview from './editor-preview';
 import { recordStat, recordEvent } from 'lib/posts/stats';
 import analytics from 'lib/analytics';
-import config from 'config';
-import { abtest } from 'lib/abtest';
 import { getSelectedSiteId, getSelectedSite } from 'state/ui/selectors';
 import { saveConfirmationSidebarPreference } from 'state/ui/editor/actions';
 import { setEditorLastDraft, resetEditorLastDraft } from 'state/ui/editor/last-draft/actions';
@@ -84,8 +82,6 @@ export const PostEditor = React.createClass( {
 	},
 
 	_previewWindow: null,
-
-	isPostPublishConfirmationABTest: abtest( 'postPublishConfirmation' ) === 'showPublishConfirmation',
 
 	getInitialState() {
 		return {
@@ -295,11 +291,6 @@ export const PostEditor = React.createClass( {
 		const mode = this.getEditorMode();
 		const isInvalidURL = this.state.loadingError;
 		const siteURL = site ? site.URL + '/' : null;
-		const isConfirmationFeatureEnabled = (
-			config.isEnabled( 'post-editor/delta-post-publish-flow' ) &&
-			this.isPostPublishConfirmationABTest &&
-			this.props.isConfirmationSidebarEnabled
-		);
 
 		let isPage;
 		let isTrashed;
@@ -334,7 +325,7 @@ export const PostEditor = React.createClass( {
 					<EditorGroundControl
 						setPostDate={ this.setPostDate }
 						hasContent={ this.state.hasContent }
-						isConfirmationSidebarEnabled={ isConfirmationFeatureEnabled }
+						isConfirmationSidebarEnabled={ this.props.isConfirmationSidebarEnabled }
 						confirmationSidebarStatus={ this.state.confirmationSidebar }
 						isDirty={ this.state.isDirty || this.props.dirty }
 						isSaveBlocked={ this.isSaveBlocked() }
@@ -365,6 +356,7 @@ export const PostEditor = React.createClass( {
 								type={ this.props.type }
 								isPostPrivate={ utils.isPrivate( this.state.post ) }
 								postAuthor={ this.state.post ? this.state.post.author : null }
+								hasEditorNestedSidebar={ this.state.nestedSidebar !== NESTED_SIDEBAR_NONE }
 							/>
 							<div className="post-editor__site">
 								<Site
@@ -725,13 +717,8 @@ export const PostEditor = React.createClass( {
 
 		edits.content = this.editor.getContent();
 
-		const isConfirmationFeatureEnabled = (
-			config.isEnabled( 'post-editor/delta-post-publish-flow' ) &&
-			this.props.isConfirmationSidebarEnabled
-		);
-
 		// TODO: REDUX - remove flux actions when whole post-editor is reduxified
-		actions.saveEdited( edits, { isConfirmationFeatureEnabled: isConfirmationFeatureEnabled }, function( error ) {
+		actions.saveEdited( edits, { isConfirmationSidebarEnabled: this.props.isConfirmationSidebarEnabled }, function( error ) {
 			if ( error && 'NO_CHANGE' !== error.message ) {
 				this.onSaveDraftFailure( error );
 			} else {
@@ -861,14 +848,8 @@ export const PostEditor = React.createClass( {
 			status: 'publish'
 		};
 
-		const isConfirmationFeatureEnabled = (
-			config.isEnabled( 'post-editor/delta-post-publish-flow' ) &&
-			this.isPostPublishConfirmationABTest &&
-			this.props.isConfirmationSidebarEnabled
-		);
-
 		if (
-			isConfirmationFeatureEnabled &&
+			this.props.isConfirmationSidebarEnabled &&
 			false === isConfirmed
 		) {
 			this.setConfirmationSidebar( { status: 'open' } );
@@ -876,7 +857,7 @@ export const PostEditor = React.createClass( {
 		}
 
 		if (
-			isConfirmationFeatureEnabled &&
+			this.props.isConfirmationSidebarEnabled &&
 			'open' === this.state.confirmationSidebar
 		) {
 			this.setConfirmationSidebar( { status: 'publishing' } );
@@ -893,7 +874,7 @@ export const PostEditor = React.createClass( {
 		// to serialize when TinyMCE is the active mode
 		edits.content = this.editor.getContent();
 
-		actions.saveEdited( edits, { isConfirmationFeatureEnabled: isConfirmationFeatureEnabled }, function( error ) {
+		actions.saveEdited( edits, { isConfirmationSidebarEnabled: this.props.isConfirmationSidebarEnabled }, function( error ) {
 			if ( error && 'NO_CHANGE' !== error.message ) {
 				this.onPublishFailure( error );
 			} else {
@@ -910,11 +891,7 @@ export const PostEditor = React.createClass( {
 	onPublishFailure: function( error ) {
 		this.onSaveFailure( error, 'publishFailure' );
 
-		if (
-			config.isEnabled( 'post-editor/delta-post-publish-flow' ) &&
-			this.isPostPublishConfirmationABTest &&
-			this.props.isConfirmationSidebarEnabled
-		) {
+		if ( this.props.isConfirmationSidebarEnabled ) {
 			this.setConfirmationSidebar( { status: 'closed', context: 'publish_failure' } );
 		}
 	},
@@ -935,11 +912,7 @@ export const PostEditor = React.createClass( {
 			this.props.saveConfirmationSidebarPreference( this.props.siteId, false );
 		}
 
-		if (
-			config.isEnabled( 'post-editor/delta-post-publish-flow' ) &&
-			this.isPostPublishConfirmationABTest &&
-			this.props.isConfirmationSidebarEnabled
-		) {
+		if ( this.props.isConfirmationSidebarEnabled ) {
 			this.setConfirmationSidebar( { status: 'closed', context: 'publish_success' } );
 		}
 
@@ -970,14 +943,9 @@ export const PostEditor = React.createClass( {
 			this.props.editPost( siteId, postId, { date: dateValue } );
 		}
 
-		if (
-			config.isEnabled( 'post-editor/delta-post-publish-flow' ) &&
-			this.isPostPublishConfirmationABTest
-		) {
-			analytics.tracks.recordEvent( 'calypso_editor_publish_date_change', {
-				context: 'open' === this.state.confirmationSidebar ? 'confirmation-sidebar' : 'post-settings',
-			} );
-		}
+		analytics.tracks.recordEvent( 'calypso_editor_publish_date_change', {
+			context: 'open' === this.state.confirmationSidebar ? 'confirmation-sidebar' : 'post-settings',
+		} );
 
 		this.checkForDateChange( dateValue );
 	},
@@ -1135,7 +1103,6 @@ export default connect(
 	},
 	( dispatch ) => {
 		return bindActionCreators( {
-			editPost,
 			setEditorLastDraft,
 			resetEditorLastDraft,
 			receivePost,

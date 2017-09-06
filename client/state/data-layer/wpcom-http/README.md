@@ -188,7 +188,7 @@ import { dispatchRequest } from 'state/data-layer/wpcom-http/utils';
 dispatchRequest( fetchMenu, addMenuItems, alertFailure );
 
 // create request when no meta present, indicate on success, undo on failure, update on progress
-dispatchRequest( sendRecipe, indicateSuccess, removeRecipe, updateRecipeProgress );
+dispatchRequest( sendRecipe, indicateSuccess, removeRecipe, { onProgress: updateRecipeProgress } );
 ```
 
 ### Helpers
@@ -237,7 +237,7 @@ const likePost = ( { dispatch }, action ) => {
 const verifyLike = ( { dispatch }, { siteId, postId } data ) => {
 	// this is a response to data coming in from the data layer,
 	// so skip further data-layer middleware with local
-	dispatch( local( {
+	dispatch( bypassDataLayer( {
 		type: data.i_like ? LIKE_POST : UNLIKE_POST,
 		siteId,
 		postId,
@@ -250,7 +250,7 @@ const verifyLike = ( { dispatch }, { siteId, postId } data ) => {
  */
 const undoLike = ( { dispatch }, { siteId, postId }, error ) => {
 	// skip data-layer middleware
-	dispatch( local( {
+	dispatch( bypassDataLayer( {
 		type: UNLIKE_POST,
 		siteId,
 		postId,
@@ -270,8 +270,8 @@ const updateProgress = ( store, { siteId, postId }, progress ) => {
 }
 
 export default {
-	// watch for this action       -> initiate, onSuccess,  onFailure, onProgress
-	[ LIKE_POST ]: [ dispatchRequest( likePost, verifyLike, undoLike, updateProgress ) ],
+	// watch for this action       -> initiate, onSuccess,  onFailure, options: { onProgress }
+	[ LIKE_POST ]: [ dispatchRequest( likePost, verifyLike, undoLike, { onProgress: updateProgress } ) ],
 };
 ```
 

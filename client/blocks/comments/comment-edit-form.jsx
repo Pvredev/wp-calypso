@@ -34,7 +34,7 @@ class PostCommentForm extends Component {
 
 	componentDidMount() {
 		// If it's a reply, give the input focus if commentText exists ( can not exist if comments are closed )
-		if ( this.props.parentCommentID && this._textareaNode ) {
+		if ( this.props.parentCommentId && this._textareaNode ) {
 			this._textareaNode.focus();
 		}
 	}
@@ -107,7 +107,7 @@ class PostCommentForm extends Component {
 			return false;
 		}
 
-		this.props.editComment( post.site_ID, post.ID, this.props.commentId, commentText );
+		this.props.editComment( post.site_ID, post.ID, this.props.commentId, { content: commentText } );
 
 		recordAction( 'edited_comment' );
 		recordGaEvent( 'Clicked Edit Comment Button' );

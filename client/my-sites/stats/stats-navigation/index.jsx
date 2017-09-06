@@ -17,13 +17,14 @@ import NavItem from 'components/section-nav/item';
 import FollowersCount from 'blocks/followers-count';
 import SegmentedControl from 'components/segmented-control';
 import QueryJetpackPlugins from 'components/data/query-jetpack-plugins';
-import { isPluginActive } from 'state/selectors';
+import { getSitePlanSlug } from 'state/sites/plans/selectors';
+import { isFreePlan } from 'lib/plans';
 import { isJetpackSite } from 'state/sites/selectors';
-import { UNITS as StoreStatsTabs } from 'extensions/woocommerce/app/store-stats/constants';
+import { isPluginActive } from 'state/selectors';
 import config from 'config';
 
 const StatsNavigation = props => {
-	const { translate, section, slug, siteId, isJetpack, isStore } = props;
+	const { translate, section, slug, siteId, isJetpack, isStore, hasPaidPlan } = props;
 	const siteFragment = slug ? '/' + slug : '';
 	const sectionTitles = {
 		insights: translate( 'Insights' ),
@@ -37,7 +38,7 @@ const StatsNavigation = props => {
 	let statsControl;
 
 	if ( isStore ) {
-		const validSection = includes( Object.keys( StoreStatsTabs ), section ) ? section : 'day';
+		const validSection = includes( [ 'day', 'week', 'month', 'year' ], section ) ? section : 'day';
 		statsControl = (
 			<SegmentedControl
 				className="stats-navigation__control is-store"
@@ -58,7 +59,7 @@ const StatsNavigation = props => {
 	}
 
 	const ActivityTab =
-		config.isEnabled( 'jetpack/activity-log' ) && isJetpack
+		config.isEnabled( 'jetpack/activity-log' ) && isJetpack && hasPaidPlan
 			? <NavItem path={ '/stats/activity' + siteFragment } selected={ section === 'activity' }>
 					{ sectionTitles.activity }
 				</NavItem>
@@ -104,6 +105,7 @@ const localized = localize( StatsNavigation );
 export default connect( ( state, { siteId } ) => {
 	const isJetpack = isJetpackSite( state, siteId );
 	return {
+		hasPaidPlan: ! isFreePlan( getSitePlanSlug( state, siteId ) ),
 		isJetpack,
 		isStore: isJetpack && isPluginActive( state, siteId, 'woocommerce' ),
 		siteId,

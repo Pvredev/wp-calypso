@@ -68,30 +68,13 @@ module.exports = {
 		defaultVariation: 'hide',
 		allowExistingUsers: true,
 	},
-	signupPlansCopyChanges: {
-		datestamp: '20170623',
-		variations: {
-			original: 0,
-			modified: 100, //Set to 100% while copy is translated
-		},
-		defaultVariation: 'original',
-	},
 	jetpackConnectPlansCopyChanges: {
 		datestamp: '20170728',
 		variations: {
-			original: 50,
-			modified: 50,
+			original: 0,
+			modified: 100,
 		},
-		defaultVariation: 'original',
-	},
-	postPublishConfirmation: {
-		datestamp: '20170801',
-		allowExistingUsers: true,
-		variations: {
-			showPublishConfirmation: 5,
-			noPublishConfirmation: 95,
-		},
-		defaultVariation: 'noPublishConfirmation',
+		defaultVariation: 'modified',
 	},
 	readerIntroIllustration: {
 		datestamp: '20170718',
@@ -103,16 +86,6 @@ module.exports = {
 		defaultVariation: 'white',
 		assignmentMethod: 'userId',
 	},
-	paymentShowPaypalLogo: {
-		datestamp: '20170719',
-		variations: {
-			hide: 50,
-			show: 50,
-		},
-		defaultVariation: 'hide',
-		allowExistingUsers: true,
-		localeTargets: 'any',
-	},
 	postSignupUpgradeScreen: {
 		datestamp: '20170810',
 		variations: {
@@ -121,5 +94,24 @@ module.exports = {
 		},
 		defaultVariation: 'original',
 		allowExistingUsers: true,
+	},
+	privacyNoPopup: {
+		datestamp: '20170830',
+		variations: {
+			original: 50,
+			nopopup: 50,
+		},
+		defaultVariation: 'original',
+		allowExistingUsers: true,
+	},
+	skipThemesSelectionModal: {
+		datestamp: '20170904',
+		variations: {
+			skip: 50,
+			show: 50,
+		},
+		defaultVariation: 'show',
+		allowExistingUsers: true,
+		localeTargets: 'any',
 	},
 };

@@ -8,7 +8,7 @@ import React, { Component } from 'react';
 import { reduxForm, Field, Fields, getFormValues, isValid, isDirty } from 'redux-form';
 import { localize } from 'i18n-calypso';
 import emailValidator from 'email-validator';
-import { flowRight as compose, padEnd } from 'lodash';
+import { flowRight as compose, padEnd, trimEnd } from 'lodash';
 
 /**
  * Internal dependencies
@@ -18,7 +18,7 @@ import FormTextInput from 'components/forms/form-text-input';
 import FormTextarea from 'components/forms/form-textarea';
 import FormCurrencyInput from 'components/forms/form-currency-input';
 import CompactFormToggle from 'components/forms/form-toggle/compact';
-import ReduxFormFieldset, { RenderFieldset } from 'components/redux-forms/redux-form-fieldset';
+import ReduxFormFieldset, { FieldsetRenderer } from 'components/redux-forms/redux-form-fieldset';
 import UploadImage from 'blocks/upload-image';
 import { getCurrencyDefaults } from 'lib/format-currency';
 
@@ -28,6 +28,42 @@ const REDUX_FORM_NAME = 'simplePaymentsForm';
 export const getProductFormValues = state => getFormValues( REDUX_FORM_NAME )( state );
 export const isProductFormValid = state => isValid( REDUX_FORM_NAME )( state );
 export const isProductFormDirty = state => isDirty( REDUX_FORM_NAME )( state );
+
+// https://developer.paypal.com/docs/integration/direct/rest/currency-codes/
+const SUPPORTED_CURRENCY_LIST = [
+	'USD',
+	'EUR',
+	'AUD',
+	'BRL',
+	'CAD',
+	'CZK',
+	'DKK',
+	'HKD',
+	'HUF',
+	'ILS',
+	'JPY',
+	'MYR',
+	'MXN',
+	'TWD',
+	'NZD',
+	'NOK',
+	'PHP',
+	'PLN',
+	'GBP',
+	'RUB',
+	'SGD',
+	'SEK',
+	'CHF',
+	'THB',
+];
+
+const VISUAL_CURRENCY_LIST = SUPPORTED_CURRENCY_LIST.map( code => {
+	const { symbol } = getCurrencyDefaults( code );
+	// if symbol is equal to the code (e.g., 'CHF' === 'CHF'), don't duplicate it.
+	// trim the dot at the end, e.g., 'kr.' becomes 'kr'
+	const label = symbol === code ? code : `${ code } ${ trimEnd( symbol, '.' ) }`;
+	return { code, label };
+} );
 
 // based on https://stackoverflow.com/a/10454560/59752
 function decimalPlaces( number ) {
@@ -95,15 +131,17 @@ const validate = ( values, props ) => {
 // to transform the props from `{ price: { input, meta }, currency: { input, meta } }` that
 // `Fields` is receiving to `{ input, meta }` that `Field` expects.
 const renderPriceField = ( { price, currency, ...props } ) => {
-	const { symbol, precision } = getCurrencyDefaults( currency.input.value );
+	const { precision } = getCurrencyDefaults( currency.input.value );
 	// Tune the placeholder to the precision value: 0 -> '0', 1 -> '0.0', 2 -> '0.00'
 	const placeholder = precision > 0 ? padEnd( '0.', precision + 2, '0' ) : '0';
 	return (
-		<RenderFieldset
+		<FieldsetRenderer
 			inputComponent={ FormCurrencyInput }
 			{ ...price }
 			{ ...props }
-			currencySymbolPrefix={ symbol }
+			currencySymbolPrefix={ currency.input.value }
+			onCurrencyChange={ currency.input.onChange }
+			currencyList={ VISUAL_CURRENCY_LIST }
 			placeholder={ placeholder }
 		/>
 	);

@@ -1,7 +1,9 @@
+/** @format */
 /**
  * External dependencies
  */
 import React from 'react';
+import { entries } from 'lodash';
 
 /**
  * Internal dependencies
@@ -20,6 +22,8 @@ import FormLegend from 'components/forms/form-legend';
 import FormPasswordInput from 'components/forms/form-password-input';
 import FormPhoneInput from 'components/forms/form-phone-input';
 import FormRadio from 'components/forms/form-radio';
+import FormRadioWithThumbnail from 'components/forms/form-radio-with-thumbnail';
+import FormRadiosBarExample from 'components/forms/form-radios-bar/docs/example';
 import FormSectionHeading from 'components/forms/form-section-heading';
 import FormSelect from 'components/forms/form-select';
 import FormSettingExplanation from 'components/forms/form-setting-explanation';
@@ -35,7 +39,15 @@ import PhoneInput from 'components/phone-input';
 /**
  * Internal dependencies
  */
-var countriesList = require( 'lib/countries-list' ).forSms();
+import { forSms } from 'lib/countries-list';
+import { CURRENCIES } from 'lib/format-currency/currencies';
+
+const countriesList = forSms();
+const currencyList = entries( CURRENCIES ).map( ( [ code ] ) => ( { code } ) );
+const visualCurrencyList = entries( CURRENCIES ).map( ( [ code, { symbol } ] ) => ( {
+	code,
+	label: `${ code } ${ symbol }`
+} ) );
 
 class FormFields extends React.PureComponent {
 	static displayName = 'FormFields'; // Needed for devdocs/design
@@ -45,6 +57,7 @@ class FormFields extends React.PureComponent {
 		toggled: false,
 		compactToggled: false,
 		phoneInput: { countryCode: 'US', value: '' },
+		currencyInput: { currency: 'USD', value: '' },
 	};
 
 	handleRadioChange = event => {
@@ -65,6 +78,20 @@ class FormFields extends React.PureComponent {
 
 	handlePhoneInputChange = data => {
 		this.setState( { phoneInput: data } );
+	};
+
+	handleCurrencyChange = event => {
+		const { value: currency } = event.currentTarget;
+		this.setState( state => ( {
+			currencyInput: { ...state.currencyInput, currency }
+		} ) );
+	};
+
+	handlePriceChange = event => {
+		const { value } = event.currentTarget;
+		this.setState( state => ( {
+			currencyInput: { ...state.currencyInput, value }
+		} ) );
 	};
 
 	render() {
@@ -240,6 +267,34 @@ class FormFields extends React.PureComponent {
 					</FormFieldset>
 
 					<FormFieldset>
+						<FormLegend>Form Radio With Thumbnail</FormLegend>
+						<div>
+							<FormRadioWithThumbnail
+								label="First radio"
+								thumbnail={ { cssClass: 'some-class' } }
+								value="first"
+								checked={ 'first' === this.state.checkedRadio }
+								onChange={ this.handleRadioChange }
+							/>
+						</div>
+					</FormFieldset>
+
+					<FormFieldset>
+						<FormLegend>Form Radios Bar</FormLegend>
+						<FormRadiosBarExample
+							isThumbnail={ false }
+							checked={ this.state.checkedRadio }
+							onChange={ this.handleRadioChange }
+						/>
+						<br />
+						<FormRadiosBarExample
+							isThumbnail={ true }
+							checked={ this.state.checkedRadio }
+							onChange={ this.handleRadioChange }
+						/>
+					</FormFieldset>
+
+					<FormFieldset>
 						<FormLabel htmlFor="telInput">Form Tel Input</FormLabel>
 						<FormTelInput name="telInput" id="telInput" placeholder="Placeholder text..." />
 					</FormFieldset>
@@ -307,6 +362,34 @@ class FormFields extends React.PureComponent {
 							isError
 						/>
 						<FormInputValidation isError text="The price is invalid." />
+					</FormFieldset>
+
+					<FormFieldset>
+						<FormLabel htmlFor="currency_input_editable">Editable Form Currency Input</FormLabel>
+						<FormCurrencyInput
+							name="currency_input_editable"
+							id="currency_input_editable"
+							value={ this.state.currencyInput.value }
+							onChange={ this.handlePriceChange }
+							currencySymbolPrefix={ this.state.currencyInput.currency }
+							onCurrencyChange={ this.handleCurrencyChange }
+							currencyList={ currencyList }
+							placeholder="Placeholder text..."
+						/>
+					</FormFieldset>
+
+					<FormFieldset>
+						<FormLabel htmlFor="currency_input_editable">Editable Form Currency Input (customized list)</FormLabel>
+						<FormCurrencyInput
+							name="currency_input_editable"
+							id="currency_input_editable"
+							value={ this.state.currencyInput.value }
+							onChange={ this.handlePriceChange }
+							currencySymbolPrefix={ this.state.currencyInput.currency }
+							onCurrencyChange={ this.handleCurrencyChange }
+							currencyList={ visualCurrencyList }
+							placeholder="Placeholder text..."
+						/>
 					</FormFieldset>
 
 					<FormFieldset>

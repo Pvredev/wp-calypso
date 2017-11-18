@@ -1,8 +1,12 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
+import PropTypes from 'prop-types';
 import React from 'react';
 import page from 'page';
 
@@ -21,21 +25,19 @@ import isSiteAutomatedTransferSelector from 'state/selectors/is-site-automated-t
 import { isJetpackSite } from 'state/sites/selectors';
 import QueryContactDetailsCache from 'components/data/query-contact-details-cache';
 
-const Plans = React.createClass( {
-	propTypes: {
-		cart: React.PropTypes.object.isRequired,
-		context: React.PropTypes.object.isRequired,
-		intervalType: React.PropTypes.string,
-		selectedSite: React.PropTypes.object,
-		displayJetpackPlans: React.PropTypes.bool
-	},
+class Plans extends React.Component {
+	static propTypes = {
+		cart: PropTypes.object.isRequired,
+		context: PropTypes.object.isRequired,
+		intervalType: PropTypes.string,
+		selectedSite: PropTypes.object,
+		displayJetpackPlans: PropTypes.bool,
+	};
 
-	getDefaultProps() {
-		return {
-			intervalType: 'yearly',
-			displayJetpackPlans: false
-		};
-	},
+	static defaultProps = {
+		intervalType: 'yearly',
+		displayJetpackPlans: false,
+	};
 
 	componentDidMount() {
 		this.redirectIfNonJetpackMonthly();
@@ -44,44 +46,35 @@ const Plans = React.createClass( {
 		if ( typeof window !== 'undefined' ) {
 			window.scrollTo( 0, 0 );
 		}
-	},
+	}
 
 	componentDidUpdate() {
 		this.redirectIfNonJetpackMonthly();
-	},
+	}
 
-	redirectIfNonJetpackMonthly() {
-		const {
-			displayJetpackPlans,
-			intervalType,
-			selectedSite,
-		} = this.props;
+	redirectIfNonJetpackMonthly = () => {
+		const { displayJetpackPlans, intervalType, selectedSite } = this.props;
 
 		if ( selectedSite && ! displayJetpackPlans && intervalType === 'monthly' ) {
 			page.redirect( '/plans/' + selectedSite.slug );
 		}
-	},
+	};
 
-	renderPlaceholder() {
+	renderPlaceholder = () => {
 		return (
 			<div>
 				<DocumentHead title={ this.props.translate( 'Plans', { textOnly: true } ) } />
-				<Main wideLayout={ true } >
+				<Main wideLayout={ true }>
 					<SidebarNavigation />
 
-					<div id="plans" className="plans has-sidebar">
-					</div>
+					<div id="plans" className="plans has-sidebar" />
 				</Main>
 			</div>
 		);
-	},
+	};
 
 	render() {
-		const {
-			selectedSite,
-			translate,
-			displayJetpackPlans
-		} = this.props;
+		const { selectedSite, translate, displayJetpackPlans } = this.props;
 
 		if ( ! selectedSite ) {
 			return this.renderPlaceholder();
@@ -93,14 +86,15 @@ const Plans = React.createClass( {
 				<PageViewTracker path="/plans/:site" title="Plans" />
 				<QueryContactDetailsCache />
 				<TrackComponentView eventName="calypso_plans_view" />
-				<Main wideLayout={ true } >
+				<Main wideLayout={ true }>
 					<SidebarNavigation />
 
 					<div id="plans" className="plans has-sidebar">
 						<UpgradesNavigation
 							path={ this.props.context.path }
 							cart={ this.props.cart }
-							selectedSite={ selectedSite } />
+							selectedSite={ selectedSite }
+						/>
 
 						<PlansFeaturesMain
 							site={ selectedSite }
@@ -114,18 +108,16 @@ const Plans = React.createClass( {
 			</div>
 		);
 	}
-} );
+}
 
-export default connect(
-	( state ) => {
-		const selectedSiteId = getSelectedSiteId( state );
+export default connect( state => {
+	const selectedSiteId = getSelectedSiteId( state );
 
-		const jetpackSite = isJetpackSite( state, selectedSiteId );
-		const isSiteAutomatedTransfer = isSiteAutomatedTransferSelector( state, selectedSiteId );
+	const jetpackSite = isJetpackSite( state, selectedSiteId );
+	const isSiteAutomatedTransfer = isSiteAutomatedTransferSelector( state, selectedSiteId );
 
-		return {
-			selectedSite: getSelectedSite( state ),
-			displayJetpackPlans: ! isSiteAutomatedTransfer && jetpackSite
-		};
-	}
-)( localize( Plans ) );
+	return {
+		selectedSite: getSelectedSite( state ),
+		displayJetpackPlans: ! isSiteAutomatedTransfer && jetpackSite,
+	};
+} )( localize( Plans ) );

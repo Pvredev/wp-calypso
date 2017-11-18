@@ -1,6 +1,10 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React from 'react';
 
 /**
@@ -12,19 +16,19 @@ import FormLegend from 'components/forms/form-legend';
 import FormLabel from 'components/forms/form-label';
 import { toggleWPcomEmailSetting } from 'lib/notification-settings-store/actions';
 
-const EmailCategory = React.createClass( {
-	propTypes() {
+class EmailCategory extends React.Component {
+	static propTypes() {
 		return {
-			name: React.PropTypes.string,
-			isEnabled: React.PropTypes.bool,
-			title: React.PropTypes.string,
-			description: React.PropTypes.string
+			name: PropTypes.string,
+			isEnabled: PropTypes.bool,
+			title: PropTypes.string,
+			description: PropTypes.string,
 		};
-	},
+	}
 
-	toggleSetting() {
+	toggleSetting = () => {
 		toggleWPcomEmailSetting( this.props.name );
-	},
+	};
 
 	render() {
 		return (
@@ -37,6 +41,6 @@ const EmailCategory = React.createClass( {
 			</FormFieldset>
 		);
 	}
-} );
+}
 
 export default EmailCategory;

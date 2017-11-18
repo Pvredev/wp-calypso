@@ -1,194 +1,179 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import { property, sortBy } from 'lodash';
-const React = require( 'react' );
+import React from 'react';
+import { connect } from 'react-redux';
+import { localize } from 'i18n-calypso';
 
 /**
  * Internal dependencies
  */
-var NextStepsBox = require( './next-steps-box' ),
-	MeSidebarNavigation = require( 'me/sidebar-navigation' ),
-	observe = require( 'lib/mixins/data-observe' ),
-	steps = require( './steps' ),
-	analytics = require( 'lib/analytics' ),
-	productsValues = require( 'lib/products-values' ),
-	sites = require( 'lib/sites-list' )();
+import MeSidebarNavigation from 'me/sidebar-navigation';
+import NextStepsBox from './next-steps-box';
+import steps from './steps';
+import { getNewestSite, userHasAnyPaidPlans } from 'state/selectors';
+import {
+	recordGoogleEvent as recordGoogleEventAction,
+	recordTracksEvent as recordTracksEventAction,
+} from 'state/analytics/actions';
 
-module.exports = React.createClass( {
-
-	mixins: [ observe( 'trophiesData', 'sites' ) ],
-
-	getDefaultProps: function() {
-		return { sites: sites };
-	},
-
-	userState: {},
-
-	componentWillUnmount: function() {
+class NextSteps extends React.Component {
+	componentWillUnmount() {
 		window.scrollTo( 0, 0 );
-	},
+	}
 
-	recordEvent: function( event ) {
-		analytics.ga.recordEvent( 'Me > Next > Welcome Message', event.action );
-		analytics.tracks.recordEvent( 'calypso_me_next_welcome_click', {
+	recordEvent = event => {
+		const { isWelcome, recordGoogleEvent, recordTracksEvent } = this.props;
+
+		recordGoogleEvent( 'Me > Next > Welcome Message', event.action );
+		recordTracksEvent( 'calypso_me_next_welcome_click', {
 			link: event.tracks,
-			is_welcome: this.props.isWelcome
+			is_welcome: isWelcome,
 		} );
-	},
+	};
 
-	setUserStateFromTrophiesData: function() {
-		this.userState = { userHasPosted: this.hasUserPosted() };
-	},
+	recordBloggingUniversityLinkClick = () => {
+		this.recordEvent( {
+			tracks: 'blogging_course',
+			action: 'Clicked Blogging University Link',
+		} );
+	};
 
-	hasUserPosted: function() {
-		if ( this.props.trophiesData.hasLoadedFromServer() ) {
-			return this.props.trophiesData.get().trophies.some( function( trophy ) {
-				return 'post-milestone' === trophy.type;
-			} );
-		}
-	},
+	recordDocsLinkClick = () => {
+		this.recordEvent( {
+			tracks: 'documentation',
+			action: 'Clicked Documentation Link',
+		} );
+	};
 
-	// This can be used to update the copy of the steps depending on whether
-	// the user has already done the action
-	renderPostComponent: function() {
-		if ( this.props.trophiesData.hasLoadedFromServer() ) {
-			return (
-				<div>
-					{ this.userState.userHasPosted ? 'You have posted' : 'Create a post' }
-				</div>
-			);
-		}
-	},
+	recordDismissLinkClick = () => {
+		this.recordEvent( {
+			tracks: 'dismiss',
+			action: 'Clicked Dismiss Link',
+		} );
+	};
 
-	renderMeSidebar: function() {
+	renderMeSidebar() {
 		if ( ! this.props.isWelcome ) {
 			return <MeSidebarNavigation />;
 		}
-	},
+	}
 
-	bloggingUniversityLinkRecordEvent: function() {
-		this.recordEvent( {
-			tracks: 'blogging_course',
-			action: 'Clicked Blogging University Link'
-		} );
-	},
+	renderIntroMessage() {
+		const { isWelcome, translate } = this.props;
 
-	docsLinkRecordEvent: function() {
-		this.recordEvent( {
-			tracks: 'documentation',
-			action: 'Clicked Documentation Link'
-		} );
-	},
-
-	dismissLinkRecordEvent: function() {
-		this.recordEvent( {
-			tracks: 'dismiss',
-			action: 'Clicked Dismiss Link'
-		} );
-	},
-
-	introMessage: function() {
-		if ( this.props.isWelcome ) {
+		if ( isWelcome ) {
 			return (
 				<div className="next-steps__intro">
-				<h3 className="next-steps__title">{ this.translate( 'Thanks for signing up for WordPress.com.' ) }</h3>
-				<p className="next-steps__intro">
-					{ this.translate(
-						'Next you can take any of the following steps, ' +
-						'join a {{bloggingUniversityLink}}guided blogging course{{/bloggingUniversityLink}}, ' +
-						'or check out our {{docsLink}}support documentation{{/docsLink}}.', {
-							components: {
-								bloggingUniversityLink: <a
-									href="https://bloggingu.wordpress.com/"
-									target="_blank"
-									rel="noopener noreferrer"
-									onClick={ this.bloggingUniversityLinkRecordEvent }
-								/>,
-								docsLink: <a
-									href="http://en.support.wordpress.com/"
-									target="_blank"
-									rel="noopener noreferrer"
-									onClick={ this.docsLinkRecordEvent }
-								/>
+					<h3 className="next-steps__title">
+						{ translate( 'Thanks for signing up for WordPress.com.' ) }
+					</h3>
+					<p className="next-steps__intro">
+						{ translate(
+							'Next you can take any of the following steps, ' +
+								'join a {{bloggingUniversityLink}}guided blogging course{{/bloggingUniversityLink}}, ' +
+								'or check out our {{docsLink}}support documentation{{/docsLink}}.',
+							{
+								components: {
+									bloggingUniversityLink: (
+										<a
+											href="https://bloggingu.wordpress.com/"
+											target="_blank"
+											rel="noopener noreferrer"
+											onClick={ this.recordBloggingUniversityLinkClick }
+										/>
+									),
+									docsLink: (
+										<a
+											href="http://en.support.wordpress.com/"
+											target="_blank"
+											rel="noopener noreferrer"
+											onClick={ this.recordDocsLinkClick }
+										/>
+									),
+								},
 							}
-						}
-					) }
-				</p>
-			</div>
+						) }
+					</p>
+				</div>
 			);
 		}
-	},
+	}
 
-	newestSite: function() {
-		return sortBy( this.props.sites.get(), property( 'ID' ) ).pop();
-	},
+	renderOutroMessage() {
+		const { isWelcome, newestSite, translate } = this.props;
 
-	outroMessage: function() {
-		var site,
-			dismissLink;
-
-		if ( this.props.isWelcome ) {
-			site = this.newestSite();
-			dismissLink = '/stats/insights/' + ( site ? site.slug : '' );
+		if ( isWelcome ) {
+			const dismissLink = '/stats/insights/' + ( newestSite ? newestSite.slug : '' );
 
 			return (
 				<div className="next-steps__outro">
-				<p>{
-					this.translate( 'If you want you can {{a}}skip these steps{{/a}}. You can come back to this page any time.', {
-						components: {
-							a: <a href={ dismissLink } onClick={ this.dismissLinkRecordEvent } />
-						}
-					} )
-				}</p>
-			</div>
+					<p>
+						{ translate(
+							'If you want you can {{a}}skip these steps{{/a}}. You can come back to this page any time.',
+							{
+								components: {
+									a: <a href={ dismissLink } onClick={ this.recordDismissLinkClick } />,
+								},
+							}
+						) }
+					</p>
+				</div>
 			);
 		}
-	},
+	}
 
-	userHasPurchasedAPlan: function() {
-		return this.props.sites.get().some( function( site ) {
-			return productsValues.isPlan( site.plan );
-		} );
-	},
+	renderSteps() {
+		const { hasPlan, isWelcome, newestSite } = this.props;
+		let sequence = steps.defaultSequence;
 
-	renderSteps: function() {
-		var site = this.newestSite(),
-			sequence = steps.defaultSequence;
-
-		if ( this.userHasPurchasedAPlan() ) {
+		if ( hasPlan ) {
 			sequence = steps.hasPlanSequence;
 		}
 
 		return (
 			<div className="next-steps__steps">
-				{ sequence.map( function( stepName, index ) {
-					var step = steps.definitions( site )[ stepName ];
-					return <NextStepsBox key={ stepName } stepName={ stepName } step={ step } primary={ index === 0 } isWelcome={ this.props.isWelcome } />;
-				}.bind( this ) ) }
-			</div>
-		);
-	},
+				{ sequence.map( ( stepName, index ) => {
+					const step = steps.definitions( newestSite )[ stepName ];
 
-	render: function() {
-		var classes = 'main main-column next-steps';
-
-		this.setUserStateFromTrophiesData();
-
-		if ( this.props.isWelcome ) {
-			classes += ' is-single-page';
-		}
-
-		return (
-			<div className={ classes }>
-				{ this.renderMeSidebar() }
-
-				{ this.introMessage() }
-
-				{ this.renderSteps() }
-
-				{ this.outroMessage() }
+					return (
+						<NextStepsBox
+							key={ stepName }
+							stepName={ stepName }
+							step={ step }
+							primary={ index === 0 }
+							isWelcome={ isWelcome }
+						/>
+					);
+				} ) }
 			</div>
 		);
 	}
-} );
+
+	render() {
+		return (
+			<div className="main main-column next-steps">
+				{ this.renderMeSidebar() }
+
+				{ this.renderIntroMessage() }
+
+				{ this.renderSteps() }
+
+				{ this.renderOutroMessage() }
+			</div>
+		);
+	}
+}
+
+export default connect(
+	state => ( {
+		newestSite: getNewestSite( state ),
+		hasPlan: userHasAnyPaidPlans( state ),
+	} ),
+	{
+		recordGoogleEvent: recordGoogleEventAction,
+		recordTracksEvent: recordTracksEventAction,
+	}
+)( localize( NextSteps ) );

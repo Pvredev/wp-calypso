@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import safeImageUrl from 'lib/safe-image-url';
 import { getMediaItem } from './';
 

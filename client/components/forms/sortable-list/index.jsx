@@ -1,12 +1,16 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import { localize } from 'i18n-calypso';
 import { assign, findIndex, fromPairs, noop } from 'lodash';
 import classNames from 'classnames';
 import debugFactory from 'debug';
+import Gridicon from 'gridicons';
 
 /**
  * Internal dependencies
@@ -40,10 +44,12 @@ class SortableList extends React.Component {
 
 	componentDidMount() {
 		document.addEventListener( 'mousemove', this.onMouseMove );
+		document.addEventListener( 'mouseup', this.onMouseUp );
 	}
 
 	componentWillUnmount() {
 		document.removeEventListener( 'mousemove', this.onMouseMove );
+		document.removeEventListener( 'mouseup', this.onMouseUp );
 	}
 
 	getPositionForCursorElement = ( element, event ) => {
@@ -110,63 +116,60 @@ class SortableList extends React.Component {
 			shadowRect = this.refs[ 'wrap-shadow-' + this.state.activeIndex ].getBoundingClientRect(),
 			index;
 
-		index = findIndex(
-			this.props.children,
-			( child, i ) => {
-				var isBeyond, adjustedElementIndex, permittedVertical;
+		index = findIndex( this.props.children, ( child, i ) => {
+			var isBeyond, adjustedElementIndex, permittedVertical;
 
-				// Avoid self-comparisons for the active item
-				if ( i === this.state.activeIndex ) {
-					return false;
+			// Avoid self-comparisons for the active item
+			if ( i === this.state.activeIndex ) {
+				return false;
+			}
+
+			// Since elements are now shifted around, we want to find their
+			// visible position to make accurate comparisons
+			adjustedElementIndex = this.getAdjustedElementIndex( i );
+
+			// When rearranging on a horizontal plane, permit breaking of
+			// vertical if the cursor is outside the list element on the
+			// same vertical, and only if the element is on the same line as
+			// the active item's shadow element
+			if ( 'horizontal' === this.props.direction ) {
+				if (
+					1 === cursorCompare &&
+					this.refs[ 'wrap-' + i ].getBoundingClientRect().top >= shadowRect.top
+				) {
+					permittedVertical = 'bottom';
+				} else if (
+					-1 === cursorCompare &&
+					this.refs[ 'wrap-' + i ].getBoundingClientRect().bottom <= shadowRect.bottom
+				) {
+					permittedVertical = 'top';
 				}
+			}
 
-				// Since elements are now shifted around, we want to find their
-				// visible position to make accurate comparisons
-				adjustedElementIndex = this.getAdjustedElementIndex( i );
-
-				// When rearranging on a horizontal plane, permit breaking of
-				// vertical if the cursor is outside the list element on the
-				// same vertical, and only if the element is on the same line as
-				// the active item's shadow element
-				if ( 'horizontal' === this.props.direction ) {
-					if (
-						1 === cursorCompare &&
-						this.refs[ 'wrap-' + i ].getBoundingClientRect().top >= shadowRect.top
-					) {
-						permittedVertical = 'bottom';
-					} else if (
-						-1 === cursorCompare &&
-						this.refs[ 'wrap-' + i ].getBoundingClientRect().bottom <= shadowRect.bottom
-					) {
-						permittedVertical = 'top';
-					}
-				}
-
-				if ( adjustedElementIndex < adjustedActiveIndex ) {
-					// If the item which is currently before the active item is
-					// suddenly after, return this item's index
-					isBeyond = this.isCursorBeyondElementThreshold(
+			if ( adjustedElementIndex < adjustedActiveIndex ) {
+				// If the item which is currently before the active item is
+				// suddenly after, return this item's index
+				isBeyond = this.isCursorBeyondElementThreshold(
+					this.refs[ 'wrap-' + i ],
+					'horizontal' === this.props.direction ? 'left' : 'top',
+					permittedVertical,
+					event
+				);
+			} else if ( adjustedElementIndex > adjustedActiveIndex ) {
+				// If the item which is currently after the active item is
+				// suddenly before, return this item's index
+				isBeyond =
+					isBeyond ||
+					this.isCursorBeyondElementThreshold(
 						this.refs[ 'wrap-' + i ],
-						'horizontal' === this.props.direction ? 'left' : 'top',
+						'horizontal' === this.props.direction ? 'right' : 'bottom',
 						permittedVertical,
 						event
 					);
-				} else if ( adjustedElementIndex > adjustedActiveIndex ) {
-					// If the item which is currently after the active item is
-					// suddenly before, return this item's index
-					isBeyond =
-						isBeyond ||
-						this.isCursorBeyondElementThreshold(
-							this.refs[ 'wrap-' + i ],
-							'horizontal' === this.props.direction ? 'right' : 'bottom',
-							permittedVertical,
-							event
-						);
-				}
-
-				return isBeyond;
 			}
-		);
+
+			return isBeyond;
+		} );
 
 		return this.getAdjustedElementIndex( index );
 	};
@@ -327,10 +330,8 @@ class SortableList extends React.Component {
 					className="sortable-list__navigation-button is-previous"
 					disabled={ null === this.state.activeIndex || this.state.activeIndex === 0 }
 				>
-					<span className="screen-reader-text">
-						{ this.props.translate( 'Move previous' ) }
-					</span>
-					<span className="noticon noticon-expand" />
+					<span className="screen-reader-text">{ this.props.translate( 'Move previous' ) }</span>
+					<Gridicon icon="chevron-down" size={ 24 } />
 				</button>
 				<button
 					type="button"
@@ -341,10 +342,8 @@ class SortableList extends React.Component {
 						this.state.activeIndex === this.props.children.length - 1
 					}
 				>
-					<span className="screen-reader-text">
-						{ this.props.translate( 'Move next' ) }
-					</span>
-					<span className="noticon noticon-collapse" />
+					<span className="screen-reader-text">{ this.props.translate( 'Move next' ) }</span>
+					<Gridicon icon="chevron-up" size={ 24 } />
 				</button>
 			</div>
 		);

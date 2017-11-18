@@ -1,11 +1,12 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import debugFactory from 'debug';
 import page from 'page';
 import qs from 'querystring';
-import ReactClass from 'react/lib/ReactClass';
-import i18n, { setLocale } from 'i18n-calypso';
 import { some, startsWith } from 'lodash';
 import url from 'url';
 
@@ -16,29 +17,42 @@ import accessibleFocus from 'lib/accessible-focus';
 import { bindState as bindWpLocaleState } from 'lib/wp/localization';
 import config from 'config';
 import { receiveUser } from 'state/users/actions';
-import {
-	setCurrentUserId,
-	setCurrentUserFlags
-} from 'state/current-user/actions';
+import { setCurrentUserId, setCurrentUserFlags } from 'state/current-user/actions';
 import { setRoute as setRouteAction } from 'state/ui/actions';
-import switchLocale from 'lib/i18n-utils/switch-locale';
 import touchDetect from 'lib/touch-detect';
+import { setLocale, setLocaleRawData } from 'state/ui/language/actions';
+import { isDefaultLocale } from 'lib/i18n-utils';
+import getCurrentLocaleSlug from 'state/selectors/get-current-locale-slug';
 
 const debug = debugFactory( 'calypso' );
 
-const switchUserLocale = currentUser => {
+const switchUserLocale = ( currentUser, reduxStore ) => {
 	const localeSlug = currentUser.get().localeSlug;
+
 	if ( localeSlug ) {
-		switchLocale( localeSlug );
+		reduxStore.dispatch( setLocale( localeSlug ) );
 	}
 };
 
 const setupContextMiddleware = reduxStore => {
 	page( '*', ( context, next ) => {
-		const parsed = url.parse( location.href, true );
+		// page.js url parsing is broken so we had to disable it with `decodeURLComponents: false`
+		const parsed = url.parse( context.canonicalPath, true );
+		context.prevPath = parsed.path === context.path ? false : parsed.path;
+		context.query = parsed.query;
 
-		// Decode the pathname by default (now disabled in page.js)
-		context.pathname = decodeURIComponent( context.pathname );
+		context.hashstring = ( parsed.hash && parsed.hash.substring( 1 ) ) || '';
+		// set `context.hash` (we have to parse manually)
+		if ( context.hashstring ) {
+			try {
+				context.hash = qs.parse( context.hashstring );
+			} catch ( e ) {
+				debug( 'failed to query-string parse `location.hash`', e );
+				context.hash = {};
+			}
+		} else {
+			context.hash = {};
+		}
 
 		context.store = reduxStore;
 
@@ -48,28 +62,6 @@ const setupContextMiddleware = reduxStore => {
 			return;
 		}
 
-		// set `context.query`
-		const querystringStart = context.canonicalPath.indexOf( '?' );
-
-		if ( querystringStart !== -1 ) {
-			context.query = qs.parse( context.canonicalPath.substring( querystringStart + 1 ) );
-		} else {
-			context.query = {};
-		}
-
-		context.prevPath = parsed.path === context.path ? false : parsed.path;
-
-		// set `context.hash` (we have to parse manually)
-		if ( parsed.hash && parsed.hash.length > 1 ) {
-			try {
-				context.hash = qs.parse( parsed.hash.substring( 1 ) );
-			} catch ( e ) {
-				debug( 'failed to query-string parse `location.hash`', e );
-				context.hash = {};
-			}
-		} else {
-			context.hash = {};
-		}
 		next();
 	} );
 };
@@ -100,9 +92,8 @@ const loggedOutMiddleware = currentUser => {
 	const validSections = sections.get().reduce( ( acc, section ) => {
 		return section.enableLoggedOut ? acc.concat( section.paths ) : acc;
 	}, [] );
-	const isValidSection = sectionPath => some(
-		validSections, validPath => startsWith( sectionPath, validPath )
-	);
+	const isValidSection = sectionPath =>
+		some( validSections, validPath => startsWith( sectionPath, validPath ) );
 
 	page( '*', ( context, next ) => {
 		if ( isValidSection( context.path ) ) {
@@ -120,10 +111,7 @@ const oauthTokenMiddleware = () => {
 
 const setRouteMiddleware = () => {
 	page( '*', ( context, next ) => {
-		context.store.dispatch( setRouteAction(
-			context.pathname,
-			context.query
-		) );
+		context.store.dispatch( setRouteAction( context.pathname, context.query ) );
 
 		next();
 	} );
@@ -139,24 +127,20 @@ const unsavedFormsMiddleware = () => {
 	page.exit( '*', require( 'lib/protect-form' ).checkFormHandler );
 };
 
-export const locales = currentUser => {
+export const locales = ( currentUser, reduxStore ) => {
 	debug( 'Executing Calypso locales.' );
-
-	// Initialize i18n mixin
-	ReactClass.injection.injectMixin( i18n.mixin );
 
 	if ( window.i18nLocaleStrings ) {
 		const i18nLocaleStringsObject = JSON.parse( window.i18nLocaleStrings );
-		setLocale( i18nLocaleStringsObject );
+		reduxStore.dispatch( setLocaleRawData( i18nLocaleStringsObject ) );
 	}
 
 	// When the user is not bootstrapped, we also bootstrap the
-	// locale strings
-	if ( ! config.isEnabled( 'wpcom-user-bootstrap' ) ) {
-		switchUserLocale( currentUser );
+	// user locale strings, unless the locale was already set in the initial store during SSR
+	const currentLocaleSlug = getCurrentLocaleSlug( reduxStore.getState() );
+	if ( ! config.isEnabled( 'wpcom-user-bootstrap' ) && isDefaultLocale( currentLocaleSlug ) ) {
+		switchUserLocale( currentUser, reduxStore );
 	}
-
-	currentUser.on( 'change', () => switchUserLocale( currentUser ) );
 };
 
 export const utils = () => {
@@ -194,7 +178,9 @@ export const configureReduxStore = ( currentUser, reduxStore ) => {
 	}
 
 	if ( config.isEnabled( 'network-connection' ) ) {
-		asyncRequire( 'lib/network-connection', networkConnection => networkConnection.init( reduxStore ) );
+		asyncRequire( 'lib/network-connection', networkConnection =>
+			networkConnection.init( reduxStore )
+		);
 	}
 };
 

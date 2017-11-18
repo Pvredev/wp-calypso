@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { Component, PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import { omit } from 'lodash';
 import Gridicon from 'gridicons';
@@ -13,12 +17,11 @@ export default class PopoverMenuItem extends Component {
 		isSelected: PropTypes.bool,
 		icon: PropTypes.string,
 		focusOnHover: PropTypes.bool,
-		children: PropTypes.node
 	};
 
 	static defaultProps = {
 		isSelected: false,
-		focusOnHover: true
+		focusOnHover: true,
 	};
 
 	focus( event ) {
@@ -26,16 +29,9 @@ export default class PopoverMenuItem extends Component {
 	}
 
 	render() {
-		const {
-			children,
-			className,
-			focusOnHover,
-			href,
-			icon,
-			isSelected,
-		} = this.props;
+		const { children, className, focusOnHover, href, icon, isSelected } = this.props;
 		const classes = classnames( 'popover__menu-item', className, {
-			'is-selected': isSelected
+			'is-selected': isSelected,
 		} );
 		const ItemComponent = href ? 'a' : 'button';
 
@@ -50,7 +46,8 @@ export default class PopoverMenuItem extends Component {
 				onMouseOver={ hoverHandler }
 				tabIndex="-1"
 				{ ...omit( this.props, 'icon', 'focusOnHover', 'isSelected' ) }
-				className={ classes }>
+				className={ classes }
+			>
 				{ icon && <Gridicon icon={ icon } size={ 18 } /> }
 				{ children }
 			</ItemComponent>

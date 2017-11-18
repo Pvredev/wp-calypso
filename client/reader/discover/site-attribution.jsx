@@ -2,8 +2,10 @@
 /**
  * External dependencies
  */
+import PropTypes from 'prop-types';
 import React from 'react';
 import classNames from 'classnames';
+import Gridicon from 'gridicons';
 
 /**
  * Internal dependencies
@@ -15,13 +17,13 @@ import { recordFollowToggle, recordSiteClick } from './stats';
 
 class DiscoverSiteAttribution extends React.Component {
 	static propTypes = {
-		attribution: React.PropTypes.shape( {
-			blog_name: React.PropTypes.string.isRequired,
-			blog_url: React.PropTypes.string.isRequired,
-			avatar_url: React.PropTypes.string,
+		attribution: PropTypes.shape( {
+			blog_name: PropTypes.string.isRequired,
+			blog_url: PropTypes.string.isRequired,
+			avatar_url: PropTypes.string,
 		} ).isRequired,
-		siteUrl: React.PropTypes.string.isRequired,
-		followUrl: React.PropTypes.string.isRequired,
+		siteUrl: PropTypes.string.isRequired,
+		followUrl: PropTypes.string.isRequired,
 	};
 
 	onSiteClick = () => recordSiteClick( this.props.siteUrl );
@@ -38,15 +40,17 @@ class DiscoverSiteAttribution extends React.Component {
 
 		return (
 			<div className={ classes }>
-				{ attribution.avatar_url
-					? <img
-							className="gravatar"
-							src={ encodeURI( attribution.avatar_url ) }
-							alt="Avatar"
-							width="20"
-							height="20"
-						/>
-					: <span className="noticon noticon-website" /> }
+				{ attribution.avatar_url ? (
+					<img
+						className="gravatar"
+						src={ encodeURI( attribution.avatar_url ) }
+						alt="Avatar"
+						width="20"
+						height="20"
+					/>
+				) : (
+					<Gridicon icon="globe" size={ 18 } />
+				) }
 				<span>
 					<a
 						{ ...siteLinkProps }
@@ -57,13 +61,13 @@ class DiscoverSiteAttribution extends React.Component {
 						{ translate( 'visit' ) } <em>{ attribution.blog_name }</em>
 					</a>
 				</span>
-				{ !! this.props.followUrl
-					? <FollowButton
-							siteUrl={ this.props.followUrl }
-							iconSize={ 20 }
-							onFollowToggle={ this.onFollowToggle }
-						/>
-					: null }
+				{ !! this.props.followUrl ? (
+					<FollowButton
+						siteUrl={ this.props.followUrl }
+						iconSize={ 20 }
+						onFollowToggle={ this.onFollowToggle }
+					/>
+				) : null }
 			</div>
 		);
 	}

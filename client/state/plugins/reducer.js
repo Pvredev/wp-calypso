@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import wporg from './wporg/reducer';
 import { combineReducers } from 'state/utils';
 import premium from './premium/reducer';

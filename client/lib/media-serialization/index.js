@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import detectFormat from './detect-format';
 import Strategies from './strategies';
 

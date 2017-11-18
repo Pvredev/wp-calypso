@@ -16,13 +16,22 @@ import {
 	COMMENT_REQUEST,
 	COMMENTS_TREE_SITE_REQUEST,
 	READER_EXPAND_COMMENTS,
+	COMMENTS_SET_ACTIVE_REPLY,
 } from '../action-types';
 import { NUMBER_OF_COMMENTS_PER_FETCH } from './constants';
 
-export const requestComment = ( { siteId, commentId } ) => ( {
+/**
+ * Creates an action that requests a single comment for a given site.
+ * @param {Number} siteId Site identifier
+ * @param {Number} commentId Comment identifier
+ * @param {Object} query API call parameters
+ * @returns {Object} Action that requests a single comment
+ */
+export const requestComment = ( { siteId, commentId, query = {} } ) => ( {
 	type: COMMENT_REQUEST,
 	siteId,
 	commentId,
+	query,
 } );
 
 /***
@@ -151,11 +160,11 @@ export const likeComment = ( siteId, postId, commentId ) => ( {
 } );
 
 /***
- * Creates a thunk that unlikes a comment
+ * Creates an action that unlikes a comment
  * @param {Number} siteId site identifier
  * @param {Number} postId post identifier
  * @param {Number} commentId comment identifier
- * @returns {Function} think that unlikes a comment
+ * @returns {Object} Action that unlikes a comment
  */
 export const unlikeComment = ( siteId, postId, commentId ) => ( {
 	type: COMMENTS_UNLIKE,
@@ -211,7 +220,38 @@ export const editComment = ( siteId, postId, commentId, comment ) => ( {
 	comment,
 } );
 
+/**
+ * Expand selected comments to the level of displayType. It's important to note that a comment will
+ * only get expanded and cannot unexpand from this action.
+ * That means comments can only go in the direction of: hidden --> singleLine --> excerpt --> full
+ *
+ * @param {Object} options options object.
+ * @param {number} options.siteId siteId for the comments to expand.
+ * @param {Array<number>} options.commentIds list of commentIds to expand.
+ * @param {number} options.postId postId for the comments to expand.
+ * @param {string} options.displayType which displayType to set the comment to.
+ *
+ * @returns {Object} reader expand comments action
+ */
 export const expandComments = ( { siteId, commentIds, postId, displayType } ) => ( {
 	type: READER_EXPAND_COMMENTS,
 	payload: { siteId, commentIds, postId, displayType },
+} );
+
+/***
+ * Creates an action that sets the active reply for a given site ID and post ID
+ * This is used on the front end to show a reply box under the specified comment.
+ *
+ * @param {Number} siteId site identifier
+ * @param {Number} postId post identifier
+ * @param {Number} commentId comment identifier
+ * @returns {Object} Action to set active reply
+ */
+export const setActiveReply = ( { siteId, postId, commentId } ) => ( {
+	type: COMMENTS_SET_ACTIVE_REPLY,
+	payload: {
+		siteId,
+		postId,
+		commentId,
+	},
 } );

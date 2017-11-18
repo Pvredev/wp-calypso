@@ -1,95 +1,97 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { translate } from 'i18n-calypso';
-import { clone, filter, findIndex, noop } from 'lodash';
-const ReactDom = require( 'react-dom' ),
-	React = require( 'react' );
+import { moment, translate } from 'i18n-calypso';
+import { clone, filter, findIndex, min, noop } from 'lodash';
+import ReactDom from 'react-dom';
+import React from 'react';
 
 /**
  * Internal dependencies
  */
-var MediaActions = require( 'lib/media/actions' ),
-	MediaUtils = require( 'lib/media/utils' ),
-	ListItem = require( './list-item' ),
-	ListNoResults = require( './list-no-results' ),
-	ListNoContent = require( './list-no-content' ),
-	InfiniteList = require( 'components/infinite-list' ),
-	user = require( 'lib/user' )();
+import MediaActions from 'lib/media/actions';
+import MediaUtils from 'lib/media/utils';
+import ListItem from './list-item';
+import ListNoResults from './list-no-results';
+import ListNoContent from './list-no-content';
+import userFactory from 'lib/user';
+const user = userFactory();
 
+import SortedGrid from 'components/sorted-grid';
 import ListPlanUpgradeNudge from './list-plan-upgrade-nudge';
 import { getPreference } from 'state/preferences/selectors';
 
 const GOOGLE_MAX_RESULTS = 1000;
 
-export const MediaLibraryList = React.createClass( {
-	displayName: 'MediaLibraryList',
+export class MediaLibraryList extends React.Component {
+	static displayName = 'MediaLibraryList';
 
-	propTypes: {
-		site: React.PropTypes.object,
-		media: React.PropTypes.arrayOf( React.PropTypes.object ),
-		mediaLibrarySelectedItems: React.PropTypes.arrayOf( React.PropTypes.object ),
-		filter: React.PropTypes.string,
-		filterRequiresUpgrade: React.PropTypes.bool.isRequired,
-		search: React.PropTypes.string,
-		containerWidth: React.PropTypes.number,
-		rowPadding: React.PropTypes.number,
-		mediaScale: React.PropTypes.number.isRequired,
-		thumbnailType: React.PropTypes.string,
-		mediaHasNextPage: React.PropTypes.bool,
-		mediaFetchingNextPage: React.PropTypes.bool,
-		mediaOnFetchNextPage: React.PropTypes.func,
-		single: React.PropTypes.bool,
-		scrollable: React.PropTypes.bool,
-		onEditItem: React.PropTypes.func
-	},
+	static propTypes = {
+		site: PropTypes.object,
+		media: PropTypes.arrayOf( PropTypes.object ),
+		mediaLibrarySelectedItems: PropTypes.arrayOf( PropTypes.object ),
+		filter: PropTypes.string,
+		filterRequiresUpgrade: PropTypes.bool.isRequired,
+		search: PropTypes.string,
+		containerWidth: PropTypes.number,
+		rowPadding: PropTypes.number,
+		mediaScale: PropTypes.number.isRequired,
+		thumbnailType: PropTypes.string,
+		mediaHasNextPage: PropTypes.bool,
+		mediaFetchingNextPage: PropTypes.bool,
+		mediaOnFetchNextPage: PropTypes.func,
+		single: PropTypes.bool,
+		scrollable: PropTypes.bool,
+		onEditItem: PropTypes.func,
+	};
 
-	getInitialState: function() {
-		return {};
-	},
+	static defaultProps = {
+		mediaLibrarySelectedItems: Object.freeze( [] ),
+		containerWidth: 0,
+		rowPadding: 10,
+		mediaHasNextPage: false,
+		mediaFetchingNextPage: false,
+		mediaOnFetchNextPage: noop,
+		single: false,
+		scrollable: false,
+		onEditItem: noop,
+	};
 
-	getDefaultProps: function() {
-		return {
-			mediaLibrarySelectedItems: Object.freeze( [] ),
-			containerWidth: 0,
-			rowPadding: 10,
-			mediaHasNextPage: false,
-			mediaFetchingNextPage: false,
-			mediaOnFetchNextPage: noop,
-			single: false,
-			scrollable: false,
-			onEditItem: noop
-		};
-	},
+	state = {};
 
-	setListContext( component ) {
+	setListContext = component => {
 		if ( ! component ) {
 			return;
 		}
 
 		this.setState( {
-			listContext: ReactDom.findDOMNode( component )
+			listContext: ReactDom.findDOMNode( component ),
 		} );
-	},
+	};
 
-	getMediaItemHeight: function() {
+	getMediaItemHeight = () => {
 		return Math.round( this.props.containerWidth * this.props.mediaScale ) + this.props.rowPadding;
-	},
+	};
 
-	getItemsPerRow: function() {
+	getItemsPerRow = () => {
 		return Math.floor( 1 / this.props.mediaScale );
-	},
+	};
 
-	getMediaItemStyle: function( index ) {
+	getMediaItemStyle = index => {
 		var itemsPerRow = this.getItemsPerRow(),
 			isFillingEntireRow = itemsPerRow === 1 / this.props.mediaScale,
 			isLastInRow = 0 === ( index + 1 ) % itemsPerRow,
-			style, marginValue;
+			style,
+			marginValue;
 
 		style = {
 			paddingBottom: this.props.rowPadding,
-			fontSize: this.props.mediaScale * 225
+			fontSize: this.props.mediaScale * 225,
 		};
 
 		if ( ! isFillingEntireRow && ! isLastInRow ) {
@@ -103,9 +105,9 @@ export const MediaLibraryList = React.createClass( {
 		}
 
 		return style;
-	},
+	};
 
-	toggleItem: function( item, shiftKeyPressed ) {
+	toggleItem = ( item, shiftKeyPressed ) => {
 		// We don't care to preserve the existing selected items if we're only
 		// seeking to select a single item
 		let selectedItems;
@@ -116,7 +118,7 @@ export const MediaLibraryList = React.createClass( {
 		}
 
 		const selectedItemsIndex = findIndex( selectedItems, { ID: item.ID } );
-		const isToBeSelected = ( -1 === selectedItemsIndex );
+		const isToBeSelected = -1 === selectedItemsIndex;
 		const selectedMediaIndex = findIndex( this.props.media, { ID: item.ID } );
 
 		let start = selectedMediaIndex;
@@ -129,7 +131,7 @@ export const MediaLibraryList = React.createClass( {
 
 		for ( let i = start; i <= end; i++ ) {
 			let interimIndex = findIndex( selectedItems, {
-				ID: this.props.media[ i ].ID
+				ID: this.props.media[ i ].ID,
 			} );
 
 			if ( isToBeSelected && -1 === interimIndex ) {
@@ -140,31 +142,44 @@ export const MediaLibraryList = React.createClass( {
 		}
 
 		this.setState( {
-			lastSelectedMediaIndex: selectedMediaIndex
+			lastSelectedMediaIndex: selectedMediaIndex,
 		} );
 
 		if ( this.props.site ) {
 			MediaActions.setLibrarySelectedItems( this.props.site.ID, selectedItems );
 		}
-	},
+	};
 
-	getItemRef: function( item ) {
+	getItemRef = item => {
 		return 'item-' + item.ID;
-	},
+	};
 
-	renderItem: function( item ) {
+	getGroupLabel = date => {
+		const itemDate = new Date( date );
+		const currentDate = new Date();
+
+		if ( itemDate.getFullYear() === currentDate.getFullYear() ) {
+			return moment( date ).format( 'MMM D' );
+		}
+
+		return moment( date ).format( 'MMM D, YYYY' );
+	};
+
+	getItemGroup = item =>
+		min( [ item.date.slice( 0, 10 ), moment( new Date() ).format( 'YYYY-MM-DD' ) ] );
+
+	renderItem = item => {
 		var index = findIndex( this.props.media, { ID: item.ID } ),
 			selectedItems = this.props.mediaLibrarySelectedItems,
 			selectedIndex = findIndex( selectedItems, { ID: item.ID } ),
 			ref = this.getItemRef( item ),
 			showGalleryHelp;
 
-		showGalleryHelp = (
+		showGalleryHelp =
 			! this.props.single &&
 			selectedIndex !== -1 &&
 			selectedItems.length === 1 &&
-			'image' === MediaUtils.getMimePrefix( item )
-		);
+			'image' === MediaUtils.getMimePrefix( item );
 
 		return (
 			<ListItem
@@ -177,14 +192,15 @@ export const MediaLibraryList = React.createClass( {
 				showGalleryHelp={ showGalleryHelp }
 				selectedIndex={ selectedIndex }
 				onToggle={ this.toggleItem }
-				onEditItem={ this.props.onEditItem } />
+				onEditItem={ this.props.onEditItem }
+			/>
 		);
-	},
+	};
 
-	renderLoadingPlaceholders: function() {
+	renderLoadingPlaceholders = () => {
 		var itemsPerRow = this.getItemsPerRow(),
 			itemsVisible = ( this.props.media || [] ).length,
-			placeholders = itemsPerRow - ( itemsVisible % itemsPerRow );
+			placeholders = itemsPerRow - itemsVisible % itemsPerRow;
 
 		// We render enough placeholders to occupy the remainder of the row
 		return Array.apply( null, new Array( placeholders ) ).map( function( value, i ) {
@@ -192,25 +208,32 @@ export const MediaLibraryList = React.createClass( {
 				<ListItem
 					key={ 'placeholder-' + i }
 					style={ this.getMediaItemStyle( itemsVisible + i ) }
-					scale={ this.props.mediaScale } />
+					scale={ this.props.mediaScale }
+				/>
 			);
 		}, this );
-	},
+	};
 
-	renderTrailingItems() {
+	renderTrailingItems = () => {
 		const { media, source } = this.props;
 
 		if ( source === 'google_photos' && media && media.length >= GOOGLE_MAX_RESULTS ) {
 			// Google Photos won't return more than 1000 photos - suggest ways round this to the user
-			const message = translate( 'Use the search button to access more photos. You can search for dates, locations, and things.' );
+			const message = translate(
+				'Use the search button to access more photos. You can search for dates, locations, and things.'
+			);
 
-			return <p><em>{ message }</em></p>;
+			return (
+				<p>
+					<em>{ message }</em>
+				</p>
+			);
 		}
 
 		return null;
-	},
+	};
 
-	render: function() {
+	render() {
 		var onFetchNextPage;
 
 		if ( this.props.filterRequiresUpgrade ) {
@@ -233,8 +256,10 @@ export const MediaLibraryList = React.createClass( {
 		}.bind( this );
 
 		return (
-			<InfiniteList
+			<SortedGrid
 				ref={ this.setListContext }
+				getItemGroup={ this.getItemGroup }
+				getGroupLabel={ this.getGroupLabel }
 				context={ this.props.scrollable ? this.state.listContext : false }
 				items={ this.props.media || [] }
 				itemsPerRow={ this.getItemsPerRow() }
@@ -246,11 +271,17 @@ export const MediaLibraryList = React.createClass( {
 				renderItem={ this.renderItem }
 				renderLoadingPlaceholders={ this.renderLoadingPlaceholders }
 				renderTrailingItems={ this.renderTrailingItems }
-				className="media-library__list" />
+				className="media-library__list"
+			/>
 		);
 	}
-} );
+}
 
-export default connect( ( state ) => ( {
-	mediaScale: getPreference( state, 'mediaScale' )
-} ), null, null, { pure: false } )( MediaLibraryList );
+export default connect(
+	state => ( {
+		mediaScale: getPreference( state, 'mediaScale' ),
+	} ),
+	null,
+	null,
+	{ pure: false }
+)( MediaLibraryList );

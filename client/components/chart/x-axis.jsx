@@ -1,6 +1,10 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React from 'react';
 import { throttle } from 'lodash';
 
@@ -9,41 +13,39 @@ import { throttle } from 'lodash';
  */
 import Label from './label';
 
-module.exports = React.createClass( {
-	displayName: 'ModuleChartXAxis',
+export default class extends React.Component {
+	static displayName = 'ModuleChartXAxis';
 
-	propTypes: {
-		labelWidth: React.PropTypes.number.isRequired,
-		data: React.PropTypes.array.isRequired
-	},
+	static propTypes = {
+		labelWidth: PropTypes.number.isRequired,
+		data: PropTypes.array.isRequired,
+	};
 
-	getInitialState: function() {
-		return {
-			divisor: 1,
-			spacing: this.props.labelWidth
-		};
-	},
+	state = {
+		divisor: 1,
+		spacing: this.props.labelWidth,
+	};
 
 	// Add listener for window resize
-	componentDidMount: function() {
+	componentDidMount() {
 		this.resizeThrottled = throttle( this.resize, 400 );
 		window.addEventListener( 'resize', this.resizeThrottled );
 		this.resize();
-	},
+	}
 
 	// Remove listener
-	componentWillUnmount: function() {
+	componentWillUnmount() {
 		if ( this.resizeThrottled.cancel ) {
 			this.resizeThrottled.cancel();
 		}
 		window.removeEventListener( 'resize', this.resizeThrottled );
-	},
+	}
 
-	componentWillReceiveProps: function( nextProps ) {
+	componentWillReceiveProps( nextProps ) {
 		this.resize( nextProps );
-	},
+	}
 
-	resize: function( nextProps ) {
+	resize = nextProps => {
 		let props = this.props;
 		if ( nextProps && ! ( nextProps instanceof Event ) ) {
 			props = nextProps;
@@ -67,27 +69,31 @@ module.exports = React.createClass( {
 
 		this.setState( {
 			divisor: divisor,
-			spacing: spacing
+			spacing: spacing,
 		} );
-	},
+	};
 
-	render: function() {
+	render() {
 		const data = this.props.data;
 
 		const labels = data.map( function( item, index ) {
-			const x = ( index * this.state.spacing ) + ( ( this.state.spacing - this.props.labelWidth ) / 2 ),
+			const x = index * this.state.spacing + ( this.state.spacing - this.props.labelWidth ) / 2,
 				rightIndex = data.length - index - 1;
 			let label;
 
 			if ( rightIndex % this.state.divisor === 0 ) {
-				label = <Label key={ index } label={ item.label } width={ this.props.labelWidth } x={ x } />;
+				label = (
+					<Label key={ index } label={ item.label } width={ this.props.labelWidth } x={ x } />
+				);
 			}
 
 			return label;
 		}, this );
 
 		return (
-			<div ref="axis" className="chart__x-axis">{ labels }</div>
+			<div ref="axis" className="chart__x-axis">
+				{ labels }
+			</div>
 		);
 	}
-} );
+}

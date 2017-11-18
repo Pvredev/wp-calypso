@@ -1,3 +1,4 @@
+/** @format */
 /**
  * Internal dependencies
  */
@@ -5,6 +6,7 @@ import {
 	WOOCOMMERCE_SERVICES_LABELS_INIT_FORM,
 	WOOCOMMERCE_SERVICES_LABELS_SET_FORM_DATA_VALUE,
 	WOOCOMMERCE_SERVICES_LABELS_SET_FORM_META_PROPERTY,
+	WOOCOMMERCE_SERVICES_LABELS_RESTORE_PRISTINE,
 } from '../action-types';
 
 export const initialState = {
@@ -13,42 +15,76 @@ export const initialState = {
 		fieldsStatus: false,
 		isSaving: false,
 		isFetching: false,
+		isLoaded: false,
+		isFetchError: false,
 		pristine: true,
 	},
 	data: null,
+	pristineData: null,
 };
 
 const reducers = {};
 
-reducers[ WOOCOMMERCE_SERVICES_LABELS_INIT_FORM ] = ( state, { storeOptions, formData, formMeta } ) => {
-	return { ...state,
+reducers[ WOOCOMMERCE_SERVICES_LABELS_INIT_FORM ] = (
+	state,
+	{ storeOptions, formData, formMeta }
+) => {
+	return {
+		...state,
 		storeOptions,
-		meta: { ...state.meta,
+		meta: {
+			...state.meta,
 			...formMeta,
 			pristine: true,
+			isLoaded: true,
 		},
-		data: { ...state.data,
+		data: {
+			...state.data,
 			...formData,
 		},
 	};
 };
 
 reducers[ WOOCOMMERCE_SERVICES_LABELS_SET_FORM_DATA_VALUE ] = ( state, { key, value } ) => {
-	return { ...state,
-		meta: { ...state.meta,
+	const pristineData = state.meta.pristine ? state.data : state.pristineData;
+
+	return {
+		...state,
+		meta: {
+			...state.meta,
 			pristine: false,
 		},
-		data: { ...state.data,
+		data: {
+			...state.data,
+			[ key ]: value,
+		},
+		pristineData,
+	};
+};
+
+reducers[ WOOCOMMERCE_SERVICES_LABELS_SET_FORM_META_PROPERTY ] = ( state, { key, value } ) => {
+	return {
+		...state,
+		meta: {
+			...state.meta,
 			[ key ]: value,
 		},
 	};
 };
 
-reducers[ WOOCOMMERCE_SERVICES_LABELS_SET_FORM_META_PROPERTY ] = ( state, { key, value } ) => {
-	return { ...state,
-		meta: { ...state.meta,
-			[ key ]: value,
+reducers[ WOOCOMMERCE_SERVICES_LABELS_RESTORE_PRISTINE ] = state => {
+	if ( state.meta.pristine ) {
+		return state;
+	}
+
+	return {
+		...state,
+		meta: {
+			...state.meta,
+			pristine: true,
 		},
+		data: state.pristineData,
+		pristineData: null,
 	};
 };
 

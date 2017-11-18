@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { JETPACK_CONNECT_TTL } from './constants';
 
 /***
@@ -14,5 +17,5 @@ export function isStale( timestamp, expiration = JETPACK_CONNECT_TTL ) {
 	if ( ! timestamp ) {
 		return false;
 	}
-	return ( now - timestamp ) >= expiration;
+	return now - timestamp >= expiration;
 }

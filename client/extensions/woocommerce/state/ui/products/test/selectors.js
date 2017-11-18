@@ -1,3 +1,5 @@
+/** @format */
+
 /**
  * External dependencies
  */
@@ -11,12 +13,10 @@ import {
 	getProductEdits,
 	getProductWithLocalEdits,
 	getCurrentlyEditingProduct,
-	getProductListCurrentPage,
-	getProductListProducts,
-	getProductListRequestedPage,
-	getProductSearchCurrentPage,
-	getProductSearchResults,
-	getProductSearchRequestedPage,
+	getProductsCurrentPage,
+	getProductsCurrentSearch,
+	getProductsRequestedPage,
+	getProductsRequestedSearch,
 } from '../selectors';
 import products from 'woocommerce/state/sites/products/test/fixtures/products';
 
@@ -36,13 +36,13 @@ const loadedListState = {
 					123: {
 						list: {
 							currentPage: 2,
+							currentSearch: 'example',
 							requestedPage: 3,
-							productIds: [ 15, 389 ],
-						}
+							requestedSearch: 'test',
+						},
 					},
 					401: {
-						list: {
-						},
+						list: {},
 					},
 				},
 			},
@@ -50,55 +50,19 @@ const loadedListState = {
 				123: {
 					products: {
 						products,
-					}
+					},
 				},
 				401: {
 					products: {
 						products: {},
 					},
 				},
-			}
+			},
 		},
 	},
 };
 
 const loadedListStateWithUi = { ...loadedListState, ui: { selectedSiteId: 123 } };
-
-const loadedSearchState = {
-	extensions: {
-		woocommerce: {
-			ui: {
-				products: {
-					123: {
-						search: {
-							currentPage: 2,
-							requestedPage: 3,
-							productIds: [ 15, 389 ],
-						}
-					},
-					401: {
-						search: {
-						},
-					},
-				},
-			},
-			sites: {
-				123: {
-					products: {
-						products,
-					}
-				},
-				401: {
-					products: {
-						products: {},
-					},
-				},
-			}
-		},
-	},
-};
-
-const loadedSearchStateWithUi = { ...loadedSearchState, ui: { selectedSiteId: 123 } };
 
 describe( 'selectors', () => {
 	let state;
@@ -111,21 +75,16 @@ describe( 'selectors', () => {
 					sites: {
 						123: {
 							products: {
-								products: [
-									{ id: 1, type: 'simple', name: 'Product 1' },
-								]
+								products: [ { id: 1, type: 'simple', name: 'Product 1' } ],
 							},
 						},
 					},
 					ui: {
 						products: {
 							123: {
-								list: {
-								},
-								search: {
-								},
-							}
-						}
+								list: {},
+							},
+						},
 					},
 				},
 			},
@@ -133,7 +92,7 @@ describe( 'selectors', () => {
 	} );
 
 	describe( 'getProductEdits', () => {
-		it( 'should get a product from "creates"', () => {
+		test( 'should get a product from "creates"', () => {
 			const newProduct = { id: { placeholder: 'product_0' }, name: 'New Product' };
 			const uiProducts = state.extensions.woocommerce.ui.products;
 			set( uiProducts, [ siteId, 'edits', 'creates' ], [ newProduct ] );
@@ -141,7 +100,7 @@ describe( 'selectors', () => {
 			expect( getProductEdits( state, newProduct.id ) ).to.equal( newProduct );
 		} );
 
-		it( 'should get a product from "updates"', () => {
+		test( 'should get a product from "updates"', () => {
 			const updateProduct = { id: 1, name: 'Existing Product' };
 			const uiProducts = state.extensions.woocommerce.ui.products;
 			set( uiProducts, [ siteId, 'edits', 'updates' ], [ updateProduct ] );
@@ -149,14 +108,14 @@ describe( 'selectors', () => {
 			expect( getProductEdits( state, updateProduct.id ) ).to.equal( updateProduct );
 		} );
 
-		it( 'should return undefined if no edits are found for productId', () => {
+		test( 'should return undefined if no edits are found for productId', () => {
 			expect( getProductEdits( state, 1 ) ).to.not.exist;
 			expect( getProductEdits( state, { placeholder: 'product_9' } ) ).to.not.exist;
 		} );
 	} );
 
 	describe( 'getProductWithLocalEdits', () => {
-		it( 'should get just edits for a product in "creates"', () => {
+		test( 'should get just edits for a product in "creates"', () => {
 			const newProduct = { id: { placeholder: 'product_0' }, name: 'New Product' };
 			const uiProducts = state.extensions.woocommerce.ui.products;
 			set( uiProducts, [ siteId, 'edits', 'creates' ], [ newProduct ] );
@@ -164,12 +123,12 @@ describe( 'selectors', () => {
 			expect( getProductWithLocalEdits( state, newProduct.id ) ).to.eql( newProduct );
 		} );
 
-		it( 'should get just fetched data for a product that has no edits', () => {
+		test( 'should get just fetched data for a product that has no edits', () => {
 			const productsFromState = state.extensions.woocommerce.sites[ 123 ].products.products;
 			expect( getProductWithLocalEdits( state, 1, 123 ) ).to.eql( productsFromState[ 0 ] );
 		} );
 
-		it( 'should get both fetched data and edits for a product in "updates"', () => {
+		test( 'should get both fetched data and edits for a product in "updates"', () => {
 			const uiProducts = state.extensions.woocommerce.ui.products;
 			const productsFromState = state.extensions.woocommerce.sites[ 123 ].products.products;
 
@@ -180,18 +139,18 @@ describe( 'selectors', () => {
 			expect( getProductWithLocalEdits( state, 1 ) ).to.eql( combinedProduct );
 		} );
 
-		it( 'should return undefined if no product is found for productId', () => {
+		test( 'should return undefined if no product is found for productId', () => {
 			expect( getProductWithLocalEdits( state, 42 ) ).to.not.exist;
 			expect( getProductWithLocalEdits( state, { placeholder: 'product_42' } ) ).to.not.exist;
 		} );
 	} );
 
 	describe( 'getCurrentlyEditingProduct', () => {
-		it( 'should return undefined if there are no edits', () => {
+		test( 'should return undefined if there are no edits', () => {
 			expect( getCurrentlyEditingProduct( state ) ).to.not.exist;
 		} );
 
-		it( 'should get the last edited product', () => {
+		test( 'should get the last edited product', () => {
 			const newProduct = { id: { placeholder: 'product_0' }, name: 'New Product' };
 			const uiProducts = state.extensions.woocommerce.ui.products;
 			set( uiProducts, [ siteId, 'edits', 'creates' ], [ newProduct ] );
@@ -200,130 +159,92 @@ describe( 'selectors', () => {
 			expect( getCurrentlyEditingProduct( state ) ).to.eql( newProduct );
 		} );
 	} );
-	describe( '#getProductListCurrentPage', () => {
-		it( 'should be 1 (default) when woocommerce state is not available.', () => {
-			expect( getProductListCurrentPage( preInitializedListState, 123 ) ).to.eql( 1 );
+
+	describe( '#getProductsCurrentPage', () => {
+		test( 'should be 1 (default) when woocommerce state is not available.', () => {
+			expect( getProductsCurrentPage( preInitializedListState, 123 ) ).to.eql( 1 );
 		} );
 
-		it( 'should be 1 (default) when products are loading.', () => {
-			expect( getProductListCurrentPage( state, 123 ) ).to.eql( 1 );
+		test( 'should be 1 (default) when products are loading.', () => {
+			expect( getProductsCurrentPage( state, 123 ) ).to.eql( 1 );
 		} );
 
-		it( 'should be 2, the set page, if the products are loaded.', () => {
-			expect( getProductListCurrentPage( loadedListState, 123 ) ).to.eql( 2 );
+		test( 'should be 2, the set page, if the products are loaded.', () => {
+			expect( getProductsCurrentPage( loadedListState, 123 ) ).to.eql( 2 );
 		} );
 
-		it( 'should be 1 (default) when products are loaded only for a different site.', () => {
-			expect( getProductListCurrentPage( loadedListState, 456 ) ).to.eql( 1 );
+		test( 'should be 1 (default) when products are loaded only for a different site.', () => {
+			expect( getProductsCurrentPage( loadedListState, 456 ) ).to.eql( 1 );
 		} );
 
-		it( 'should get the siteId from the UI tree if not provided.', () => {
-			expect( getProductListCurrentPage( loadedListStateWithUi ) ).to.eql( 2 );
+		test( 'should get the siteId from the UI tree if not provided.', () => {
+			expect( getProductsCurrentPage( loadedListStateWithUi ) ).to.eql( 2 );
 		} );
 	} );
-	describe( '#getProductListRequestedPage', () => {
-		it( 'should be null (default) when woocommerce state is not available.', () => {
-			expect( getProductListRequestedPage( preInitializedListState, 123 ) ).to.be.null;
+
+	describe( '#getProductsCurrentSearch', () => {
+		test( 'should be 1 (default) when woocommerce state is not available.', () => {
+			expect( getProductsCurrentSearch( preInitializedListState, 123 ) ).to.eql( '' );
 		} );
 
-		it( 'should be null (default) when products are loading.', () => {
-			expect( getProductListRequestedPage( state, 123 ) ).to.be.null;
+		test( 'should be 1 (default) when products are loading.', () => {
+			expect( getProductsCurrentSearch( state, 123 ) ).to.eql( '' );
 		} );
 
-		it( 'should be 3, the set requested page, if the products are loaded.', () => {
-			expect( getProductListRequestedPage( loadedListState, 123 ) ).to.eql( 3 );
+		test( 'should be 2, the set page, if the products are loaded.', () => {
+			expect( getProductsCurrentSearch( loadedListState, 123 ) ).to.eql( 'example' );
 		} );
 
-		it( 'should be null (default) when products are loaded only for a different site.', () => {
-			expect( getProductListRequestedPage( loadedListState, 456 ) ).to.be.null;
+		test( 'should be 1 (default) when products are loaded only for a different site.', () => {
+			expect( getProductsCurrentSearch( loadedListState, 456 ) ).to.eql( '' );
 		} );
 
-		it( 'should get the siteId from the UI tree if not provided.', () => {
-			expect( getProductListRequestedPage( loadedListStateWithUi ) ).to.eql( 3 );
+		test( 'should get the siteId from the UI tree if not provided.', () => {
+			expect( getProductsCurrentSearch( loadedListStateWithUi ) ).to.eql( 'example' );
 		} );
 	} );
-	describe( '#getProductListProducts', () => {
-		it( 'should be false when woocommerce state is not available.', () => {
-			expect( getProductListProducts( preInitializedListState, 123 ) ).to.be.false;
+
+	describe( '#getProductsRequestedPage', () => {
+		test( 'should be null (default) when woocommerce state is not available.', () => {
+			expect( getProductsRequestedPage( preInitializedListState, 123 ) ).to.be.null;
 		} );
 
-		it( 'should be false when products are loading.', () => {
-			expect( getProductListProducts( state, 123 ) ).to.be.false;
+		test( 'should be null (default) when products are loading.', () => {
+			expect( getProductsRequestedPage( state, 123 ) ).to.be.null;
 		} );
 
-		it( 'should be the list of products if they are loaded.', () => {
-			expect( getProductListProducts( loadedListState, 123 ) ).to.eql( products );
+		test( 'should be 3, the set requested page, if the products are loaded.', () => {
+			expect( getProductsRequestedPage( loadedListState, 123 ) ).to.eql( 3 );
 		} );
 
-		it( 'should be false when products are loaded only for a different site.', () => {
-			expect( getProductListProducts( loadedListState, 456 ) ).to.be.false;
+		test( 'should be null (default) when products are loaded only for a different site.', () => {
+			expect( getProductsRequestedPage( loadedListState, 456 ) ).to.be.null;
 		} );
 
-		it( 'should get the siteId from the UI tree if not provided.', () => {
-			expect( getProductListProducts( loadedListStateWithUi ) ).to.eql( products );
+		test( 'should get the siteId from the UI tree if not provided.', () => {
+			expect( getProductsRequestedPage( loadedListStateWithUi ) ).to.eql( 3 );
 		} );
 	} );
-	describe( '#getProductSearchCurrentPage', () => {
-		it( 'should be 1 (default) when woocommerce state is not available.', () => {
-			expect( getProductSearchCurrentPage( preInitializedListState, 123 ) ).to.eql( 1 );
+
+	describe( '#getProductsRequestedSearch', () => {
+		test( 'should be null (default) when woocommerce state is not available.', () => {
+			expect( getProductsRequestedSearch( preInitializedListState, 123 ) ).to.be.null;
 		} );
 
-		it( 'should be 1 (default) when products are loading.', () => {
-			expect( getProductSearchCurrentPage( state, 123 ) ).to.eql( 1 );
+		test( 'should be null (default) when products are loading.', () => {
+			expect( getProductsRequestedSearch( state, 123 ) ).to.be.null;
 		} );
 
-		it( 'should be 2, the set page, if the products are loaded.', () => {
-			expect( getProductSearchCurrentPage( loadedSearchState, 123 ) ).to.eql( 2 );
+		test( 'should be 3, the set requested page, if the products are loaded.', () => {
+			expect( getProductsRequestedSearch( loadedListState, 123 ) ).to.eql( 'test' );
 		} );
 
-		it( 'should be 1 (default) when products are loaded only for a different site.', () => {
-			expect( getProductSearchCurrentPage( loadedSearchState, 456 ) ).to.eql( 1 );
+		test( 'should be null (default) when products are loaded only for a different site.', () => {
+			expect( getProductsRequestedSearch( loadedListState, 456 ) ).to.be.null;
 		} );
 
-		it( 'should get the siteId from the UI tree if not provided.', () => {
-			expect( getProductSearchCurrentPage( loadedSearchStateWithUi ) ).to.eql( 2 );
-		} );
-	} );
-	describe( '#getProductSearchRequestedPage', () => {
-		it( 'should be null (default) when woocommerce state is not available.', () => {
-			expect( getProductSearchRequestedPage( preInitializedListState, 123 ) ).to.be.null;
-		} );
-
-		it( 'should be null (default) when products are loading.', () => {
-			expect( getProductSearchRequestedPage( state, 123 ) ).to.be.null;
-		} );
-
-		it( 'should be 3, the set requested page, if the products are loaded.', () => {
-			expect( getProductSearchRequestedPage( loadedSearchState, 123 ) ).to.eql( 3 );
-		} );
-
-		it( 'should be null (default) when products are loaded only for a different site.', () => {
-			expect( getProductSearchRequestedPage( loadedSearchState, 456 ) ).to.be.null;
-		} );
-
-		it( 'should get the siteId from the UI tree if not provided.', () => {
-			expect( getProductSearchRequestedPage( loadedSearchStateWithUi ) ).to.eql( 3 );
-		} );
-	} );
-	describe( '#getProductSearchResults', () => {
-		it( 'should be false when woocommerce state is not available.', () => {
-			expect( getProductSearchResults( preInitializedListState, 123 ) ).to.be.false;
-		} );
-
-		it( 'should be false when products are loading.', () => {
-			expect( getProductSearchResults( state, 123 ) ).to.be.false;
-		} );
-
-		it( 'should be the list of products if they are loaded.', () => {
-			expect( getProductSearchResults( loadedSearchState, 123 ) ).to.eql( products );
-		} );
-
-		it( 'should be false when products are loaded only for a different site.', () => {
-			expect( getProductSearchResults( loadedSearchState, 456 ) ).to.be.false;
-		} );
-
-		it( 'should get the siteId from the UI tree if not provided.', () => {
-			expect( getProductSearchResults( loadedSearchStateWithUi ) ).to.eql( products );
+		test( 'should get the siteId from the UI tree if not provided.', () => {
+			expect( getProductsRequestedSearch( loadedListStateWithUi ) ).to.eql( 'test' );
 		} );
 	} );
 } );

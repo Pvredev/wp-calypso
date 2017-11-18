@@ -1,21 +1,20 @@
+/** @format */
+
 /**
  * External dependencies
  */
-const React = require( 'react' );
 
-const Property = React.createClass( {
+import React from 'react';
+
+class Property extends React.Component {
 	render() {
 		return (
 			<div className="domain-details-card__property">
-				<strong>
-					{ this.props.label }:
-				</strong>
-				<span>
-					{ this.props.children }
-				</span>
+				<strong>{ this.props.label }:</strong>
+				<span>{ this.props.children }</span>
 			</div>
 		);
 	}
-} );
+}
 
-module.exports = Property;
+export default Property;

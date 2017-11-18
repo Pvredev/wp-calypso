@@ -1,25 +1,35 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React from 'react';
 import classNames from 'classnames';
 import SidebarRegion from './region';
 
-export default React.createClass( {
-	displayName: 'Sidebar',
+export default class extends React.Component {
+	static displayName = 'Sidebar';
 
-	propTypes: {
-		className: React.PropTypes.string,
-		onClick: React.PropTypes.func
-	},
+	static propTypes = {
+		className: PropTypes.string,
+		onClick: PropTypes.func,
+	};
 
-	render: function() {
-		const hasRegions = React.Children.toArray( this.props.children ).some( el => el.type === SidebarRegion );
+	render() {
+		const hasRegions = React.Children
+			.toArray( this.props.children )
+			.some( el => el.type === SidebarRegion );
 
 		return (
-			<ul className={ classNames( 'sidebar', this.props.className, { 'has-regions': hasRegions } ) } onClick={ this.props.onClick } data-tip-target="sidebar">
+			<ul
+				className={ classNames( 'sidebar', this.props.className, { 'has-regions': hasRegions } ) }
+				onClick={ this.props.onClick }
+				data-tip-target="sidebar"
+			>
 				{ this.props.children }
 			</ul>
 		);
 	}
-} );
+}

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { translate } from 'i18n-calypso';
@@ -13,7 +16,6 @@ import contextTypes from '../context-types';
 
 export default class Quit extends Component {
 	static propTypes = {
-		children: PropTypes.node,
 		primary: PropTypes.bool,
 		subtle: PropTypes.bool,
 	};
@@ -24,11 +26,11 @@ export default class Quit extends Component {
 		super( props, context );
 	}
 
-	onClick = ( event ) => {
+	onClick = event => {
 		this.props.onClick && this.props.onClick( event );
 		const { quit, tour, tourVersion, step, isLastStep } = this.context;
 		quit( { tour, tourVersion, step, isLastStep } );
-	}
+	};
 
 	render() {
 		const { children, primary, subtle } = this.props;

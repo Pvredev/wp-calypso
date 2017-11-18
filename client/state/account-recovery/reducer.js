@@ -1,10 +1,12 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import reset from './reset/reducer';
 import { combineReducers, createReducer } from 'state/utils';
 import settings from './settings/reducer';
-
 import {
 	ACCOUNT_RECOVERY_SETTINGS_FETCH,
 	ACCOUNT_RECOVERY_SETTINGS_FETCH_SUCCESS,

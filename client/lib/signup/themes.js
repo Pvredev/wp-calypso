@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { includes, sampleSize } from 'lodash';
 
 /**
@@ -21,7 +24,11 @@ export function getDefaultThemes() {
 }
 
 export default function getThemes( vertical, designType, quantity = 9 ) {
-	const filterByType = theme => theme.design === designType;
+	const filterByType = theme => {
+		return Array.isArray( theme.design )
+			? includes( theme.design, designType )
+			: theme.design === designType;
+	};
 	const themePool = themes;
 	const themesByType = themePool.filter( filterByType );
 	let themeSet = themesByType;
@@ -33,7 +40,9 @@ export default function getThemes( vertical, designType, quantity = 9 ) {
 
 	// Make sure we meet the minimum number of themes by adding back in random design type matches.
 	if ( themeSet.length < quantity ) {
-		themeSet = themeSet.concat( getUnusedThemes( themeSet, themesByType, quantity - themeSet.length ) );
+		themeSet = themeSet.concat(
+			getUnusedThemes( themeSet, themesByType, quantity - themeSet.length )
+		);
 	}
 
 	return sampleSize( themeSet, quantity );

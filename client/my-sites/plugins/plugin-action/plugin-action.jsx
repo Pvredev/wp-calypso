@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 import classNames from 'classnames';
 
@@ -10,16 +13,16 @@ import classNames from 'classnames';
 import CompactToggle from 'components/forms/form-toggle/compact';
 import InfoPopover from 'components/info-popover';
 
-const PluginAction = React.createClass( {
-	handleAction( event ) {
+class PluginAction extends React.Component {
+	handleAction = event => {
 		if ( ! this.props.disabledInfo ) {
 			this.props.action();
 		} else {
 			this.refs.infoPopover._onClick( event );
 		}
-	},
+	};
 
-	renderLabel() {
+	renderLabel = () => {
 		if ( this.props.label ) {
 			return (
 				<label
@@ -28,15 +31,15 @@ const PluginAction = React.createClass( {
 					onClick={ this.handleAction }
 					htmlFor={ this.props.htmlFor }
 					key="renderDisabledInfoLabel"
-					>
+				>
 					{ this.props.label }
 				</label>
 			);
 		}
 		return null;
-	},
+	};
 
-	renderDisabledInfo() {
+	renderDisabledInfo = () => {
 		return [
 			<InfoPopover
 				key="renderDisabledInfoPopOver"
@@ -46,14 +49,14 @@ const PluginAction = React.createClass( {
 				gaEventCategory="Plugins"
 				ref="infoPopover"
 				ignoreContext={ this.refs && this.refs.disabledInfoLabel }
-				>
+			>
 				{ this.props.disabledInfo }
 			</InfoPopover>,
-			this.renderLabel()
+			this.renderLabel(),
 		];
-	},
+	};
 
-	renderToggle() {
+	renderToggle = () => {
 		return (
 			<CompactToggle
 				onChange={ this.props.action }
@@ -65,18 +68,18 @@ const PluginAction = React.createClass( {
 				{ this.renderLabel() }
 			</CompactToggle>
 		);
-	},
+	};
 
-	renderChildren() {
+	renderChildren = () => {
 		return (
 			<div>
 				<span className="plugin-action__children">{ this.props.children }</span>
 				{ this.renderLabel() }
 			</div>
 		);
-	},
+	};
 
-	renderInner() {
+	renderInner = () => {
 		if ( this.props.disabledInfo ) {
 			return this.renderDisabledInfo();
 		}
@@ -86,12 +89,12 @@ const PluginAction = React.createClass( {
 		}
 
 		return this.renderToggle();
-	},
+	};
 
 	render() {
 		const additionalClasses = {
 			'is-disabled': this.props.disabled,
-			'has-disabled-info': !! this.props.disabledInfo
+			'has-disabled-info': !! this.props.disabledInfo,
 		};
 
 		return (
@@ -100,6 +103,6 @@ const PluginAction = React.createClass( {
 			</div>
 		);
 	}
-} );
+}
 
 export default PluginAction;

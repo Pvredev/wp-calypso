@@ -44,10 +44,15 @@
 	}
 
 	&:visited {
-		color: $gray;
+		color: darken( $gray, 20% );
 	}
 
 	&:hover {
 		color: $blue-medium;
+	}
+
+	.gridicon {
+		position: relative;
+		top: 3px;
 	}
 }

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import ReactDom from 'react-dom';
 import React from 'react';
 import classNames from 'classnames';
@@ -15,19 +18,16 @@ import FormInputValidation from 'components/forms/form-input-validation';
 import analytics from 'lib/analytics';
 import scrollIntoViewport from 'lib/scroll-into-viewport';
 
-export default React.createClass( {
-	displayName: 'Input',
-
-	getDefaultProps() {
-		return { autoFocus: false, autoComplete: 'on' };
-	},
+export default class extends React.Component {
+	static displayName = 'Input';
+	static defaultProps = { autoFocus: false, autoComplete: 'on' };
 
 	componentDidMount() {
 		this.setupInputModeHandlers();
 		this.autoFocusInput();
-	},
+	}
 
-	setupInputModeHandlers() {
+	setupInputModeHandlers = () => {
 		const inputElement = ReactDom.findDOMNode( this.refs.input );
 
 		if ( this.props.inputMode === 'numeric' ) {
@@ -37,12 +37,13 @@ export default React.createClass( {
 			//
 			// This workaround is based on the following StackOverflow post:
 			// http://stackoverflow.com/a/19998430/821706
-			inputElement.addEventListener( 'touchstart', () => inputElement.pattern = '\\d*' );
+			inputElement.addEventListener( 'touchstart', () => ( inputElement.pattern = '\\d*' ) );
 
-			[ 'keydown', 'blur' ].forEach( ( eventName ) =>
-				inputElement.addEventListener( eventName, () => inputElement.pattern = '.*' ) );
+			[ 'keydown', 'blur' ].forEach( eventName =>
+				inputElement.addEventListener( eventName, () => ( inputElement.pattern = '.*' ) )
+			);
 		}
-	},
+	};
 
 	componentDidUpdate( oldProps ) {
 		if ( oldProps.disabled && ! this.props.disabled ) {
@@ -50,28 +51,37 @@ export default React.createClass( {
 			// until we receive data from the server.
 			this.autoFocusInput();
 		}
-	},
+	}
 
-	focus() {
+	focus = () => {
 		const node = ReactDom.findDOMNode( this.refs.input );
 		node.focus();
 		scrollIntoViewport( node );
-	},
+	};
 
-	autoFocusInput() {
+	autoFocusInput = () => {
 		if ( this.props.autoFocus ) {
 			this.focus();
 		}
-	},
+	};
 
-	recordFieldClick() {
+	recordFieldClick = () => {
 		if ( this.props.eventFormName ) {
-			analytics.ga.recordEvent( 'Upgrades', `Clicked ${ this.props.eventFormName } Field`, this.props.name );
+			analytics.ga.recordEvent(
+				'Upgrades',
+				`Clicked ${ this.props.eventFormName } Field`,
+				this.props.name
+			);
 		}
-	},
+	};
 
 	render() {
-		const classes = classNames( this.props.additionalClasses, this.props.name, this.props.labelClass, this.props.classes );
+		const classes = classNames(
+			this.props.additionalClasses,
+			this.props.name,
+			this.props.labelClass,
+			this.props.classes
+		);
 
 		return (
 			<div className={ classes }>
@@ -89,9 +99,12 @@ export default React.createClass( {
 					onChange={ this.props.onChange }
 					onClick={ this.recordFieldClick }
 					isError={ this.props.isError }
-					inputRef={ this.props.inputRef } />
-				{ this.props.errorMessage && <FormInputValidation text={ this.props.errorMessage } isError /> }
+					inputRef={ this.props.inputRef }
+				/>
+				{ this.props.errorMessage && (
+					<FormInputValidation text={ this.props.errorMessage } isError />
+				) }
 			</div>
 		);
 	}
-} );
+}

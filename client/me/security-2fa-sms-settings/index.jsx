@@ -1,9 +1,15 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
+import { localize } from 'i18n-calypso';
 import React from 'react';
-import LinkedStateMixin from 'react-addons-linked-state-mixin';
+import createReactClass from 'create-react-class';
 import debugFactory from 'debug';
+import { flowRight } from 'lodash';
 
 /**
  * Internal dependencies
@@ -22,8 +28,7 @@ import { forSms } from 'lib/countries-list';
 const debug = debugFactory( 'calypso:me:security:2fa-sms-settings' );
 const countriesList = forSms();
 
-module.exports = protectForm( React.createClass( {
-
+const Security2faSMSSettings = createReactClass( {
 	displayName: 'Security2faSMSSettings',
 
 	componentDidMount: function() {
@@ -35,33 +40,33 @@ module.exports = protectForm( React.createClass( {
 		debug( this.constructor.displayName + ' React component will unmount.' );
 	},
 
-	mixins: [ formBase, LinkedStateMixin, observe( 'userSettings' ) ],
+	mixins: [ formBase, observe( 'userSettings' ) ],
 
 	propTypes: {
-		onCancel: React.PropTypes.func.isRequired,
-		onVerifyByApp: React.PropTypes.func.isRequired,
-		onVerifyBySMS: React.PropTypes.func.isRequired,
-		markChanged: React.PropTypes.func.isRequired,
-		markSaved: React.PropTypes.func.isRequired
+		onCancel: PropTypes.func.isRequired,
+		onVerifyByApp: PropTypes.func.isRequired,
+		onVerifyBySMS: PropTypes.func.isRequired,
+		markChanged: PropTypes.func.isRequired,
+		markSaved: PropTypes.func.isRequired,
 	},
 
 	verifyByApp: null,
 
 	getInitialState: function() {
 		let phoneNumber = null;
-		let storedCountry = this.props.userSettings.getSetting( 'two_step_sms_country' );
-		let storedNumber = this.props.userSettings.getSetting( 'two_step_sms_phone_number' );
+		const storedCountry = this.props.userSettings.getSetting( 'two_step_sms_country' );
+		const storedNumber = this.props.userSettings.getSetting( 'two_step_sms_phone_number' );
 		if ( storedCountry && storedNumber ) {
 			phoneNumber = {
 				countryCode: storedCountry,
 				phoneNumber: storedNumber,
-				isValid: true
-			}
+				isValid: true,
+			};
 		}
 
 		return {
 			lastError: false,
-			phoneNumber
+			phoneNumber,
 		};
 	},
 
@@ -99,13 +104,11 @@ module.exports = protectForm( React.createClass( {
 	 * manage Notices ourselves
 	 */
 	submitSMSSettings: function() {
-		var phoneNumber;
-
 		if ( ! this.refs.phoneInput ) {
 			return;
 		}
 
-		phoneNumber = this.state.phoneNumber;
+		const phoneNumber = this.state.phoneNumber;
 
 		if ( ! phoneNumber.isValid ) {
 			this.setState( { lastError: phoneNumber.validation } );
@@ -125,8 +128,8 @@ module.exports = protectForm( React.createClass( {
 				phoneNumber: phoneNumber.phoneNumber,
 				countryCode: phoneNumber.countryData.code,
 				isValid: phoneNumber.isValid,
-				validation: phoneNumber.validation
-			}
+				validation: phoneNumber.validation,
+			},
 		} );
 	},
 
@@ -150,40 +153,37 @@ module.exports = protectForm( React.createClass( {
 	},
 
 	possiblyRenderError: function() {
-		var errorMessage;
+		let errorMessage;
 
 		if ( ! this.state.lastError ) {
 			return null;
 		}
 
 		if ( ! this.state.lastError.message ) {
-			errorMessage = this.translate( 'An unknown error occurred. Please try again later.' );
+			errorMessage = this.props.translate( 'An unknown error occurred. Please try again later.' );
 		} else {
 			errorMessage = this.state.lastError.message;
 		}
 
 		return (
-			<Notice
-				status="is-error"
-				onDismissClick={ this.clearLastError }
-				text={ errorMessage }
-			/>
+			<Notice status="is-error" onDismissClick={ this.clearLastError } text={ errorMessage } />
 		);
 	},
 
 	render: function() {
-		var savingLabel = this.translate( 'Saving…' );
+		const savingLabel = this.props.translate( 'Saving…' );
 
 		return (
 			<div className="security-2fa-sms-settings__container">
 				<form className="security-2fa-sms-settings">
-
 					<Security2faProgress step={ 1 } />
 					<p>
-						{ this.translate( 'First, we need your Mobile Phone number to ' +
-							'send you verification codes when you choose the SMS method or ' +
-							'in cases where the authenticator app on your phone is ' +
-							'unavailable.' ) }
+						{ this.props.translate(
+							'First, we need your Mobile Phone number to ' +
+								'send you verification codes when you choose the SMS method or ' +
+								'in cases where the authenticator app on your phone is ' +
+								'unavailable.'
+						) }
 					</p>
 					<div className="security-2fa-sms-settings__fieldset-container">
 						<FormPhoneInput
@@ -193,15 +193,17 @@ module.exports = protectForm( React.createClass( {
 							countrySelectProps={ {
 								onFocus: function() {
 									analytics.ga.recordEvent( 'Me', 'Focused On 2fa SMS Country Select' );
-								}
+								},
 							} }
-							phoneInputProps= { {
+							phoneInputProps={ {
 								onFocus: function() {
 									analytics.ga.recordEvent( 'Me', 'Focused On 2fa SMS Phone Number' );
-								}
+								},
 							} }
 							initialCountryCode={ this.props.userSettings.getSetting( 'two_step_sms_country' ) }
-							initialPhoneNumber={ this.props.userSettings.getSetting( 'two_step_sms_phone_number' ) }
+							initialPhoneNumber={ this.props.userSettings.getSetting(
+								'two_step_sms_phone_number'
+							) }
 							onChange={ this.onChangePhoneInput }
 						/>
 						{ this.possiblyRenderError() }
@@ -214,17 +216,17 @@ module.exports = protectForm( React.createClass( {
 								this.onVerifyByApp( event );
 							}.bind( this ) }
 						>
-							{ this.state.submittingForm ? savingLabel : this.translate( 'Verify via App' ) }
+							{ this.state.submittingForm ? savingLabel : this.props.translate( 'Verify via App' ) }
 						</FormButton>
 						<FormButton
 							disabled={ this.getSubmitDisabled() }
-							isPrimary= { false }
+							isPrimary={ false }
 							onClick={ function( event ) {
 								analytics.ga.recordEvent( 'Me', 'Clicked On 2fa Use SMS Button' );
 								this.onVerifyBySMS( event );
 							}.bind( this ) }
 						>
-							{ this.state.submittingForm ? savingLabel : this.translate( 'Verify via SMS' ) }
+							{ this.state.submittingForm ? savingLabel : this.props.translate( 'Verify via SMS' ) }
 						</FormButton>
 						<FormButton
 							className="security-2fa-sms-settings__cancel-button"
@@ -234,11 +236,13 @@ module.exports = protectForm( React.createClass( {
 								this.props.onCancel( event );
 							}.bind( this ) }
 						>
-							{ this.state.submittingForm ? savingLabel : this.translate( 'Cancel' ) }
+							{ this.state.submittingForm ? savingLabel : this.props.translate( 'Cancel' ) }
 						</FormButton>
 					</FormButtonsBar>
 				</form>
 			</div>
 		);
-	}
-} ) );
+	},
+} );
+
+export default flowRight( protectForm, localize )( Security2faSMSSettings );

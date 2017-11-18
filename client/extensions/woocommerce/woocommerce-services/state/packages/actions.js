@@ -1,3 +1,4 @@
+/** @format */
 /**
  * Internal dependencies
  */
@@ -17,12 +18,13 @@ import {
 	WOOCOMMERCE_SERVICES_PACKAGES_TOGGLE_ALL_PREDEFINED,
 	WOOCOMMERCE_SERVICES_PACKAGES_TOGGLE_PREDEFINED,
 	WOOCOMMERCE_SERVICES_PACKAGES_SET_ADD_MODE,
+	WOOCOMMERCE_SERVICES_PACKAGES_SET_IS_FETCH_ERROR,
 	WOOCOMMERCE_SERVICES_PACKAGES_SET_IS_FETCHING,
 	WOOCOMMERCE_SERVICES_PACKAGES_INIT_PACKAGES_FORM,
 } from '../action-types';
 import { getPackagesForm } from './selectors';
 
-export const addPackage = ( siteId ) => ( {
+export const addPackage = siteId => ( {
 	type: WOOCOMMERCE_SERVICES_PACKAGES_ADD_PACKAGE,
 	siteId,
 } );
@@ -35,11 +37,11 @@ export const removePackage = ( siteId, index ) => ( {
 
 export const editPackage = ( siteId, packageToEdit ) => ( {
 	type: WOOCOMMERCE_SERVICES_PACKAGES_EDIT_PACKAGE,
-	'package': packageToEdit,
+	package: packageToEdit,
 	siteId,
 } );
 
-export const dismissModal = ( siteId ) => ( {
+export const dismissModal = siteId => ( {
 	type: WOOCOMMERCE_SERVICES_PACKAGES_DISMISS_MODAL,
 	siteId,
 } );
@@ -56,7 +58,7 @@ export const updatePackagesField = ( siteId, newValues ) => ( {
 	siteId,
 } );
 
-export const toggleOuterDimensions = ( siteId ) => ( {
+export const toggleOuterDimensions = siteId => ( {
 	type: WOOCOMMERCE_SERVICES_PACKAGES_TOGGLE_OUTER_DIMENSIONS,
 	siteId,
 } );
@@ -76,7 +78,7 @@ export const togglePackage = ( siteId, serviceId, packageId ) => ( {
 	siteId,
 } );
 
-export const savePredefinedPackages = ( siteId ) => ( {
+export const savePredefinedPackages = siteId => ( {
 	type: WOOCOMMERCE_SERVICES_PACKAGES_SAVE_PREDEFINED,
 	siteId,
 } );
@@ -106,13 +108,19 @@ export const setIsFetching = ( siteId, isFetching ) => ( {
 	siteId,
 } );
 
+export const setIsFetchError = ( siteId, isFetchError ) => ( {
+	type: WOOCOMMERCE_SERVICES_PACKAGES_SET_IS_FETCH_ERROR,
+	isFetchError,
+	siteId,
+} );
+
 export const setAddMode = ( siteId, mode ) => ( {
 	type: WOOCOMMERCE_SERVICES_PACKAGES_SET_ADD_MODE,
 	siteId,
 	mode,
 } );
 
-export const fetchSettings = ( siteId ) => ( dispatch, getState ) => {
+export const fetchSettings = siteId => ( dispatch, getState ) => {
 	const form = getPackagesForm( getState(), siteId );
 
 	if ( form && ( form.packages || form.isFetching ) ) {
@@ -120,7 +128,8 @@ export const fetchSettings = ( siteId ) => ( dispatch, getState ) => {
 	}
 	dispatch( setIsFetching( siteId, true ) );
 
-	api.get( siteId, api.url.packages )
+	api
+		.get( siteId, api.url.packages )
 		.then( ( { formData, formSchema, storeOptions } ) => {
 			dispatch( {
 				type: WOOCOMMERCE_SERVICES_PACKAGES_INIT_PACKAGES_FORM,
@@ -132,9 +141,10 @@ export const fetchSettings = ( siteId ) => ( dispatch, getState ) => {
 				siteId,
 			} );
 		} )
-		.catch( ( error ) => {
+		.catch( error => {
 			//TODO: add better error handling
 			console.error( error ); // eslint-disable-line no-console
+			dispatch( setIsFetchError( siteId, true ) );
 		} )
 		.then( () => dispatch( setIsFetching( siteId, false ) ) );
 };
@@ -142,7 +152,8 @@ export const fetchSettings = ( siteId ) => ( dispatch, getState ) => {
 export const submit = ( siteId, onSaveSuccess, onSaveFailure ) => ( dispatch, getState ) => {
 	const form = getPackagesForm( getState(), siteId );
 	dispatch( setIsSaving( siteId, true ) );
-	api.post( siteId, api.url.packages, form.packages )
+	api
+		.post( siteId, api.url.packages, form.packages )
 		.then( onSaveSuccess )
 		.catch( onSaveFailure )
 		.then( () => dispatch( setIsSaving( siteId, false ) ) );

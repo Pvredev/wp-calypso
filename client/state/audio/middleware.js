@@ -1,9 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
-import {
-	HAPPYCHAT_RECEIVE_EVENT,
-} from 'state/action-types';
+import { HAPPYCHAT_IO_RECEIVE_MESSAGE } from 'state/action-types';
 
 const isAudioSupported = () => typeof window === 'object' && typeof window.Audio === 'function';
 
@@ -16,10 +16,10 @@ export const playSound = src => {
 	audioClip.play();
 };
 
-export const playSoundForMessageToCustomer = ( dispatch, { event } ) => {
+export const playSoundForMessageToCustomer = ( dispatch, { message } ) => {
 	// If the customer sent the message, there's no
 	// need to play a sound to the customer.
-	if ( event && event.source === 'customer' ) {
+	if ( message && message.source === 'customer' ) {
 		return;
 	}
 
@@ -32,13 +32,13 @@ export const playSoundForMessageToCustomer = ( dispatch, { event } ) => {
 
 // Initialized this way for performance reasons
 export const handlers = Object.create( null );
-handlers[ HAPPYCHAT_RECEIVE_EVENT ] = playSoundForMessageToCustomer;
+handlers[ HAPPYCHAT_IO_RECEIVE_MESSAGE ] = playSoundForMessageToCustomer;
 
 /**
  * Middleware
  */
 
-export default ( { dispatch } ) => ( next ) => {
+export default ( { dispatch } ) => next => {
 	if ( ! isAudioSupported() ) {
 		return next;
 	}

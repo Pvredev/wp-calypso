@@ -1,7 +1,12 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import { localize } from 'i18n-calypso';
+import React from 'react';
 
 /**
  * Internal dependencies
@@ -10,37 +15,41 @@ import Card from 'components/card';
 import SectionHeader from 'components/section-header';
 import Button from 'components/button';
 
-export default React.createClass( {
-	propTypes: {
+class HostSelect extends React.Component {
+	static displayName = 'HostSelect';
+
+	static propTypes = {
 		hosts: PropTypes.arrayOf(
 			PropTypes.shape( {
 				showHost: PropTypes.func.isRequired,
 				label: PropTypes.string.isRequired,
-				logo: PropTypes.string.isRequired
+				logo: PropTypes.string.isRequired,
 			} )
-		).isRequired
-	},
+		).isRequired,
+	};
 
 	render() {
 		const { hosts } = this.props;
 
 		return (
 			<div>
-				<SectionHeader label={ this.translate( 'Set up Guided Transfer' ) } />
+				<SectionHeader label={ this.props.translate( 'Set up Guided Transfer' ) } />
 				<Card>
-					<p>{ this.translate(
-'{{strong}}Please choose{{/strong}} one of our Guided Transfer compatible ' +
-'{{partner_link}}partner hosts{{/partner_link}}. Visit the {{lobby_link}}Guided ' +
-'Transfer Lobby{{/lobby_link}} if you have any questions before starting, or ' +
-'{{learn_link}}learn more{{/learn_link}} about the process.',
-						{
-							components: {
-								strong: <strong />,
-								partner_link: <a href="https://get.wp.com/gt-hosting/" />,
-								lobby_link: <a href="https://guidedtransfer.wordpress.com/" />,
-								learn_link: <a href="https://en.support.wordpress.com/guided-transfer/" />,
+					<p>
+						{ this.props.translate(
+							'{{strong}}Please choose{{/strong}} one of our Guided Transfer compatible ' +
+								'{{partner_link}}partner hosts{{/partner_link}}. Visit the {{lobby_link}}Guided ' +
+								'Transfer Lobby{{/lobby_link}} if you have any questions before starting, or ' +
+								'{{learn_link}}learn more{{/learn_link}} about the process.',
+							{
+								components: {
+									strong: <strong />,
+									partner_link: <a href="https://get.wp.com/gt-hosting/" />,
+									lobby_link: <a href="https://guidedtransfer.wordpress.com/" />,
+									learn_link: <a href="https://en.support.wordpress.com/guided-transfer/" />,
+								},
 							}
-						} ) }
+						) }
 					</p>
 					<div>
 						{ hosts.map( ( host, index ) => {
@@ -50,7 +59,8 @@ export default React.createClass( {
 									className="guided-transfer__host-button"
 									onClick={ showHost }
 									key={ index }
-									aria-label={ label } >
+									aria-label={ label }
+								>
 									<img className="guided-transfer__host-button-image" src={ logo } />
 								</Button>
 							);
@@ -60,4 +70,6 @@ export default React.createClass( {
 			</div>
 		);
 	}
-} );
+}
+
+export default localize( HostSelect );

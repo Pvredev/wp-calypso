@@ -1,30 +1,46 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { rewindStatusSchema } from './schema';
 import {
 	REWIND_ACTIVATE_SUCCESS,
 	REWIND_STATUS_ERROR,
 	REWIND_STATUS_UPDATE,
 } from 'state/action-types';
-import {
-	createReducer,
-	keyedReducer,
-} from 'state/utils';
+import { keyedReducer } from 'state/utils';
 
-const stubNull = () => null;
+export const rewindStatusItem = ( state = undefined, { type, status } ) => {
+	switch ( type ) {
+		case REWIND_STATUS_ERROR:
+			return undefined;
 
-export const rewindStatus = keyedReducer( 'siteId', createReducer( {}, {
-	[ REWIND_STATUS_ERROR ]: stubNull,
-	[ REWIND_STATUS_UPDATE ]: ( state, { status } ) => status,
-	[ REWIND_ACTIVATE_SUCCESS ]: ( state ) => ( {
-		...state,
-		active: true,
-	} ),
-} ) );
+		case REWIND_STATUS_UPDATE:
+			return status;
+
+		case REWIND_ACTIVATE_SUCCESS:
+			return { ...state, active: true };
+
+		default:
+			return state;
+	}
+};
+export const rewindStatus = keyedReducer( 'siteId', rewindStatusItem );
 rewindStatus.schema = rewindStatusSchema;
 
-export const rewindStatusError = keyedReducer( 'siteId', createReducer( {}, {
-	[ REWIND_STATUS_ERROR ]: ( state, { error } ) => error,
-	[ REWIND_STATUS_UPDATE ]: stubNull,
-} ) );
+export const rewindStatusErrorItem = ( state = undefined, { type, error } ) => {
+	switch ( type ) {
+		case REWIND_STATUS_ERROR:
+			return error;
+
+		case REWIND_STATUS_UPDATE:
+			return undefined;
+
+		default:
+			return state;
+	}
+};
+
+export const rewindStatusError = keyedReducer( 'siteId', rewindStatusErrorItem );

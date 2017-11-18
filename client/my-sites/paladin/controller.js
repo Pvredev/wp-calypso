@@ -1,6 +1,9 @@
+/** @format */
+
 /**
- * External Dependencies
+ * External dependencies
  */
+
 import React from 'react';
 
 /**
@@ -9,13 +12,12 @@ import React from 'react';
 import { renderWithReduxStore } from 'lib/react-helpers';
 import PaladinComponent from './main';
 
-module.exports = {
+export default {
 	activate: function( context ) {
 		renderWithReduxStore(
 			React.createElement( PaladinComponent ),
 			document.getElementById( 'primary' ),
 			context.store
 		);
-	}
+	},
 };
-

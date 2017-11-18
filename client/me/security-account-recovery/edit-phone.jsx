@@ -1,6 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
+import { localize } from 'i18n-calypso';
 import React from 'react';
 import { isEmpty } from 'lodash';
 
@@ -17,37 +22,30 @@ import Buttons from './buttons';
  */
 var countriesList = require( 'lib/countries-list' ).forSms();
 
-module.exports = React.createClass( {
-	displayName: 'SecurityAccountRecoveryRecoveryPhoneEdit',
+class SecurityAccountRecoveryRecoveryPhoneEdit extends React.Component {
+	static displayName = 'SecurityAccountRecoveryRecoveryPhoneEdit';
 
-	propTypes: {
-		storedPhone: React.PropTypes.shape( {
-			countryCode: React.PropTypes.string,
-			countryNumericCode: React.PropTypes.string,
-			number: React.PropTypes.string,
-			numberFull: React.PropTypes.string
+	static propTypes = {
+		storedPhone: PropTypes.shape( {
+			countryCode: PropTypes.string,
+			countryNumericCode: PropTypes.string,
+			number: PropTypes.string,
+			numberFull: PropTypes.string,
 		} ),
-		onSave: React.PropTypes.func,
-		onCancel: React.PropTypes.func,
-		onDelete: React.PropTypes.func
-	},
+		onSave: PropTypes.func,
+		onCancel: PropTypes.func,
+		onDelete: PropTypes.func,
+	};
 
-	getInitialState: function() {
-		return {
-			isInvalid: false
-		};
-	},
+	state = {
+		isInvalid: false,
+	};
 
-	render: function() {
+	render() {
 		var validation = null,
 			havePhone = ! isEmpty( this.props.storedPhone );
 		if ( this.state.validation ) {
-			validation = (
-				<FormInputValidation
-					isError
-					text={ this.state.validation }
-					/>
-			);
+			validation = <FormInputValidation isError text={ this.state.validation } />;
 		}
 
 		return (
@@ -58,26 +56,26 @@ module.exports = React.createClass( {
 						initialCountryCode={ havePhone ? this.props.storedPhone.countryCode : null }
 						initialPhoneNumber={ havePhone ? this.props.storedPhone.number : null }
 						phoneInputProps={ {
-							onKeyUp: this.onKeyUp
+							onKeyUp: this.onKeyUp,
 						} }
 						onChange={ this.onChange }
-						/>
+					/>
 					{ validation }
 				</FormFieldset>
 
 				<Buttons
 					isSavable={ this.isSavable() }
 					isDeletable={ havePhone }
-					saveText={ this.translate( 'Save Number' ) }
+					saveText={ this.props.translate( 'Save Number' ) }
 					onSave={ this.onSave }
 					onDelete={ this.onDelete }
 					onCancel={ this.onCancel }
-					/>
+				/>
 			</div>
 		);
-	},
+	}
 
-	isSavable: function() {
+	isSavable = () => {
 		if ( ! this.state.phoneNumber ) {
 			return false;
 		}
@@ -86,30 +84,34 @@ module.exports = React.createClass( {
 			return false;
 		}
 
-		if ( this.props.storedPhone &&
-				this.props.storedPhone.countryCode === this.state.phoneNumber.countryData.code &&
-				this.props.storedPhone.number === this.state.phoneNumber.phoneNumber ) {
+		if (
+			this.props.storedPhone &&
+			this.props.storedPhone.countryCode === this.state.phoneNumber.countryData.code &&
+			this.props.storedPhone.number === this.state.phoneNumber.phoneNumber
+		) {
 			return false;
 		}
 
 		return true;
-	},
+	};
 
-	onChange: function( phoneNumber ) {
+	onChange = phoneNumber => {
 		this.setState( { phoneNumber } );
-	},
+	};
 
-	onKeyUp: function( event ) {
+	onKeyUp = event => {
 		if ( event.key === 'Enter' ) {
 			this.onSave();
 		}
-	},
+	};
 
-	onSave: function() {
+	onSave = () => {
 		var phoneNumber = this.state.phoneNumber;
 
 		if ( ! phoneNumber.isValid ) {
-			this.setState( { validation: this.translate( 'Please enter a valid phone number.' ) } );
+			this.setState( {
+				validation: this.props.translate( 'Please enter a valid phone number.' ),
+			} );
 			return;
 		}
 
@@ -118,15 +120,17 @@ module.exports = React.createClass( {
 			countryCode: phoneNumber.countryData.code,
 			countryNumericCode: phoneNumber.countryData.numericCode,
 			number: phoneNumber.phoneNumber,
-			numberFull: phoneNumber.phoneNumberFull
+			numberFull: phoneNumber.phoneNumberFull,
 		} );
-	},
+	};
 
-	onCancel: function() {
+	onCancel = () => {
 		this.props.onCancel();
-	},
+	};
 
-	onDelete: function() {
+	onDelete = () => {
 		this.props.onDelete();
-	}
-} );
+	};
+}
+
+export default localize( SecurityAccountRecoveryRecoveryPhoneEdit );

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 
 // eslint-disable-next-line wpcalypso/jsx-classname-namespace

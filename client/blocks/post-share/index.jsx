@@ -1,13 +1,18 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { Component, PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { get, includes, map, concat } from 'lodash';
 import { localize } from 'i18n-calypso';
 import { isEnabled } from 'config';
 import Gridicon from 'gridicons';
+import { current as currentPage } from 'page';
 
 /**
  * Internal dependencies
@@ -15,24 +20,18 @@ import Gridicon from 'gridicons';
 import QueryPostTypes from 'components/data/query-post-types';
 import QueryPosts from 'components/data/query-posts';
 import QueryPublicizeConnections from 'components/data/query-publicize-connections';
+import QuerySitePlans from 'components/data/query-site-plans';
 import Button from 'components/button';
 import ButtonGroup from 'components/button-group';
 import NoticeAction from 'components/notice/notice-action';
-import {
-	getPostShareScheduledActions,
-	getPostSharePublishedActions,
-} from 'state/selectors';
+import { getPostShareScheduledActions, getPostSharePublishedActions } from 'state/selectors';
 import {
 	isPublicizeEnabled,
 	isSchedulingPublicizeShareAction,
 	getScheduledPublicizeShareActionTime,
 	isSchedulingPublicizeShareActionError,
 } from 'state/selectors';
-import {
-	getSiteSlug,
-	getSitePlanSlug,
-	isJetpackSite,
-} from 'state/sites/selectors';
+import { getSiteSlug, getSitePlanSlug, isJetpackSite } from 'state/sites/selectors';
 import { getCurrentUserId, getCurrentUserCurrencyCode } from 'state/current-user/selectors';
 import {
 	getSiteUserConnections,
@@ -45,33 +44,32 @@ import {
 	dismissShareConfirmation,
 } from 'state/sharing/publicize/actions';
 import { schedulePostShareAction } from 'state/sharing/publicize/publicize-actions/actions';
-import { isRequestingSharePost, sharePostFailure, sharePostSuccessMessage } from 'state/sharing/publicize/selectors';
+import {
+	isRequestingSharePost,
+	sharePostFailure,
+	sharePostSuccessMessage,
+} from 'state/sharing/publicize/selectors';
 import PostMetadata from 'lib/post-metadata';
 import PublicizeMessage from 'post-editor/editor-sharing/publicize-message';
 import Notice from 'components/notice';
 import {
 	hasFeature,
+	isRequestingSitePlans as siteIsRequestingPlans,
 	getSitePlanRawPrice,
 	getPlanDiscountedRawPrice,
 } from 'state/sites/plans/selectors';
-import {
-	FEATURE_REPUBLICIZE,
-	PLAN_PREMIUM,
-	PLAN_JETPACK_PREMIUM
-} from 'lib/plans/constants';
+import { FEATURE_REPUBLICIZE, PLAN_PREMIUM, PLAN_JETPACK_PREMIUM } from 'lib/plans/constants';
 import { UpgradeToPremiumNudge } from 'blocks/post-share/nudges';
-
 import SharingPreviewModal from './sharing-preview-modal';
 import ConnectionsList, { NoConnectionsNotice } from './connections-list';
-
 import ActionsList from './publicize-actions-list';
 import CalendarButton from 'blocks/calendar-button';
 import EventsTooltip from 'components/date-picker/events-tooltip';
-
 import SectionHeader from 'components/section-header';
 import Tooltip from 'components/tooltip';
 import analytics from 'lib/analytics';
 import TrackComponentView from 'lib/analytics/track-component-view';
+import { sectionify } from 'lib/route/path';
 
 class PostShare extends Component {
 	static propTypes = {
@@ -104,7 +102,7 @@ class PostShare extends Component {
 	};
 
 	state = {
-		message: PostMetadata.publicizeMessage( this.props.post ) || this.props.post.title,
+		message: PostMetadata.publicizeMessage( this.props.post ) || '',
 		skipped: PostMetadata.publicizeSkipped( this.props.post ) || [],
 		showSharingPreview: false,
 		showAccountTooltip: false,
@@ -141,7 +139,8 @@ class PostShare extends Component {
 		return this.state.skipped.indexOf( keyring_connection_ID ) === -1;
 	}
 
-	isConnectionActive = connection => connection.status !== 'broken' && this.skipConnection( connection );
+	isConnectionActive = connection =>
+		connection.status !== 'broken' && this.skipConnection( connection );
 
 	activeConnections() {
 		return this.props.connections.filter( this.isConnectionActive );
@@ -156,9 +155,11 @@ class PostShare extends Component {
 			document.documentElement.classList.remove( 'no-scroll', 'is-previewing' );
 		}
 
-		analytics.tracks.recordEvent( 'calypso_publicize_share_preview_toggle', { show: showSharingPreview } );
+		analytics.tracks.recordEvent( 'calypso_publicize_share_preview_toggle', {
+			show: showSharingPreview,
+		} );
 		this.setState( { showSharingPreview } );
-	}
+	};
 
 	setMessage = message => this.setState( { message } );
 
@@ -167,69 +168,68 @@ class PostShare extends Component {
 	};
 
 	sharePost = () => {
-		const {
-			postId,
-			siteId,
-			connections,
-		} = this.props;
-		const servicesToPublish = connections
-			.filter( connection => this.state.skipped.indexOf( connection.keyring_connection_ID ) === -1 );
+		const { postId, siteId, connections } = this.props;
+		const servicesToPublish = connections.filter(
+			connection => this.state.skipped.indexOf( connection.keyring_connection_ID ) === -1
+		);
 		//Let's prepare array of service stats for tracks.
-		const numberOfAccountsPerService = servicesToPublish.reduce( ( counts, service ) => {
-			counts.service_all = counts.service_all + 1;
-			if ( ! counts[ 'service_' + service.service ] ) {
-				counts[ 'service_' + service.service ] = 0;
-			}
-			counts[ 'service_' + service.service ] = counts[ 'service_' + service.service ] + 1;
-			return counts;
-		}, { service_all: 0 } );
+		const numberOfAccountsPerService = servicesToPublish.reduce(
+			( counts, service ) => {
+				counts.service_all = counts.service_all + 1;
+				if ( ! counts[ 'service_' + service.service ] ) {
+					counts[ 'service_' + service.service ] = 0;
+				}
+				counts[ 'service_' + service.service ] = counts[ 'service_' + service.service ] + 1;
+				return counts;
+			},
+			{ service_all: 0 }
+		);
+		const additionalProperties = { context_path: sectionify( currentPage ) };
+		const eventProperties = { ...numberOfAccountsPerService, ...additionalProperties };
 
 		if ( this.state.scheduledDate ) {
-			analytics.tracks.recordEvent( 'calypso_publicize_share_schedule', numberOfAccountsPerService );
+			analytics.tracks.recordEvent( 'calypso_publicize_share_schedule', eventProperties );
 
 			this.props.schedulePostShareAction(
 				siteId,
 				postId,
 				this.state.message,
 				this.state.scheduledDate.format( 'X' ),
-				servicesToPublish.map( connection => connection.ID ),
+				servicesToPublish.map( connection => connection.ID )
 			);
 		} else {
-			analytics.tracks.recordEvent( 'calypso_publicize_share_instantly', numberOfAccountsPerService );
+			analytics.tracks.recordEvent( 'calypso_publicize_share_instantly', eventProperties );
 			this.props.sharePost( siteId, postId, this.state.skipped, this.state.message );
 		}
 	};
 
 	isDisabled() {
-		if (
-			this.props.disabled ||
-			this.props.requesting ||
-			this.activeConnections().length < 1
-		) {
+		if ( this.props.disabled || this.props.requesting || this.activeConnections().length < 1 ) {
 			return true;
 		}
 	}
 
-	previewSharingPost = () => {
-	}
+	previewSharingPost = () => {};
 
 	renderMessage() {
 		if ( ! this.hasConnections() ) {
 			return;
 		}
 
-		const targeted = this.hasConnections() ? this.props.connections.filter( this.isConnectionActive ) : [];
+		const targeted = this.hasConnections()
+			? this.props.connections.filter( this.isConnectionActive )
+			: [];
 		const requireCount = includes( map( targeted, 'service' ), 'twitter' );
-		const acceptableLength = ( requireCount ) ? 140 - 23 - 23 : null;
+		const acceptableLength = requireCount ? 140 - 23 - 23 : null;
 
 		return (
 			<PublicizeMessage
 				disabled={ this.isDisabled() }
 				message={ this.state.message }
-				preview={ this.props.post.title }
 				requireCount={ requireCount }
 				onChange={ this.setMessage }
-				acceptableLength={ acceptableLength } />
+				acceptableLength={ acceptableLength }
+			/>
 		);
 	}
 
@@ -250,59 +250,58 @@ class PostShare extends Component {
 	};
 
 	renderSharingButtons() {
-		const {
-			siteId,
-			translate,
-			publishedActions,
-			scheduledActions,
-		} = this.props;
+		const { siteId, translate, publishedActions, scheduledActions } = this.props;
 
-		const shareButton = <Button
-			className="post-share__share-button"
-			busy={ this.props.requesting }
-			primary
-			onClick={ this.sharePost }
-			disabled={ this.isDisabled() }
-		>
-			{ this.state.scheduledDate ? translate( 'Schedule post' ) : translate( 'Share post' ) }
-		</Button>;
+		const shareButton = (
+			<Button
+				className="post-share__share-button"
+				busy={ this.props.requesting }
+				primary
+				onClick={ this.sharePost }
+				disabled={ this.isDisabled() }
+			>
+				{ this.state.scheduledDate ? translate( 'Schedule post' ) : translate( 'Share post' ) }
+			</Button>
+		);
 
-		const previewButton = isEnabled( 'publicize-preview' ) &&
+		const previewButton = isEnabled( 'publicize-preview' ) && (
 			<Button
 				disabled={ this.isDisabled() }
 				className="post-share__preview-button"
 				onClick={ this.toggleSharingPreview }
 			>
 				{ translate( 'Preview' ) }
-			</Button>;
+			</Button>
+		);
 
-		const actionsEvents = map( concat( publishedActions, scheduledActions ), ( { ID, message, date, service } ) => ( {
-			id: ID,
-			type: 'published-action',
-			title: message,
-			date,
-			socialIcon: service === 'google_plus' ? 'google-plus' : service,
-		} ) );
+		const actionsEvents = map(
+			concat( publishedActions, scheduledActions ),
+			( { ID, message, date, service } ) => ( {
+				id: ID,
+				type: 'published-action',
+				title: message,
+				date,
+				socialIcon: service === 'google_plus' ? 'google-plus' : service,
+			} )
+		);
 
 		// custom tooltip title
 		const { eventsByDay } = this.state;
 
-		const tooltipTitle = this.props.translate(
-			'%d share',
-			'%d shares', {
-				count: eventsByDay.length,
-				args: eventsByDay.length,
-			}
-		);
+		const tooltipTitle = this.props.translate( '%d share', '%d shares', {
+			count: eventsByDay.length,
+			args: eventsByDay.length,
+		} );
 
 		const maxEvents = 8;
 		const moreShares = eventsByDay.length - maxEvents;
 
 		const tooltipMoreEventsLabel = this.props.translate(
 			'… and %d more share',
-			'… and %d more shares', {
+			'… and %d more shares',
+			{
 				count: moreShares,
-				args: moreShares
+				args: moreShares,
 			}
 		);
 
@@ -350,12 +349,7 @@ class PostShare extends Component {
 	}
 
 	renderConnectionsWarning() {
-		const {
-			connections,
-			hasFetchedConnections,
-			siteSlug,
-			translate,
-		} = this.props;
+		const { connections, hasFetchedConnections, siteSlug, translate } = this.props;
 
 		if ( ! hasFetchedConnections || ! connections.length ) {
 			return null;
@@ -369,8 +363,8 @@ class PostShare extends Component {
 
 		return (
 			<div>
-				{ brokenConnections
-					.map( connection => <Notice
+				{ brokenConnections.map( connection => (
+					<Notice
 						key={ connection.keyring_connection_ID }
 						status="is-warning"
 						showDismiss={ false }
@@ -379,19 +373,14 @@ class PostShare extends Component {
 						<NoticeAction href={ `/sharing/${ siteSlug }` }>
 							{ translate( 'Reconnect' ) }
 						</NoticeAction>
-					</Notice> )
-				}
+					</Notice>
+				) ) }
 			</div>
 		);
 	}
 
 	renderRequestSharingNotice() {
-		const {
-			failure,
-			requesting,
-			success,
-			translate,
-		} = this.props;
+		const { failure, requesting, success, translate } = this.props;
 
 		if ( this.props.scheduling ) {
 			return (
@@ -403,8 +392,8 @@ class PostShare extends Component {
 		if ( this.props.scheduledAt ) {
 			return (
 				<Notice status="is-success" onDismissClick={ this.dismiss }>
-					{ translate( 'We\'ll share your post on %s.', {
-						args: this.props.scheduledAt.format( 'ddd, MMMM Do YYYY, h:mm:ss a' )
+					{ translate( "We'll share your post on %s.", {
+						args: this.props.scheduledAt.format( 'ddd, MMMM Do YYYY, h:mm:ss a' ),
 					} ) }
 				</Notice>
 			);
@@ -413,7 +402,7 @@ class PostShare extends Component {
 		if ( this.props.schedulingFailed ) {
 			return (
 				<Notice status="is-error" onDismissClick={ this.dismiss }>
-					{ translate( 'Scheduling share failed. Please don\'t be mad.' ) }
+					{ translate( "Scheduling share failed. Please don't be mad." ) }
 				</Notice>
 			);
 		}
@@ -421,7 +410,7 @@ class PostShare extends Component {
 		if ( requesting ) {
 			return (
 				<Notice status="is-warning" showDismiss={ false }>
-						{ translate( 'Sharing…' ) }
+					{ translate( 'Sharing…' ) }
 				</Notice>
 			);
 		}
@@ -437,7 +426,7 @@ class PostShare extends Component {
 		if ( failure ) {
 			return (
 				<Notice status="is-error" onDismissClick={ this.dismiss }>
-					{ translate( 'Something went wrong. Please don\'t be mad.' ) }
+					{ translate( "Something went wrong. Please don't be mad." ) }
 				</Notice>
 			);
 		}
@@ -451,13 +440,17 @@ class PostShare extends Component {
 		const { hasFetchedConnections, siteId, siteSlug, translate } = this.props;
 
 		// enrich connections
-		const connections = map( this.props.connections, connection => (
-			{ ...connection, isActive: this.isConnectionActive( connection ) } )
-		);
+		const connections = map( this.props.connections, connection => ( {
+			...connection,
+			isActive: this.isConnectionActive( connection ),
+		} ) );
 
 		return (
 			<div className="post-share__services">
-				<SectionHeader className="post-share__services-header" label={ translate( 'Connected accounts' ) }>
+				<SectionHeader
+					className="post-share__services-header"
+					label={ translate( 'Connected accounts' ) }
+				>
 					<Button
 						compact
 						href={ '/sharing/' + siteId }
@@ -465,23 +458,27 @@ class PostShare extends Component {
 						onMouseEnter={ this.showAddTooltip }
 						onMouseLeave={ this.hideAddTooltip }
 						ref="addAccountButton"
-						aria-label={ translate( 'Add account' ) }>
-						<Gridicon icon="plus-small" size={ 18 } /><Gridicon icon="user" size={ 18 } />
+						aria-label={ translate( 'Add account' ) }
+					>
+						<Gridicon icon="plus-small" size={ 18 } />
+						<Gridicon icon="user" size={ 18 } />
 						<Tooltip
 							isVisible={ this.state.showAccountTooltip }
 							context={ this.refs && this.refs.addAccountButton }
-							position="bottom">
+							position="bottom"
+						>
 							{ translate( 'Add account' ) }
 						</Tooltip>
 					</Button>
 				</SectionHeader>
 
-				<ConnectionsList { ...{
-					connections,
-					hasFetchedConnections,
-					siteId,
-					siteSlug,
-				} }
+				<ConnectionsList
+					{ ...{
+						connections,
+						hasFetchedConnections,
+						siteId,
+						siteSlug,
+					} }
 					onToggle={ this.toggleConnection }
 				/>
 			</div>
@@ -489,12 +486,7 @@ class PostShare extends Component {
 	}
 
 	renderPrimarySection() {
-		const {
-			hasFetchedConnections,
-			hasRepublicizeFeature,
-			siteSlug,
-			translate,
-		} = this.props;
+		const { hasFetchedConnections, hasRepublicizeFeature, siteSlug, translate } = this.props;
 
 		if ( ! hasFetchedConnections ) {
 			return null;
@@ -502,10 +494,12 @@ class PostShare extends Component {
 
 		if ( ! this.hasConnections() ) {
 			return (
-				<NoConnectionsNotice { ...{
-					siteSlug,
-					translate,
-				} } />
+				<NoConnectionsNotice
+					{ ...{
+						siteSlug,
+						translate,
+					} }
+				/>
 			);
 		}
 
@@ -542,6 +536,7 @@ class PostShare extends Component {
 		const {
 			hasRepublicizeFeature,
 			hasFetchedConnections,
+			isRequestingSitePlans,
 			postId,
 			siteId,
 			siteSlug,
@@ -555,7 +550,7 @@ class PostShare extends Component {
 		}
 
 		const classes = classNames( 'post-share__wrapper', {
-			'is-placeholder': ! this.hasFetchedConnections,
+			'is-placeholder': ! hasFetchedConnections || isRequestingSitePlans,
 			'has-connections': this.hasConnections(),
 			'has-republicize-scheduling-feature': hasRepublicizeFeature,
 		} );
@@ -565,37 +560,37 @@ class PostShare extends Component {
 				<TrackComponentView eventName="calypso_publicize_post_share_view" />
 				<QueryPostTypes siteId={ siteId } />
 				<QueryPublicizeConnections siteId={ siteId } />
+				<QuerySitePlans siteId={ siteId } />
 
 				<div className={ classes }>
 					<div className="post-share__head">
 						<h4 className="post-share__title">
-							{ translate( 'Share this post' ) }
+							<span>{ translate( 'Share this post' ) }</span>
+							{ showClose && (
+								<Button
+									borderless
+									aria-label={ translate( 'Close post sharing' ) }
+									className="post-share__close"
+									data-tip-target="post-share__close"
+									onClick={ onClose }
+								>
+									<Gridicon icon="cross" />
+								</Button>
+							) }
 						</h4>
 						<div className="post-share__subtitle">
 							{ translate(
 								'Share your post on all of your connected social media accounts using ' +
-								'{{a}}Publicize{{/a}}.', {
+									'{{a}}Publicize{{/a}}.',
+								{
 									components: {
-										a: <a href={ `/sharing/${ siteSlug }` } />
-									}
+										a: <a href={ `/sharing/${ siteSlug }` } />,
+									},
 								}
 							) }
 						</div>
 					</div>
-					{ showClose && (
-						<Button
-							borderless
-							aria-label={ translate( 'Close post sharing' ) }
-							className="post-share__close"
-							data-tip-target="post-share__close"
-							onClick={ onClose }
-						>
-							<Gridicon icon="cross" />
-						</Button>
-					) }
-					{ ! hasFetchedConnections && (
-						<div className="post-share__placeholder" />
-					) }
+					{ ! hasFetchedConnections && <div className="post-share__placeholder" /> }
 					{ this.renderRequestSharingNotice() }
 					{ this.renderConnectionsWarning() }
 					{ this.renderPrimarySection() }
@@ -613,10 +608,9 @@ class PostShare extends Component {
 	}
 }
 
-const getDiscountedOrRegularPrice = ( state, siteId, plan ) => (
+const getDiscountedOrRegularPrice = ( state, siteId, plan ) =>
 	getPlanDiscountedRawPrice( state, siteId, plan, { isMonthly: true } ) ||
-	getSitePlanRawPrice( state, siteId, plan, { isMonthly: true } )
-);
+	getSitePlanRawPrice( state, siteId, plan, { isMonthly: true } );
 
 export default connect(
 	( state, props ) => {
@@ -632,6 +626,7 @@ export default connect(
 			planSlug,
 			isJetpack: isJetpackSite( state, siteId ),
 			hasFetchedConnections: siteHasFetchedConnections( state, siteId ),
+			isRequestingSitePlans: siteIsRequestingPlans( state, siteId ),
 			hasRepublicizeFeature: hasFeature( state, siteId, FEATURE_REPUBLICIZE ),
 			siteSlug: getSiteSlug( state, siteId ),
 			isPublicizeEnabled: isPublicizeEnabled( state, siteId, postType ),

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 
 /**
@@ -29,7 +32,8 @@ const WizardExample = ( { stepName = steps[ 0 ] } ) => (
 			basePath="/devdocs/design/wizard"
 			components={ components }
 			steps={ steps }
-			stepName={ stepName } />
+			stepName={ stepName }
+		/>
 	</div>
 );
 

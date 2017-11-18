@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import config from 'config';
 import { combineReducers } from 'state/utils';
 import ui from './ui/reducer';
@@ -16,9 +19,11 @@ const reducers = {
 	actionList,
 };
 
-export default combineReducers( wcsEnabled
-	? {
-		...reducers,
-		woocommerceServices,
-	}
-	: reducers );
+export default combineReducers(
+	wcsEnabled
+		? {
+				...reducers,
+				woocommerceServices,
+			}
+		: reducers
+);

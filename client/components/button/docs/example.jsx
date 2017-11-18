@@ -1,8 +1,10 @@
+/** @format */
+
 /**
-* External dependencies
-*/
+ * External dependencies
+ */
+
 import React from 'react';
-import PureRenderMixin from 'react-pure-render/mixin';
 import Gridicon from 'gridicons';
 
 /**
@@ -13,34 +15,32 @@ import Card from 'components/card';
 import config from 'config';
 import DocsExample from 'devdocs/docs-example';
 
-var Buttons = React.createClass( {
-	displayName: 'Buttons',
+class Buttons extends React.PureComponent {
+	static displayName = 'Buttons';
 
-	mixins: [ PureRenderMixin ],
+	state = {
+		compactButtons: false,
+	};
 
-	getInitialState: function() {
-		return {
-			compactButtons: false
-		};
-	},
-
-	render: function() {
+	render() {
 		var toggleText = this.state.compactButtons ? 'Normal Buttons' : 'Compact Buttons';
 		return config.isEnabled( 'devdocs/components-usage-stats' )
 			? this.renderDocsExampleWithUsageStats( toggleText )
 			: this.renderDocsExample( toggleText );
-	},
+	}
 
-	renderDocsExample: function( toggleText ) {
+	renderDocsExample = toggleText => {
 		return (
 			<div>
-				<a className="docs__design-toggle button" onClick={ this.toggleButtons }>{ toggleText }</a>
+				<a className="docs__design-toggle button" onClick={ this.toggleButtons }>
+					{ toggleText }
+				</a>
 				{ this.renderButtons( toggleText ) }
 			</div>
 		);
-	},
+	};
 
-	renderDocsExampleWithUsageStats: function( toggleText ) {
+	renderDocsExampleWithUsageStats = toggleText => {
 		return (
 			<DocsExample
 				componentUsageStats={ this.props.componentUsageStats }
@@ -50,35 +50,59 @@ var Buttons = React.createClass( {
 				{ this.renderButtons() }
 			</DocsExample>
 		);
-	},
+	};
 
-	renderButtons: function() {
+	renderButtons = () => {
 		if ( ! this.state.compactButtons ) {
 			return (
 				<Card>
 					<div className="docs__design-button-row">
 						<Button>Button</Button>
-						<Button icon><Gridicon icon="heart" /> Icon button</Button>
-						<Button icon><Gridicon icon="plugins" /></Button>
-						<Button disabled >Disabled button</Button>
+						<Button icon>
+							<Gridicon icon="heart" /> Icon button
+						</Button>
+						<Button icon>
+							<Gridicon icon="plugins" />
+						</Button>
+						<Button disabled>Disabled button</Button>
 					</div>
 					<div className="docs__design-button-row">
-						<Button scary >Scary button</Button>
-						<Button scary icon><Gridicon icon="globe" /> Scary icon button</Button>
-						<Button scary icon><Gridicon icon="pencil" /></Button>
-						<Button scary disabled >Scary disabled button</Button>
+						<Button scary>Scary button</Button>
+						<Button scary icon>
+							<Gridicon icon="globe" /> Scary icon button
+						</Button>
+						<Button scary icon>
+							<Gridicon icon="pencil" />
+						</Button>
+						<Button scary disabled>
+							Scary disabled button
+						</Button>
 					</div>
 					<div className="docs__design-button-row">
-						<Button primary >Primary button</Button>
-						<Button primary icon ><Gridicon icon="camera" /> Primary icon button</Button>
-						<Button primary icon ><Gridicon icon="time" /></Button>
-						<Button primary disabled >Primary disabled button</Button>
+						<Button primary>Primary button</Button>
+						<Button primary icon>
+							<Gridicon icon="camera" /> Primary icon button
+						</Button>
+						<Button primary icon>
+							<Gridicon icon="time" />
+						</Button>
+						<Button primary disabled>
+							Primary disabled button
+						</Button>
 					</div>
 					<div className="docs__design-button-row">
-						<Button primary scary >Primary scary button</Button>
-						<Button primary scary icon ><Gridicon icon="user-circle" /> Primary scary icon button</Button>
-						<Button primary scary icon ><Gridicon icon="cart" /></Button>
-						<Button primary scary disabled >Primary scary disabled button</Button>
+						<Button primary scary>
+							Primary scary button
+						</Button>
+						<Button primary scary icon>
+							<Gridicon icon="user-circle" /> Primary scary icon button
+						</Button>
+						<Button primary scary icon>
+							<Gridicon icon="cart" />
+						</Button>
+						<Button primary scary disabled>
+							Primary scary disabled button
+						</Button>
 					</div>
 					<div className="docs__design-button-row">
 						<Button borderless>
@@ -115,10 +139,16 @@ var Buttons = React.createClass( {
 						</Button>
 					</div>
 					<div className="docs__design-button-row">
-						<Button busy >Busy button</Button>
-						<Button primary busy icon ><Gridicon icon="camera" /> Primary icon button</Button>
-						<Button primary busy icon ><Gridicon icon="time" /></Button>
-						<Button primary busy >Primary busy button</Button>
+						<Button busy>Busy button</Button>
+						<Button primary busy icon>
+							<Gridicon icon="camera" /> Primary icon button
+						</Button>
+						<Button primary busy icon>
+							<Gridicon icon="time" />
+						</Button>
+						<Button primary busy>
+							Primary busy button
+						</Button>
 					</div>
 				</Card>
 			);
@@ -126,28 +156,58 @@ var Buttons = React.createClass( {
 			return (
 				<Card>
 					<div className="docs__design-button-row">
-						<Button compact >Compact button</Button>
-						<Button compact icon><Gridicon icon="heart" /> Compact icon button</Button>
-						<Button compact icon><Gridicon icon="plugins" /></Button>
-						<Button compact disabled >Compact disabled button</Button>
+						<Button compact>Compact button</Button>
+						<Button compact icon>
+							<Gridicon icon="heart" /> Compact icon button
+						</Button>
+						<Button compact icon>
+							<Gridicon icon="plugins" />
+						</Button>
+						<Button compact disabled>
+							Compact disabled button
+						</Button>
 					</div>
 					<div className="docs__design-button-row">
-						<Button compact scary >Compact scary button</Button>
-						<Button compact scary icon><Gridicon icon="globe" /> Compact scary icon button</Button>
-						<Button compact scary icon><Gridicon icon="pencil" /></Button>
-						<Button compact scary disabled >Compact scary disabled button</Button>
+						<Button compact scary>
+							Compact scary button
+						</Button>
+						<Button compact scary icon>
+							<Gridicon icon="globe" /> Compact scary icon button
+						</Button>
+						<Button compact scary icon>
+							<Gridicon icon="pencil" />
+						</Button>
+						<Button compact scary disabled>
+							Compact scary disabled button
+						</Button>
 					</div>
 					<div className="docs__design-button-row">
-						<Button compact primary >Compact primary button</Button>
-						<Button compact primary icon ><Gridicon icon="camera" /> Compact primary icon button</Button>
-						<Button compact primary icon ><Gridicon icon="time" /></Button>
-						<Button compact primary disabled >Compact primary disabled button</Button>
+						<Button compact primary>
+							Compact primary button
+						</Button>
+						<Button compact primary icon>
+							<Gridicon icon="camera" /> Compact primary icon button
+						</Button>
+						<Button compact primary icon>
+							<Gridicon icon="time" />
+						</Button>
+						<Button compact primary disabled>
+							Compact primary disabled button
+						</Button>
 					</div>
 					<div className="docs__design-button-row">
-						<Button compact primary scary >Compact primary scary button</Button>
-						<Button compact primary scary icon ><Gridicon icon="user-circle" /> Compact primary scary icon button</Button>
-						<Button compact primary scary icon ><Gridicon icon="cart" /></Button>
-						<Button compact primary scary disabled >Compact primary scary disabled button</Button>
+						<Button compact primary scary>
+							Compact primary scary button
+						</Button>
+						<Button compact primary scary icon>
+							<Gridicon icon="user-circle" /> Compact primary scary icon button
+						</Button>
+						<Button compact primary scary icon>
+							<Gridicon icon="cart" />
+						</Button>
+						<Button compact primary scary disabled>
+							Compact primary scary disabled button
+						</Button>
 					</div>
 					<div className="docs__design-button-row">
 						<Button compact borderless>
@@ -184,19 +244,27 @@ var Buttons = React.createClass( {
 						</Button>
 					</div>
 					<div className="docs__design-button-row">
-						<Button compact busy >Busy button</Button>
-						<Button compact primary busy icon ><Gridicon icon="camera" /> Primary icon button</Button>
-						<Button compact primary busy icon ><Gridicon icon="time" /></Button>
-						<Button compact primary busy >Primary busy button</Button>
+						<Button compact busy>
+							Busy button
+						</Button>
+						<Button compact primary busy icon>
+							<Gridicon icon="camera" /> Primary icon button
+						</Button>
+						<Button compact primary busy icon>
+							<Gridicon icon="time" />
+						</Button>
+						<Button compact primary busy>
+							Primary busy button
+						</Button>
 					</div>
 				</Card>
 			);
 		}
-	},
+	};
 
-	toggleButtons: function() {
+	toggleButtons = () => {
 		this.setState( { compactButtons: ! this.state.compactButtons } );
-	}
-} );
+	};
+}
 
-module.exports = Buttons;
+export default Buttons;

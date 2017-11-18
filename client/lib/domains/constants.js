@@ -1,20 +1,31 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import keyMirror from 'key-mirror';
 
 const type = keyMirror( {
 	MAPPED: null,
 	REGISTERED: null,
 	SITE_REDIRECT: null,
-	WPCOM: null
+	WPCOM: null,
+	TRANSFER: null,
+} );
+
+const transferStatus = keyMirror( {
+	PENDING_OWNER: null,
+	PENDING_REGISTRY: null,
+	CANCELLED: null,
+	COMPLETED: null,
 } );
 
 const registrar = {
 	OPENHRS: 'OpenHRS',
 	OPENSRS: 'OpenSRS',
 	WWD: 'WWD',
-	MAINTENANCE: 'Registrar TLD Maintenance'
+	MAINTENANCE: 'Registrar TLD Maintenance',
 };
 
 const domainAvailability = {
@@ -27,6 +38,7 @@ const domainAvailability = {
 	FORBIDDEN: 'forbidden_domain',
 	FORBIDDEN_SUBDOMAIN: 'forbidden_subdomain',
 	EMPTY_QUERY: 'empty_query',
+	INVALID_QUERY: 'invalid_query',
 	INVALID: 'invalid_domain',
 	INVALID_TLD: 'invalid_tld',
 	RESTRICTED: 'restricted_domain',
@@ -38,21 +50,27 @@ const domainAvailability = {
 const dnsTemplates = {
 	G_SUITE: {
 		PROVIDER: 'g-suite',
-		SERVICE: 'G-Suite'
+		SERVICE: 'G-Suite',
 	},
 	MICROSOFT_OFFICE365: {
 		PROVIDER: 'microsoft-office365',
-		SERVICE: 'O365'
+		SERVICE: 'O365',
 	},
 	ZOHO_MAIL: {
 		PROVIDER: 'zoho-mail',
-		SERVICE: 'Zoho'
-	}
+		SERVICE: 'Zoho',
+	},
+};
+
+const domainProductSlugs = {
+	TRANSFER_IN: 'domain_transfer',
 };
 
 export default {
 	dnsTemplates,
 	domainAvailability,
+	domainProductSlugs,
 	registrar,
+	transferStatus,
 	type,
 };

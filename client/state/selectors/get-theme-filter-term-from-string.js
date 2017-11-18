@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { isAmbiguousThemeFilterTerm } from 'state/selectors';
 
 /**

@@ -1,30 +1,26 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import ReactDom from 'react-dom';
-import React, { PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 import Gridicon from 'gridicons';
 import { localize } from 'i18n-calypso';
-import {
-	identity,
-	includes,
-	noop,
-	without,
-} from 'lodash';
+import { identity, includes, noop, without } from 'lodash';
 
 /**
  * Internal dependencies
  */
 import RootChild from 'components/root-child';
-import {
-	hideDropZone,
-	showDropZone,
-} from 'state/ui/drop-zone/actions';
+import { hideDropZone, showDropZone } from 'state/ui/drop-zone/actions';
 
-export const DropZone = React.createClass( {
-	propTypes: {
+export class DropZone extends React.Component {
+	static propTypes = {
 		className: PropTypes.string,
 		fullScreen: PropTypes.bool,
 		icon: PropTypes.node,
@@ -36,28 +32,24 @@ export const DropZone = React.createClass( {
 		showDropZone: PropTypes.func.isRequired,
 		hideDropZone: PropTypes.func.isRequired,
 		dropZoneName: PropTypes.string,
-	},
+	};
 
-	getInitialState() {
-		return {
-			isDraggingOverDocument: false,
-			isDraggingOverElement: false,
-			lastVisibleState: false,
-		};
-	},
+	static defaultProps = {
+		className: null,
+		onDrop: noop,
+		onVerifyValidTransfer: () => true,
+		onFilesDrop: noop,
+		fullScreen: false,
+		icon: <Gridicon icon="cloud-upload" size={ 48 } />,
+		translate: identity,
+		dropZoneName: null,
+	};
 
-	getDefaultProps() {
-		return {
-			className: null,
-			onDrop: noop,
-			onVerifyValidTransfer: () => true,
-			onFilesDrop: noop,
-			fullScreen: false,
-			icon: <Gridicon icon="cloud-upload" size={ 48 } />,
-			translate: identity,
-			dropZoneName: null,
-		};
-	},
+	state = {
+		isDraggingOverDocument: false,
+		isDraggingOverElement: false,
+		lastVisibleState: false,
+	};
 
 	componentDidMount() {
 		this.dragEnterNodes = [];
@@ -66,13 +58,13 @@ export const DropZone = React.createClass( {
 		window.addEventListener( 'dragenter', this.toggleDraggingOverDocument );
 		window.addEventListener( 'dragleave', this.toggleDraggingOverDocument );
 		window.addEventListener( 'mouseup', this.resetDragState );
-	},
+	}
 
 	componentDidUpdate( prevProps, prevState ) {
 		if ( prevState.isDraggingOverDocument !== this.state.isDraggingOverDocument ) {
 			this.toggleMutationObserver();
 		}
-	},
+	}
 
 	componentWillUnmount() {
 		window.removeEventListener( 'dragover', this.preventDefault );
@@ -81,55 +73,53 @@ export const DropZone = React.createClass( {
 		window.removeEventListener( 'dragleave', this.toggleDraggingOverDocument );
 		window.removeEventListener( 'mouseup', this.resetDragState );
 		this.disconnectMutationObserver();
-	},
+	}
 
-	resetDragState() {
+	resetDragState = () => {
 		if ( ! ( this.state.isDraggingOverDocument || this.state.isDraggingOverElement ) ) {
 			return;
 		}
 
 		this.setState( {
 			isDraggingOverDocument: false,
-			isDraggingOverElement: false
+			isDraggingOverElement: false,
 		} );
 
 		this.toggleDropZoneReduxState( false );
-	},
+	};
 
-	toggleMutationObserver() {
+	toggleMutationObserver = () => {
 		this.disconnectMutationObserver();
 
 		if ( this.state.isDraggingOverDocument ) {
 			this.observer = new window.MutationObserver( this.detectNodeRemoval );
 			this.observer.observe( document.body, {
 				childList: true,
-				subtree: true
+				subtree: true,
 			} );
 		}
-	},
+	};
 
-	disconnectMutationObserver() {
+	disconnectMutationObserver = () => {
 		if ( ! this.observer ) {
 			return;
 		}
 
 		this.observer.disconnect();
 		delete this.observer;
-	},
+	};
 
-	detectNodeRemoval( mutations ) {
-		mutations.forEach( ( mutation ) => {
+	detectNodeRemoval = mutations => {
+		mutations.forEach( mutation => {
 			if ( ! mutation.removedNodes.length ) {
 				return;
 			}
 
 			this.dragEnterNodes = without( this.dragEnterNodes, Array.from( mutation.removedNodes ) );
 		} );
-	},
+	};
 
-	toggleDraggingOverDocument( event ) {
-		let isDraggingOverDocument, detail, isValidDrag;
-
+	toggleDraggingOverDocument = event => {
 		// Track nodes that have received a drag event. So long as nodes exist
 		// in the set, we can assume that an item is being dragged on the page.
 		if ( 'dragenter' === event.type && ! includes( this.dragEnterNodes, event.target ) ) {
@@ -144,15 +134,15 @@ export const DropZone = React.createClass( {
 		// as the `detail` property.
 		//
 		// See: https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Creating_and_triggering_events
-		detail = window.CustomEvent && event instanceof window.CustomEvent ? event.detail : event;
-
-		isValidDrag = this.props.onVerifyValidTransfer( detail.dataTransfer );
-		isDraggingOverDocument = isValidDrag && this.dragEnterNodes.length;
+		const detail = window.CustomEvent && event instanceof window.CustomEvent ? event.detail : event,
+			isValidDrag = this.props.onVerifyValidTransfer( detail.dataTransfer ),
+			isDraggingOverDocument = isValidDrag && this.dragEnterNodes.length;
 
 		this.setState( {
 			isDraggingOverDocument: isDraggingOverDocument,
-			isDraggingOverElement: isDraggingOverDocument && ( this.props.fullScreen ||
-				this.isWithinZoneBounds( detail.clientX, detail.clientY ) )
+			isDraggingOverElement:
+				isDraggingOverDocument &&
+				( this.props.fullScreen || this.isWithinZoneBounds( detail.clientX, detail.clientY ) ),
 		} );
 
 		if ( window.CustomEvent && event instanceof window.CustomEvent ) {
@@ -161,10 +151,12 @@ export const DropZone = React.createClass( {
 			this.dragEnterNodes = without( this.dragEnterNodes, window );
 		}
 
-		this.toggleDropZoneReduxState( !! ( this.state.isDraggingOverDocument || this.state.isDraggingOverElement ) );
-	},
+		this.toggleDropZoneReduxState(
+			!! ( this.state.isDraggingOverDocument || this.state.isDraggingOverElement )
+		);
+	};
 
-	toggleDropZoneReduxState( isVisible ) {
+	toggleDropZoneReduxState = isVisible => {
 		if ( this.state.lastVisibleState !== isVisible ) {
 			if ( isVisible ) {
 				this.props.showDropZone( this.props.dropZoneName );
@@ -176,38 +168,42 @@ export const DropZone = React.createClass( {
 				lastVisibleState: isVisible,
 			} );
 		}
-	},
+	};
 
-	preventDefault( event ) {
+	preventDefault = event => {
 		event.preventDefault();
-	},
+	};
 
-	isWithinZoneBounds( x, y ) {
-		let rect;
-
+	isWithinZoneBounds = ( x, y ) => {
 		if ( ! this.refs.zone ) {
 			return false;
 		}
 
-		rect = this.refs.zone.getBoundingClientRect();
+		const rect = this.refs.zone.getBoundingClientRect();
 
 		/// make sure the rect is a valid rect
 		if ( rect.bottom === rect.top || rect.left === rect.right ) {
 			return false;
 		}
 
-		return x >= rect.left && x <= rect.right &&
-			y >= rect.top && y <= rect.bottom;
-	},
+		return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+	};
 
-	onDrop( event ) {
+	onDrop = event => {
 		// This seemingly useless line has been shown to resolve a Safari issue
 		// where files dragged directly from the dock are not recognized
 		event.dataTransfer && event.dataTransfer.files.length;
 
 		this.resetDragState();
 
-		if ( ! this.props.fullScreen && ! ReactDom.findDOMNode( this.refs.zone ).contains( event.target ) ) {
+		// Regardless of whether or not files are dropped in the zone,
+		// prevent the browser default action, which navigates to the file.
+		event.preventDefault();
+
+		if (
+			! this.props.fullScreen &&
+			! ReactDom.findDOMNode( this.refs.zone ).contains( event.target )
+		) {
 			return;
 		}
 
@@ -222,33 +218,26 @@ export const DropZone = React.createClass( {
 		}
 
 		event.stopPropagation();
-		event.preventDefault();
-	},
+	};
 
-	renderContent() {
+	renderContent = () => {
 		const textLabel = this.props.textLabel
 			? this.props.textLabel
 			: this.props.translate( 'Drop files to upload' );
 
 		return (
 			<div className="drop-zone__content">
-				{
+				{ this.props.children ? (
 					this.props.children
-						? this.props.children
-						: (
-							<div>
-								<span className="drop-zone__content-icon">
-									{ this.props.icon }
-								</span>
-								<span className="drop-zone__content-text">
-									{ textLabel }
-								</span>
-							</div>
-						)
-				}
+				) : (
+					<div>
+						<span className="drop-zone__content-icon">{ this.props.icon }</span>
+						<span className="drop-zone__content-text">{ textLabel }</span>
+					</div>
+				) }
 			</div>
 		);
-	},
+	};
 
 	render() {
 		const classes = classNames( 'drop-zone', this.props.className, {
@@ -269,7 +258,7 @@ export const DropZone = React.createClass( {
 		}
 		return element;
 	}
-} );
+}
 
 const mapDispatch = {
 	showDropZone,

@@ -1,11 +1,14 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 import { omit } from 'lodash';
 
-export default React.createClass( {
-	displayName: 'ContactFormViewPreviewFieldset',
+export default class extends React.Component {
+	static displayName = 'ContactFormViewPreviewFieldset';
 
 	render() {
 		return (
@@ -14,4 +17,4 @@ export default React.createClass( {
 			</fieldset>
 		);
 	}
-} );
+}

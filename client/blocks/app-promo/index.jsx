@@ -1,6 +1,10 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
 import { identity, noop, sample } from 'lodash';
@@ -23,23 +27,23 @@ const getRandomPromo = () => {
 		{
 			promoCode: 'a0002',
 			message: 'Get WordPress.com app for your desktop.',
-			type: 'desktop'
+			type: 'desktop',
 		},
 		{
 			promoCode: 'a0003',
 			message: 'WordPress.com app now available for desktop.',
-			type: 'desktop'
+			type: 'desktop',
 		},
 		{
 			promoCode: 'a0005',
 			message: 'WordPress.com at your fingertips — download app for desktop.',
-			type: 'desktop'
+			type: 'desktop',
 		},
 		{
 			promoCode: 'a0006',
 			message: 'WordPress.com in the palm of your hands — download app for mobile.',
-			type: 'mobile'
-		}
+			type: 'mobile',
+		},
 	];
 
 	return sample( promoOptions );
@@ -51,46 +55,47 @@ export const getPromoLink = ( location, promoDetails ) => {
 	return `https://apps.wordpress.com/${ type }/?ref=promo_${ location }_${ promoCode }`;
 };
 
-export const AppPromo = React.createClass( {
+export class AppPromo extends React.Component {
+	static displayName = 'AppPromo';
 
-	displayName: 'AppPromo',
+	static propTypes = {
+		location: PropTypes.string.isRequired,
+	};
 
-	propTypes: {
-		location: React.PropTypes.string.isRequired
-	},
+	constructor( props ) {
+		super( props );
+		const promoItem = props.promoItem || getRandomPromo();
 
-	getInitialState: function() {
-		const promoItem = this.props.promoItem || getRandomPromo();
-		return {
+		this.state = {
 			promoItem,
-			showPromo: true
+			showPromo: true,
 		};
-	},
+	}
 
-	componentDidMount: function() {
+	componentDidMount() {
 		this.props.recordTracksEvent( 'calypso_desktop_promo_view', {
 			promo_location: this.props.location,
 			promo_code: this.state.promoItem.promoCode,
 		} );
-	},
+	}
 
-	recordClickEvent: function() {
+	recordClickEvent = () => {
 		this.props.recordTracksEvent( 'calypso_desktop_promo_click', {
 			promo_location: this.props.location,
-			promo_code: this.state.promoItem.promoCode
+			promo_code: this.state.promoItem.promoCode,
 		} );
-	},
+	};
 
-	dismiss: function() {
+	dismiss = () => {
 		this.setState( { showPromo: false } );
 		this.props.saveDismissal();
 		this.props.recordTracksEvent( 'calypso_desktop_promo_dismiss', {
 			promo_location: this.props.location,
 			promo_code: this.state.promoItem.promoCode,
 		} );
-	},
+	};
 
-	render: function() {
+	render() {
 		if ( ! this.state.showPromo ) {
 			return null;
 		}
@@ -100,11 +105,9 @@ export const AppPromo = React.createClass( {
 
 		return (
 			<div className="app-promo">
-				<span tabIndex="0" className="app-promo__dismiss" onClick={ this.dismiss } >
+				<span tabIndex="0" className="app-promo__dismiss" onClick={ this.dismiss }>
 					<Gridicon icon="cross" size={ 24 } />
-					<span className="app-promo__screen-reader-text">
-						{ translate( 'Dismiss' ) }
-					</span>
+					<span className="app-promo__screen-reader-text">{ translate( 'Dismiss' ) }</span>
 				</span>
 				<a
 					onClick={ this.recordClickEvent }
@@ -125,14 +128,14 @@ export const AppPromo = React.createClass( {
 				</a>
 			</div>
 		);
-	},
-} );
+	}
+}
 
 AppPromo.defaultProps = {
 	translate: identity,
 	recordTracksEvent: noop,
 	saveDismissal: () => store.set( 'desktop_promo_disabled', true ),
-	getPromoLink
+	getPromoLink,
 };
 
-export default connect( null, { recordTracksEvent } )( localize( AppPromo ) ) ;
+export default connect( null, { recordTracksEvent } )( localize( AppPromo ) );

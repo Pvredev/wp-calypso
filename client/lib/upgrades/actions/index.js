@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import * as cart from './cart';
 import * as checkout from './checkout';
 import * as freeTrials from './free-trials';
@@ -14,5 +17,5 @@ export default {
 	...freeTrials,
 	...domainManagement,
 	...domainSearch,
-	...purchases
+	...purchases,
 };

@@ -1,16 +1,23 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 
-export default React.createClass( {
-	displayName: 'ContactFormViewPreviewRequired',
+import { localize } from 'i18n-calypso';
+
+class ContactFormViewPreviewRequired extends React.Component {
+	static displayName = 'ContactFormViewPreviewRequired';
 
 	render() {
 		if ( this.props.required ) {
-			return ( <em>&nbsp;({ this.translate( 'required' ) })</em> );
+			return <em>&nbsp;({ this.props.translate( 'required' ) })</em>;
 		}
 
 		return null;
 	}
-} );
+}
+
+export default localize( ContactFormViewPreviewRequired );

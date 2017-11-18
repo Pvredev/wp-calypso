@@ -1,18 +1,29 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import validator from 'is-my-json-valid';
-import { merge, flow, partialRight, reduce, isEqual, omit } from 'lodash';
+import {
+	flow,
+	get,
+	includes,
+	isEqual,
+	mapValues,
+	merge,
+	partialRight,
+	omit,
+	omitBy,
+	reduce,
+} from 'lodash';
 import { combineReducers as combine } from 'redux'; // eslint-disable-line wpcalypso/import-no-redux-combine-reducers
 import LRU from 'lru-cache';
 
 /**
  * Internal dependencies
  */
-import {
-	DESERIALIZE,
-	SERIALIZE,
-} from './action-types';
+import { DESERIALIZE, SERIALIZE } from './action-types';
 import warn from 'lib/warn';
 
 export function isValidStateWithSchema( state, schema ) {
@@ -37,13 +48,17 @@ export function isValidStateWithSchema( state, schema ) {
  * Note! This will only apply the supplied reducer to
  * the item referenced by the supplied key in the action.
  *
- * If no key exists whose name matches the given keyName
+ * If no key exists whose name matches the given lodash style keyPath
  * then this super-reducer will abort and return the
  * previous state.
  *
  * If some action should apply to every single item
- * in the map of keyed objects, this utility cannot be
- * used as it will only reduce the referenced item.
+ * in the map of keyed objects, then that action type
+ * should be supplied in the list of `globalActions`
+ * These will apply to every item in the collection
+ * and they may not have the necessary key: for
+ * example, the DESERIALIZE and SERIALIZE actions
+ * may apply to all items and are included by default.
  *
  * @example
  * const age = ( state = 0, action ) =>
@@ -72,32 +87,49 @@ export function isValidStateWithSchema( state, schema ) {
  *     }
  * }
  *
- * @param {string} keyName name of key in action referencing item in state map
- * @param {function} reducer applied to referenced item in state map
- * @return {function} super-reducer applying reducer over map of keyed items
+ * @example
+ * const reducer = keyedReducer( 'username', userReducer, [ DESERIALIZE, SERIALIZE ] );
+ * reducer.hasCustomerPersistence = true;
+ *
+ * // now every item can decide what to do for persistence
+ *
+ * @param {string} keyPath lodash-style path to the key in action referencing item in state map
+ * @param {Function} reducer applied to referenced item in state map
+ * @param {Array} globalActions set of types which apply to every item in the collection
+ * @return {Function} super-reducer applying reducer over map of keyed items
  */
-export const keyedReducer = ( keyName, reducer ) => {
+export const keyedReducer = ( keyPath, reducer, globalActions = [ SERIALIZE, DESERIALIZE ] ) => {
 	// some keys are invalid
-	if ( 'string' !== typeof keyName ) {
-		throw new TypeError( `Key name passed into ``keyedReducer`` must be a string but I detected a ${ typeof keyName }` );
+	if ( 'string' !== typeof keyPath ) {
+		throw new TypeError(
+			`Key name passed into ``keyedReducer`` must be a string but I detected a ${ typeof keyName }`
+		);
 	}
 
-	if ( ! keyName.length ) {
-		throw new TypeError( 'Key name passed into `keyedReducer` must have a non-zero length but I detected an empty string' );
+	if ( ! keyPath.length ) {
+		throw new TypeError(
+			'Key name passed into `keyedReducer` must have a non-zero length but I detected an empty string'
+		);
 	}
 
 	if ( 'function' !== typeof reducer ) {
-		throw new TypeError( `Reducer passed into ``keyedReducer`` must be a function but I detected a ${ typeof reducer }` );
+		throw new TypeError(
+			`Reducer passed into ``keyedReducer`` must be a function but I detected a ${ typeof reducer }`
+		);
 	}
 
+	const initialState = reducer( undefined, { type: '@@calypso/INIT' } );
+
 	return ( state = {}, action ) => {
-		// don't allow coercion of key name: null => 0
-		if ( ! action.hasOwnProperty( keyName ) ) {
-			return state;
+		if ( globalActions && includes( globalActions, action.type ) ) {
+			return omitBy(
+				mapValues( state, item => reducer( item, action ) ),
+				a => a === undefined || a === initialState
+			);
 		}
 
-		// the action must refer to some item in the map
-		const itemKey = action[ keyName ];
+		// don't allow coercion of key name: null => 0
+		const itemKey = get( action, keyPath, undefined );
 
 		// if the action doesn't contain a valid reference
 		// then return without any updates
@@ -108,7 +140,6 @@ export const keyedReducer = ( keyName, reducer ) => {
 		// pass the old sub-state from that item into the reducer
 		// we need this to update state and also to compare if
 		// we had any changes, thus the initialState
-		const initialState = reducer( undefined, { type: '@@calypso/INIT' } );
 		const oldItemState = state[ itemKey ];
 		const newItemState = reducer( oldItemState, action );
 
@@ -120,9 +151,7 @@ export const keyedReducer = ( keyName, reducer ) => {
 		// remove key from state if setting to undefined or back to initial state
 		// if it didn't exist anyway, then do nothing.
 		if ( undefined === newItemState || isEqual( newItemState, initialState ) ) {
-			return state.hasOwnProperty( itemKey )
-				? omit( state, itemKey )
-				: state;
+			return state.hasOwnProperty( itemKey ) ? omit( state, itemKey ) : state;
 		}
 
 		// otherwise immutably update the super-state
@@ -146,7 +175,7 @@ export function extendAction( action, data ) {
 		return merge( {}, action, data );
 	}
 
-	return ( dispatch ) => {
+	return dispatch => {
 		const newDispatch = flow( partialRight( extendAction, data ), dispatch );
 		return action( newDispatch );
 	};
@@ -172,8 +201,8 @@ export function createReducer( initialState = null, customHandlers = {}, schema 
 	let defaultHandlers;
 	if ( schema ) {
 		defaultHandlers = {
-			[ SERIALIZE ]: ( state ) => state,
-			[ DESERIALIZE ]: ( state ) => {
+			[ SERIALIZE ]: state => state,
+			[ DESERIALIZE ]: state => {
 				if ( isValidStateWithSchema( state, schema ) ) {
 					return state;
 				}
@@ -181,18 +210,18 @@ export function createReducer( initialState = null, customHandlers = {}, schema 
 				warn( 'state validation failed - check schema used for:', customHandlers );
 
 				return initialState;
-			}
+			},
 		};
 	} else {
 		defaultHandlers = {
 			[ SERIALIZE ]: () => initialState,
-			[ DESERIALIZE ]: () => initialState
+			[ DESERIALIZE ]: () => initialState,
 		};
 	}
 
 	const handlers = {
 		...defaultHandlers,
-		...customHandlers
+		...customHandlers,
 	};
 
 	// When custom serialization behavior is provided, we assume that it may
@@ -216,8 +245,10 @@ export function createReducer( initialState = null, customHandlers = {}, schema 
 		const { type } = action;
 
 		if ( 'production' !== process.env.NODE_ENV && 'type' in action && ! type ) {
-			throw new TypeError( 'Reducer called with undefined type.' +
-				' Verify that the action type is defined in state/action-types.js' );
+			throw new TypeError(
+				'Reducer called with undefined type.' +
+					' Verify that the action type is defined in state/action-types.js'
+			);
 		}
 
 		if ( handlers.hasOwnProperty( type ) ) {
@@ -370,10 +401,17 @@ export const withSchemaValidation = ( schema, reducer ) => {
  * @returns {function} - Returns the combined reducer function
  */
 export function combineReducers( reducers ) {
-	const validatedReducers = reduce( reducers, ( validated, next, key ) => {
-		const { schema, hasCustomPersistence } = next;
-		return { ...validated, [ key ]: hasCustomPersistence ? next : withSchemaValidation( schema, next ) };
-	}, {} );
+	const validatedReducers = reduce(
+		reducers,
+		( validated, next, key ) => {
+			const { schema, hasCustomPersistence } = next;
+			return {
+				...validated,
+				[ key ]: hasCustomPersistence ? next : withSchemaValidation( schema, next ),
+			};
+		},
+		{}
+	);
 	const combined = combine( validatedReducers );
 	combined.hasCustomPersistence = true;
 	return combined;
@@ -453,7 +491,8 @@ export const cachingActionCreatorFactory = (
 	successActionCreator,
 	failureActionCreator,
 	parametersHashFunction = params => params.join( '' ),
-	cacheOptions = { // those are passed to LRU ctor directly
+	cacheOptions = {
+		// those are passed to LRU ctor directly
 		max: 100,
 		maxAge: 2 * 60 * 60, // 2 hours
 	}

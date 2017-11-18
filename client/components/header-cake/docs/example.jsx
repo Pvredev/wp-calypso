@@ -1,8 +1,10 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
-import PureRenderMixin from 'react-pure-render/mixin';
 
 /**
  * Internal dependencies
@@ -17,25 +19,33 @@ const noop = function() {};
 
 const action = () => alert( 'i <3 cake' );
 
-module.exports = React.createClass( {
-	displayName: 'Headers',
-
-	mixins: [ PureRenderMixin ],
+export default class extends React.PureComponent {
+	static displayName = 'Headers';
 
 	render() {
 		return (
 			<div>
-				<HeaderCake onClick={ noop }>
-					Subsection Header aka Header Cake
-				</HeaderCake>
+				<HeaderCake onClick={ noop }>Subsection Header aka Header Cake</HeaderCake>
 				<p>Clicking header cake returns to previous section.</p>
-				<HeaderCake onClick={ noop } actionIcon="status" actionText="Action" actionOnClick={ action }>
+				<HeaderCake
+					onClick={ noop }
+					actionIcon="status"
+					actionText="Action"
+					actionOnClick={ action }
+				>
 					Header Cake with optional Action Button
 				</HeaderCake>
-				<HeaderCake onClick={ noop } actionButton={ <Button compact primary onClick={ action }>An action</Button> }>
+				<HeaderCake
+					onClick={ noop }
+					actionButton={
+						<Button compact primary onClick={ action }>
+							An action
+						</Button>
+					}
+				>
 					Header Cake with a custom action button
 				</HeaderCake>
 			</div>
 		);
 	}
-} );
+}

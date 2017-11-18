@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { isFunction, isObject } from 'lodash';
 
 /**
@@ -25,4 +28,3 @@ export function dispatchWithProps( dispatch, getState, action, props ) {
 		dispatch( { ...action, ...props } );
 	}
 }
-

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
@@ -15,14 +18,13 @@ import FormFieldset from 'components/forms/form-fieldset';
 import FormButton from 'components/forms/form-button';
 import FormTextInput from 'components/forms/form-text-input';
 import { getSiteTitle } from 'state/signup/steps/site-title/selectors';
-
 import { translate } from 'i18n-calypso';
 
-const SignupSiteTitle = React.createClass( {
-	propTypes: {
+class SignupSiteTitle extends React.Component {
+	static propTypes = {
 		onSubmit: PropTypes.func.isRequired,
 		siteTitle: PropTypes.string.isRequired,
-	},
+	};
 
 	componentWillMount() {
 		this.formStateController = new formState.Controller( {
@@ -32,26 +34,26 @@ const SignupSiteTitle = React.createClass( {
 			hideFieldErrorsOnChange: true,
 			initialState: {
 				siteTitle: {
-					value: this.props.siteTitle
-				}
-			}
+					value: this.props.siteTitle,
+				},
+			},
 		} );
 
 		this.setFormState( this.formStateController.getInitialState() );
-	},
+	}
 
-	setFormState( state ) {
+	setFormState = state => {
 		this.setState( { form: state } );
-	},
+	};
 
-	handleChangeEvent( event ) {
+	handleChangeEvent = event => {
 		this.formStateController.handleFieldChange( {
 			name: event.target.name,
-			value: event.target.value
+			value: event.target.value,
 		} );
-	},
+	};
 
-	formFields() {
+	formFields = () => {
 		return (
 			<FormFieldset>
 				<FormTextInput
@@ -67,14 +69,14 @@ const SignupSiteTitle = React.createClass( {
 				<FormButton className="signup-site-title__button">{ translate( 'Continue' ) }</FormButton>
 			</FormFieldset>
 		);
-	},
+	};
 
-	handleSubmit( event ) {
+	handleSubmit = event => {
 		event.preventDefault();
 
 		const siteTitle = formState.getFieldValue( this.state.form, 'siteTitle' );
 		this.props.onSubmit( siteTitle );
-	},
+	};
 
 	render() {
 		return (
@@ -83,10 +85,8 @@ const SignupSiteTitle = React.createClass( {
 			</LoggedOutForm>
 		);
 	}
-} );
+}
 
-export default connect(
-	state => ( {
-		siteTitle: getSiteTitle( state ),
-	} )
-)( SignupSiteTitle );
+export default connect( state => ( {
+	siteTitle: getSiteTitle( state ),
+} ) )( SignupSiteTitle );

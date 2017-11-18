@@ -49,25 +49,23 @@
 	&:focus {
 		color: $gray-dark;
 		outline: none;
-
-		.keyboard-navigation & .segmented-control__text {
-			outline: dotted 1px $gray-dark;
-		}
-	}
-
-	.notouch & {
-		&:hover {
-			color: $gray-dark;
-		}
-	}
-
-	.segmented-control__item.is-selected & {
-		border-color: $gray-dark;
-		color: $gray-dark;
 	}
 }
 
+.keyboard-navigation .segmented-control__link:focus .segmented-control__text {
+	outline: dotted 1px $gray-dark;
+}
 
+.segmented-control__item.is-selected .segmented-control__link {
+	border-color: $gray-dark;
+	color: $gray-dark;
+}
+
+.notouch .segmented-control__link {
+	&:hover {
+		color: $gray-dark;
+	}
+}
 
 .segmented-control__text {
 	display: block;
@@ -86,59 +84,20 @@
 }
 
 //Primary variation
-.segmented-control.is-primary {
+.segmented-control.is-primary { 
 
 	.segmented-control__item {
 
 		&.is-selected {
 
 			.segmented-control__link {
-		  	border-color: $blue-medium;
+		  		border-color: $blue-medium;
 		 		background-color: $blue-medium;
 		 		color: $white;
 		  }
 
 			+ .segmented-control__item .segmented-control__link {
 				border-left-color: $blue-medium;
-			}
-		}
-	}
-}
-
-//For WooCommerce Extension
-.is-store {
-
-	&.segmented-control {
-		@include breakpoint( "<480px" ) {
-			padding: 0 16px 16px;
-		}
-
-		.segmented-control__item {
-
-			.segmented-control__link {
-				background: #f3f6f8;
-				border-color: #e9eff3;
-
-				.segmented-control__text {
-					color: #a8bece;
-				}
-			}
-
-			&.is-selected {
-				.segmented-control__link {
-					background: #00aadc;
-					border-color: #008ab3;
-
-					.segmented-control__text {
-						color: #ffffff;
-					}
-				}
-			}
-
-			&.is-selected + .segmented-control__item {
-				.segmented-control__link {
-					border-left-color: #008ab3;
-				}
 			}
 		}
 	}

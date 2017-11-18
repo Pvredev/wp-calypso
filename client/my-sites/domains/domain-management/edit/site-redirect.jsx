@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
+import createReactClass from 'create-react-class';
 import { localize } from 'i18n-calypso';
 
 /**
@@ -16,7 +20,8 @@ import VerticalNav from 'components/vertical-nav';
 import VerticalNavItem from 'components/vertical-nav/item';
 import paths from 'my-sites/domains/paths';
 
-const SiteRedirect = React.createClass( {
+const SiteRedirect = createReactClass( {
+	displayName: 'SiteRedirect',
 	mixins: [ analyticsMixin( 'domainManagement', 'edit' ) ],
 
 	getAutoRenewalOrExpirationDate() {
@@ -60,24 +65,28 @@ const SiteRedirect = React.createClass( {
 							type={ domain.type }
 							subscriptionId={ domain.subscriptionId }
 							siteSlug={ this.props.selectedSite.slug }
-							onClick={ this.handlePaymentSettingsClick } />
+							onClick={ this.handlePaymentSettingsClick }
+						/>
 					</Card>
 				</div>
 
-				<VerticalNav>
-					{ this.siteRedirectNavItem() }
-				</VerticalNav>
+				<VerticalNav>{ this.siteRedirectNavItem() }</VerticalNav>
 			</div>
 		);
 	},
 
 	siteRedirectNavItem() {
 		return (
-			<VerticalNavItem path={ paths.domainManagementRedirectSettings( this.props.selectedSite.slug, this.props.domain.name ) }>
+			<VerticalNavItem
+				path={ paths.domainManagementRedirectSettings(
+					this.props.selectedSite.slug,
+					this.props.domain.name
+				) }
+			>
 				{ this.props.translate( 'Redirect Settings' ) }
 			</VerticalNavItem>
 		);
-	}
+	},
 } );
 
 export default localize( SiteRedirect );

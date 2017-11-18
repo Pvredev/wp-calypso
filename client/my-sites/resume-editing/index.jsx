@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React from 'react';
 import classnames from 'classnames';
 import { connect } from 'react-redux';
 import { get } from 'lodash';
@@ -14,7 +18,7 @@ import { resetEditorLastDraft } from 'state/ui/editor/last-draft/actions';
 import {
 	getEditorLastDraftPost,
 	getEditorLastDraftSiteId,
-	getEditorLastDraftPostId
+	getEditorLastDraftPostId,
 } from 'state/ui/editor/last-draft/selectors';
 import { isRequestingSitePost } from 'state/posts/selectors';
 import { getEditorPath } from 'state/ui/editor/selectors';
@@ -26,16 +30,16 @@ import QueryPosts from 'components/data/query-posts';
 import SiteIcon from 'blocks/site-icon';
 import Dispatcher from 'dispatcher';
 
-const ResumeEditing = React.createClass( {
-	propTypes: {
+class ResumeEditing extends React.Component {
+	static propTypes = {
 		siteId: PropTypes.number,
 		postId: PropTypes.number,
 		requesting: PropTypes.bool,
 		draft: PropTypes.object,
 		editPath: PropTypes.string,
 		section: PropTypes.string,
-		translate: PropTypes.func
-	},
+		translate: PropTypes.func,
+	};
 
 	componentWillReceiveProps( nextProps ) {
 		// Once we start tracking a draft, monitor received changes for that
@@ -54,22 +58,22 @@ const ResumeEditing = React.createClass( {
 		if ( 'draft' !== get( draft, 'status', 'draft' ) ) {
 			nextProps.resetEditorLastDraft();
 		}
-	},
+	}
 
 	componentWillUnmount() {
 		this.unregisterDispatcher();
-	},
+	}
 
-	unregisterDispatcher() {
+	unregisterDispatcher = () => {
 		if ( ! this.dispatchToken ) {
 			return;
 		}
 
 		Dispatcher.unregister( this.dispatchToken );
 		delete this.dispatchToken;
-	},
+	};
 
-	maybeStopTrackingDraft( payload ) {
+	maybeStopTrackingDraft = payload => {
 		const { action } = payload;
 		if ( 'RECEIVE_UPDATED_POST' !== action.type ) {
 			return;
@@ -84,12 +88,12 @@ const ResumeEditing = React.createClass( {
 		if ( 'draft' !== post.status ) {
 			this.props.resetEditorLastDraft();
 		}
-	},
+	};
 
-	trackAnalytics() {
+	trackAnalytics = () => {
 		analytics.ga.recordEvent( 'Master Bar', 'Resumed Editing' );
 		analytics.mc.bumpStat( 'calypso_edit_via', 'masterbar_resume_editing' );
-	},
+	};
 
 	render() {
 		const { siteId, postId, requesting, draft, editPath, section, site, translate } = this.props;
@@ -98,15 +102,13 @@ const ResumeEditing = React.createClass( {
 		}
 
 		const classes = classnames( 'resume-editing', {
-			'is-requesting': requesting
+			'is-requesting': requesting,
 		} );
 
 		return (
 			<a href={ editPath } onClick={ this.trackAnalytics } className={ classes }>
 				<QueryPosts siteId={ siteId } postId={ postId } />
-				<span className="resume-editing__label">
-					{ translate( 'Continue Editing' ) }
-				</span>
+				<span className="resume-editing__label">{ translate( 'Continue Editing' ) }</span>
 				<span className="resume-editing__post-title">
 					<SiteIcon size={ 16 } site={ site } />
 					{ draft.title ? decodeEntities( draft.title ) : translate( 'Untitled' ) }
@@ -114,10 +116,10 @@ const ResumeEditing = React.createClass( {
 			</a>
 		);
 	}
-} );
+}
 
 export default connect(
-	( state ) => {
+	state => {
 		const siteId = getEditorLastDraftSiteId( state );
 		const postId = getEditorLastDraftPostId( state );
 

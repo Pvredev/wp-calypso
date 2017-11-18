@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
+import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import Gridicon from 'gridicons';
 
@@ -11,32 +15,34 @@ import Gridicon from 'gridicons';
 import { isExternal } from 'lib/url';
 import { preload } from 'sections-preload';
 
-export default React.createClass( {
-	displayName: 'SidebarItem',
+export default class extends React.Component {
+	static displayName = 'SidebarItem';
 
-	propTypes: {
-		label: React.PropTypes.string.isRequired,
-		className: React.PropTypes.string,
-		link: React.PropTypes.string.isRequired,
-		onNavigate: React.PropTypes.func,
-		icon: React.PropTypes.string,
-		selected: React.PropTypes.bool,
-		preloadSectionName: React.PropTypes.string,
-		testTarget: React.PropTypes.string,
-		tipTarget: React.PropTypes.string
-	},
+	static propTypes = {
+		label: PropTypes.string.isRequired,
+		className: PropTypes.string,
+		link: PropTypes.string.isRequired,
+		onNavigate: PropTypes.func,
+		icon: PropTypes.string,
+		selected: PropTypes.bool,
+		preloadSectionName: PropTypes.string,
+		forceInternalLink: PropTypes.bool,
+		testTarget: PropTypes.string,
+		tipTarget: PropTypes.string,
+	};
 
-	_preloaded: false,
+	_preloaded = false;
 
-	preload() {
+	preload = () => {
 		if ( ! this._preloaded && this.props.preloadSectionName ) {
 			this._preloaded = true;
 			preload( this.props.preloadSectionName );
 		}
-	},
+	};
 
 	render() {
 		const isExternalLink = isExternal( this.props.link );
+		const showAsExternal = isExternalLink && ! this.props.forceInternalLink;
 		const classes = classnames( this.props.className, { selected: this.props.selected } );
 
 		return (
@@ -48,16 +54,16 @@ export default React.createClass( {
 				<a
 					onClick={ this.props.onNavigate }
 					href={ this.props.link }
-					target={ isExternalLink ? '_blank' : null }
+					target={ showAsExternal ? '_blank' : null }
 					rel={ isExternalLink ? 'noopener noreferrer' : null }
 					onMouseEnter={ this.preload }
 				>
 					<Gridicon icon={ this.props.icon } size={ 24 } />
 					<span className="menu-link-text">{ this.props.label }</span>
-					{ isExternalLink ? <Gridicon icon="external" size={ 24 } /> : null }
+					{ showAsExternal && <Gridicon icon="external" size={ 24 } /> }
 				</a>
 				{ this.props.children }
 			</li>
 		);
 	}
-} );
+}

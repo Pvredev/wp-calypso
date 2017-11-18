@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { mapValues } from 'lodash';
 
 /**
@@ -29,7 +32,7 @@ function syncInitialize( { fieldNames } ) {
 			}
 
 			return next;
-		}
+		},
 	};
 }
 

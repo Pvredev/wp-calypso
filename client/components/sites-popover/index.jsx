@@ -1,6 +1,10 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React from 'react';
 import { noop } from 'lodash';
 import classnames from 'classnames';
@@ -12,62 +16,54 @@ import Popover from 'components/popover';
 import { hasTouch } from 'lib/touch-detect';
 import SiteSelector from 'components/site-selector';
 
-module.exports = React.createClass( {
-	displayName: 'SitesPopover',
+export default class extends React.Component {
+	static displayName = 'SitesPopover';
 
-	propTypes: {
-		showDelay: React.PropTypes.number,
-		context: React.PropTypes.object,
-		visible: React.PropTypes.bool,
-		onClose: React.PropTypes.func,
-		position: React.PropTypes.string,
-		id: React.PropTypes.string,
-		groups: React.PropTypes.bool,
-		className: React.PropTypes.string
-	},
+	static propTypes = {
+		showDelay: PropTypes.number,
+		context: PropTypes.object,
+		visible: PropTypes.bool,
+		onClose: PropTypes.func,
+		position: PropTypes.string,
+		id: PropTypes.string,
+		groups: PropTypes.bool,
+		className: PropTypes.string,
+	};
 
-	getInitialState: function() {
-		return {
-			popoverVisible: false
-		};
-	},
+	static defaultProps = {
+		visible: false,
+		onClose: noop,
+		position: 'bottom left',
+		groups: false,
+		siteQuerystring: false,
+		className: '',
+	};
 
-	getDefaultProps: function() {
-		return {
-			visible: false,
-			onClose: noop,
-			position: 'bottom left',
-			groups: false,
-			siteQuerystring: false,
-			className: ''
-		};
-	},
+	state = {
+		popoverVisible: false,
+	};
 
-	componentDidMount: function() {
+	componentDidMount() {
 		this.updatePopoverVisibilityState();
-	},
+	}
 
-	componentDidUpdate: function( prevProps ) {
+	componentDidUpdate( prevProps ) {
 		if ( this.props.visible !== prevProps.visible ) {
 			this.updatePopoverVisibilityState();
 		}
-	},
+	}
 
-	updatePopoverVisibilityState: function() {
+	updatePopoverVisibilityState = () => {
 		this.setState( {
-			popoverVisible: this.props.visible
+			popoverVisible: this.props.visible,
 		} );
-	},
+	};
 
-	renderHeader() {
-		return (
-			<div className="sites-popover__header">
-				{ this.props.header }
-			</div>
-		);
-	},
+	renderHeader = () => {
+		return <div className="sites-popover__header">{ this.props.header }</div>;
+	};
 
-	renderSiteSelector() {
+	renderSiteSelector = () => {
 		return (
 			<SiteSelector
 				siteBasePath="/post"
@@ -76,11 +72,12 @@ module.exports = React.createClass( {
 				indicator={ false }
 				autoFocus={ ! hasTouch() }
 				groups={ true }
-				onClose={ this.props.onClose } />
+				onClose={ this.props.onClose }
+			/>
 		);
-	},
+	};
 
-	render: function() {
+	render() {
 		let classes = classnames(
 			this.props.className,
 			'popover sites-popover',
@@ -102,4 +99,4 @@ module.exports = React.createClass( {
 			</Popover>
 		);
 	}
-} );
+}

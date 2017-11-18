@@ -64,21 +64,6 @@
 	}
 }
 
-.reader__post-time {
-	color: lighten( $gray, 10 );
-	font-size: 12px;
-	line-height: 1;
-	white-space: nowrap;
-
-	@include breakpoint( "<480px" ) {
-		font-size: 11px;
-	}
-}
-
-.reader__post-time a {
-	color: inherit;
-}
-
 .reader__post-title {
 	clear: none;
 	font-family: $serif;
@@ -353,22 +338,15 @@
 
 .is-group-reader .main .empty-content,
 .is-reader-page .main .empty-content {
+
 	padding-top: 0;
 
 	.empty-content__title {
 		margin-top: -10px;
 	}
 
-	&.is-drake {
-		margin-top: -72px;
-
-		@include breakpoint( ">480px" ) {
-			margin-top: -90px;
-		}
-
-		.empty-content__title {
-			margin-top: 0;
-		}
+	&.stream__empty{
+		margin-top: 25px;
 	}
 }
 

@@ -2,28 +2,17 @@
 /**
  * External dependencies
  */
-import {
-	concat,
-	get,
-	has,
-	head,
-	map,
-	overEvery,
-	partial,
-	partialRight,
-	reduce,
-	split,
-} from 'lodash';
+import { get, map } from 'lodash';
 
 /**
  * Internal dependencies
  */
-import warn from 'lib/warn';
+import { makeParser } from 'state/data-layer/wpcom-http/utils';
+import apiResponseSchema from './schema';
 
 /**
  * Module constants
  */
-export const ACTIVITY_REQUIRED_PROPS = [ 'activity_id', 'name', 'published', 'summary' ];
 export const DEFAULT_GRAVATAR_URL = 'https://www.gravatar.com/avatar/0';
 export const DEFAULT_GRIDICON = 'info-outline';
 
@@ -34,36 +23,9 @@ export const DEFAULT_GRIDICON = 'info-outline';
  * @param  {array}  apiResponse.current.orderedItems Array of item objects
  * @return {array}                                   Array of proccessed item objects
  */
-export default function fromApi( apiResponse ) {
+export function transformer( apiResponse ) {
 	const orderedItems = get( apiResponse, [ 'current', 'orderedItems' ], [] );
-	return reduce( orderedItems, itemsReducer, [] );
-}
-
-/**
- * Takes an Activity item in the API format returns true if it appears valid, otherwise false
- *
- * @param  {object}  item Activity item
- * @return {boolean}      True if the item appears to be valid, otherwise false.
- */
-export const validateItem = overEvery(
-	map( ACTIVITY_REQUIRED_PROPS, partial( partialRight, has ) )
-);
-
-/**
- * Reducer which recieves an array of processed items and an item to process and returns a new array
- * with the processed item appended if it is valid.
- *
- * @param  {array}  validProcessedItems Array of processed items
- * @param  {object} item                API format item to process
- * @return {array}                      Array of items with current item appended if valid
- */
-export function itemsReducer( validProcessedItems, item ) {
-	if ( ! validateItem( item ) ) {
-		warn( 'Activity item fails validation and has been omitted: %o', item );
-		return validProcessedItems;
-	}
-
-	return concat( validProcessedItems, processItem( item ) );
+	return map( orderedItems, processItem );
 }
 
 /**
@@ -73,32 +35,32 @@ export function itemsReducer( validProcessedItems, item ) {
  * @return {object}       Processed Activity item ready for use in UI
  */
 export function processItem( item ) {
-	return {
-		...processItemBase( item ),
-	};
-}
+	const published = item.published;
+	const actor = item.actor;
 
-export function processItemActor( item ) {
 	return {
-		actorAvatarUrl: get( item, [ 'actor', 'icon', 'url' ], DEFAULT_GRAVATAR_URL ),
-		actorName: get( item, [ 'actor', 'name' ], '' ),
-		actorRemoteId: get( item, [ 'actor', 'external_user_id' ], 0 ),
-		actorRole: get( item, [ 'actor', 'role' ], '' ),
-		actorType: get( item, [ 'actor', 'type' ], '' ),
-		actorWpcomId: get( item, [ 'actor', 'wpcom_user_id' ], 0 ),
-	};
-}
+		/* activity actor */
+		actorAvatarUrl: get( actor, 'icon.url', DEFAULT_GRAVATAR_URL ),
+		actorName: get( actor, 'name', '' ),
+		actorRemoteId: get( actor, 'external_user_id', 0 ),
+		actorRole: get( actor, 'role', '' ),
+		actorType: get( actor, 'type', '' ),
+		actorWpcomId: get( actor, 'wpcom_user_id', 0 ),
 
-export function processItemBase( item ) {
-	const published = get( item, 'published' );
-	return {
-		...processItemActor( item ),
+		/* base activity info */
 		activityDate: published,
-		activityGroup: head( split( get( item, 'name' ), '__', 1 ) ),
+		activityGroup: ( item.name || '' ).split( '__', 1 )[ 0 ], // split always returns at least one item
 		activityIcon: get( item, 'gridicon', DEFAULT_GRIDICON ),
-		activityId: get( item, 'activity_id' ),
-		activityName: get( item, 'name' ),
+		activityId: item.activity_id,
+		activityIsRewindable: item.is_rewindable,
+		rewindId: item.rewind_id,
+		activityName: item.name,
+		activityStatus: item.status,
+		activityTargetTs: get( item, 'object.target_ts', undefined ),
 		activityTitle: get( item, 'summary', '' ),
 		activityTs: Date.parse( published ),
 	};
 }
+
+// fromApi default export
+export default makeParser( apiResponseSchema, {}, transformer );

@@ -1,9 +1,14 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
+import { localize } from 'i18n-calypso';
 import { includes, isEmpty, map } from 'lodash';
-const debug = require( 'debug' )( 'calypso:steps:site' ); // eslint-disable-line no-unused-vars
+import debugFactory from 'debug';
+
 /**
  * Internal dependencies
  */
@@ -21,37 +26,41 @@ import StepWrapper from 'signup/step-wrapper';
 import LoggedOutForm from 'components/logged-out-form';
 import LoggedOutFormFooter from 'components/logged-out-form/footer';
 
+const debug = debugFactory( 'calypso:steps:site' );
+
 /**
  * Constants
  */
-var VALIDATION_DELAY_AFTER_FIELD_CHANGES = 1500;
+const VALIDATION_DELAY_AFTER_FIELD_CHANGES = 1500;
 
 /**
  * Module variables
  */
-var siteUrlsSearched = [],
+let siteUrlsSearched = [],
 	timesValidationFailed = 0;
 
-module.exports = React.createClass( {
-	displayName: 'Site',
+class Site extends React.Component {
+	static displayName = 'Site';
 
-	getInitialState: function() {
-		return {
-			form: null,
-			submitting: false
-		};
-	},
+	state = {
+		form: null,
+		submitting: false,
+	};
 
-	componentWillMount: function() {
-		var initialState;
+	componentWillMount() {
+		let initialState;
 
 		if ( this.props.step && this.props.step.form ) {
 			initialState = this.props.step.form;
 
 			if ( ! isEmpty( this.props.step.errors ) ) {
-				initialState = formState.setFieldErrors( formState.setFieldsValidating( initialState ), {
-					site: this.props.step.errors[ 0 ].message
-				}, true );
+				initialState = formState.setFieldErrors(
+					formState.setFieldsValidating( initialState ),
+					{
+						site: this.props.step.errors[ 0 ].message,
+					},
+					true
+				);
 			}
 		}
 
@@ -63,37 +72,38 @@ module.exports = React.createClass( {
 			onError: this.handleFormControllerError,
 			debounceWait: VALIDATION_DELAY_AFTER_FIELD_CHANGES,
 			hideFieldErrorsOnChange: true,
-			initialState: initialState
+			initialState: initialState,
 		} );
 
 		this.setState( { form: this.formStateController.getInitialState() } );
-	},
+	}
 
-	componentWillUnmount: function() {
+	componentWillUnmount() {
 		this.save();
-	},
+	}
 
-	sanitizeSubdomain: function( domain ) {
+	sanitizeSubdomain = domain => {
 		if ( ! domain ) {
 			return domain;
 		}
 		return domain.replace( /[^a-zA-Z0-9]/g, '' ).toLowerCase();
-	},
+	};
 
-	sanitize: function( fields, onComplete ) {
-		var sanitizedSubdomain = this.sanitizeSubdomain( fields.site );
+	sanitize = ( fields, onComplete ) => {
+		const sanitizedSubdomain = this.sanitizeSubdomain( fields.site );
 		if ( fields.site !== sanitizedSubdomain ) {
 			onComplete( { site: sanitizedSubdomain } );
 		}
-	},
+	};
 
-	validate: function( fields, onComplete ) {
+	validate = ( fields, onComplete ) => {
 		wpcom.undocumented().sitesNew( {
 			blog_name: fields.site,
 			blog_title: fields.site,
-			validate: true
-		}, function( error, response ) {
-			var messages = {},
+			validate: true,
+		},
+		function( error, response ) {
+			let messages = {},
 				errorObject = {};
 
 			debug( error, response );
@@ -104,7 +114,7 @@ module.exports = React.createClass( {
 
 					analytics.tracks.recordEvent( 'calypso_signup_site_url_validation_failed', {
 						error: error.error,
-						site_url: fields.site
+						site_url: fields.site,
 					} );
 				}
 
@@ -115,162 +125,175 @@ module.exports = React.createClass( {
 			}
 			onComplete( null, messages );
 		} );
-	},
+	};
 
-	setFormState: function( state ) {
+	setFormState = state => {
 		this.setState( { form: state } );
-	},
+	};
 
-	resetAnalyticsData: function() {
+	resetAnalyticsData = () => {
 		siteUrlsSearched = [];
 		timesValidationFailed = 0;
-	},
+	};
 
-	handleSubmit: function( event ) {
+	handleSubmit = event => {
 		event.preventDefault();
 
 		this.setState( { submitting: true } );
 
-		this.formStateController.handleSubmit( function( hasErrors ) {
-			var site = formState.getFieldValue( this.state.form, 'site' );
+		this.formStateController.handleSubmit(
+			function( hasErrors ) {
+				const site = formState.getFieldValue( this.state.form, 'site' );
 
-			this.setState( { submitting: false } );
+				this.setState( { submitting: false } );
 
-			if ( hasErrors ) {
-				return;
-			}
+				if ( hasErrors ) {
+					return;
+				}
 
-			analytics.tracks.recordEvent( 'calypso_signup_site_step_submit', {
-				unique_site_urls_searched: siteUrlsSearched.length,
-				times_validation_failed: timesValidationFailed
-			} );
+				analytics.tracks.recordEvent( 'calypso_signup_site_step_submit', {
+					unique_site_urls_searched: siteUrlsSearched.length,
+					times_validation_failed: timesValidationFailed,
+				} );
 
-			this.resetAnalyticsData();
+				this.resetAnalyticsData();
 
-			SignupActions.submitSignupStep( {
-				processingMessage: this.translate( 'Setting up your site' ),
-				stepName: this.props.stepName,
-				form: this.state.form,
-				site
-			} );
+				SignupActions.submitSignupStep( {
+					processingMessage: this.props.translate( 'Setting up your site' ),
+					stepName: this.props.stepName,
+					form: this.state.form,
+					site,
+				} );
 
-			this.props.goToNextStep();
-		}.bind( this ) );
-	},
+				this.props.goToNextStep();
+			}.bind( this )
+		);
+	};
 
-	handleBlur: function() {
+	handleBlur = () => {
 		this.formStateController.sanitize();
 		this.formStateController.validate();
 		this.save();
-	},
+	};
 
-	save: function() {
+	save = () => {
 		SignupActions.saveSignupStep( {
 			stepName: 'site',
-			form: this.state.form
+			form: this.state.form,
 		} );
-	},
+	};
 
-	handleChangeEvent: function( event ) {
+	handleChangeEvent = event => {
 		this.formStateController.handleFieldChange( {
 			name: event.target.name,
-			value: event.target.value
+			value: event.target.value,
 		} );
-	},
+	};
 
-	handleFormControllerError: function( error ) {
+	handleFormControllerError = error => {
 		if ( error ) {
 			throw error;
 		}
-	},
+	};
 
-	getErrorMessagesWithLogin( fieldName ) {
-		const link = login( { isNative: config.isEnabled( 'login/native-login-links' ), redirectTo: window.location.href } ),
+	getErrorMessagesWithLogin = fieldName => {
+		const link = login( {
+				isNative: config.isEnabled( 'login/native-login-links' ),
+				redirectTo: window.location.href,
+			} ),
 			messages = formState.getFieldErrorMessages( this.state.form, fieldName );
 
 		if ( ! messages ) {
 			return;
 		}
 
-		return map( messages, function( message, error_code ) {
-			if ( error_code === 'blog_name_reserved' ) {
-				return (
-					<span>
-						<p>
-							{ message }&nbsp;
-							{ this.translate( 'Is this your username? {{a}}Log in now to claim this site address{{/a}}.', {
-								components: {
-									a: <a href={ link } />
-								}
-							} ) }
-						</p>
-					</span>
-				);
-			}
-			return message;
-		}.bind( this ) );
-	},
+		return map(
+			messages,
+			function( message, error_code ) {
+				if ( error_code === 'blog_name_reserved' ) {
+					return (
+						<span>
+							<p>
+								{ message }&nbsp;
+								{ this.props.translate(
+									'Is this your username? {{a}}Log in now to claim this site address{{/a}}.',
+									{
+										components: {
+											a: <a href={ link } />,
+										},
+									}
+								) }
+							</p>
+						</span>
+					);
+				}
+				return message;
+			}.bind( this )
+		);
+	};
 
-	formFields: function() {
-		var fieldDisabled = this.state.submitting;
+	formFields = () => {
+		const fieldDisabled = this.state.submitting;
 
-		return <ValidationFieldset errorMessages={ this.getErrorMessagesWithLogin( 'site' ) }>
-			<FormLabel htmlFor="site">
-				{ this.translate( 'Choose a site address' ) }
-			</FormLabel>
-			<FormTextInput
-				autoFocus={ true }
-				autoCapitalize={ 'off' }
-				className='site-signup-step__site-url'
-				disabled={ fieldDisabled }
-				type='text'
-				name='site'
-				value={ formState.getFieldValue( this.state.form, 'site' ) }
-				isError={ formState.isFieldInvalid( this.state.form, 'site' ) }
-				isValid={ formState.isFieldValid( this.state.form, 'site' ) }
-				onBlur={ this.handleBlur }
-				onChange={ this.handleChangeEvent } />
-			<span className='site-signup-step__wordpress-domain-suffix'>.wordpress.com</span>
-		</ValidationFieldset>;
-	},
+		return (
+			<ValidationFieldset errorMessages={ this.getErrorMessagesWithLogin( 'site' ) }>
+				<FormLabel htmlFor="site">{ this.props.translate( 'Choose a site address' ) }</FormLabel>
+				<FormTextInput
+					autoFocus={ true }
+					autoCapitalize={ 'off' }
+					className="site__site-url"
+					disabled={ fieldDisabled }
+					type="text"
+					name="site"
+					value={ formState.getFieldValue( this.state.form, 'site' ) }
+					isError={ formState.isFieldInvalid( this.state.form, 'site' ) }
+					isValid={ formState.isFieldValid( this.state.form, 'site' ) }
+					onBlur={ this.handleBlur }
+					onChange={ this.handleChangeEvent }
+				/>
+				<span className="site__wordpress-domain-suffix">.wordpress.com</span>
+			</ValidationFieldset>
+		);
+	};
 
-	buttonText: function() {
+	buttonText = () => {
 		if ( this.props.step && 'completed' === this.props.step.status ) {
-			return this.translate( 'Site created - Go to next step' );
+			return this.props.translate( 'Site created - Go to next step' );
 		}
 
 		if ( this.state.submitting ) {
-			return this.translate( 'Creating your site…' );
+			return this.props.translate( 'Creating your site…' );
 		}
 
-		return this.translate( 'Create My Site' );
-	},
+		return this.props.translate( 'Create My Site' );
+	};
 
-	formFooter: function() {
+	formFooter = () => {
 		return <FormButton>{ this.buttonText() }</FormButton>;
-	},
+	};
 
-	renderSiteForm: function() {
+	renderSiteForm = () => {
 		return (
-			<LoggedOutForm onSubmit={ this.handleSubmit } noValidate >
+			<LoggedOutForm onSubmit={ this.handleSubmit } noValidate>
 				{ this.formFields() }
 
-				<LoggedOutFormFooter>
-					{ this.formFooter() }
-				</LoggedOutFormFooter>
+				<LoggedOutFormFooter>{ this.formFooter() }</LoggedOutFormFooter>
 			</LoggedOutForm>
 		);
-	},
+	};
 
-	render: function() {
+	render() {
 		return (
 			<StepWrapper
 				flowName={ this.props.flowName }
 				stepName={ this.props.stepName }
 				positionInFlow={ this.props.positionInFlow }
-				fallbackHeaderText={ this.translate( 'Create your site.' ) }
+				fallbackHeaderText={ this.props.translate( 'Create your site.' ) }
 				signupProgress={ this.props.signupProgress }
-				stepContent={ this.renderSiteForm() } />
+				stepContent={ this.renderSiteForm() }
+			/>
 		);
 	}
-} );
+}
+
+export default localize( Site );

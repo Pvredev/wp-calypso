@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React, { PureComponent } from 'react';
 
 /**
@@ -10,9 +13,7 @@ import SpinnerLine from 'components/spinner-line';
 
 export default class SpinnerLineExample extends PureComponent {
 	render() {
-		return (
-			<SpinnerLine />
-		);
+		return <SpinnerLine />;
 	}
 }
 

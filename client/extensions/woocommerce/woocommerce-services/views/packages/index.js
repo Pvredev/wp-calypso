@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
@@ -15,24 +18,13 @@ import Card from 'components/card';
 import ExtendedHeader from 'woocommerce/components/extended-header';
 import PackageDialog from './package-dialog';
 import PackagesListItem from './packages-list-item';
+import QueryPackages from 'woocommerce/woocommerce-services/components/query-packages';
 import * as PackagesActions from '../../state/packages/actions';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import { getPackagesForm, getAllSelectedPackages } from '../../state/packages/selectors';
 
 class Packages extends Component {
-	componentWillMount() {
-		if ( this.props.siteId ) {
-			this.props.fetchSettings( this.props.siteId );
-		}
-	}
-
-	componentWillReceiveProps( props ) {
-		if ( props.siteId && props.siteId !== this.props.siteId ) {
-			this.props.fetchSettings( props.siteId );
-		}
-	}
-
-	renderListHeader = ( packages ) => {
+	renderListHeader = packages => {
 		const { translate } = this.props;
 
 		if ( ! packages || ! packages.length ) {
@@ -56,10 +48,18 @@ class Packages extends Component {
 		let button = null;
 		if ( pckg.is_user_defined ) {
 			const onEdit = () => this.props.editPackage( siteId, pckg );
-			button = <Button compact onClick={ onEdit }>{ translate( 'Edit' ) }</Button>;
+			button = (
+				<Button compact onClick={ onEdit }>
+					{ translate( 'Edit' ) }
+				</Button>
+			);
 		} else {
 			const onRemove = () => this.props.removePredefinedPackage( siteId, pckg.serviceId, pckg.id );
-			button = <Button compact onClick={ onRemove }>{ translate( 'Remove' ) }</Button>;
+			button = (
+				<Button compact onClick={ onRemove }>
+					{ translate( 'Remove' ) }
+				</Button>
+			);
 		}
 
 		return (
@@ -68,7 +68,8 @@ class Packages extends Component {
 				siteId={ siteId }
 				isPlaceholder={ isFetching }
 				data={ pckg }
-				dimensionUnit={ dimensionUnit }>
+				dimensionUnit={ dimensionUnit }
+			>
 				{ button }
 			</PackagesListItem>
 		);
@@ -78,19 +79,25 @@ class Packages extends Component {
 		const { isFetching, siteId, allSelectedPackages, translate } = this.props;
 		const packages = isFetching ? [ {}, {}, {} ] : allSelectedPackages;
 
-		const addPackage = () => ( this.props.addPackage( siteId ) );
+		const addPackage = () => this.props.addPackage( siteId );
 
 		return (
 			<div>
+				<QueryPackages siteId={ siteId } />
 				<ExtendedHeader
 					label={ translate( 'Packages' ) }
-					description={ translate( 'Add boxes, envelopes, and other packages you use most frequently.' ) }>
-					<Button onClick={ addPackage } disabled={ isFetching }>{ translate( 'Add package' ) }</Button>
+					description={ translate(
+						'Add boxes, envelopes, and other packages you use most frequently.'
+					) }
+				>
+					<Button onClick={ addPackage } disabled={ isFetching }>
+						{ translate( 'Add package' ) }
+					</Button>
 				</ExtendedHeader>
 				<Card className="packages__packages">
 					{ this.renderListHeader( packages ) }
 					{ packages.map( this.renderListItem ) }
-					{ ( ! isFetching ) && <PackageDialog { ...this.props } /> }
+					{ ! isFetching && <PackageDialog { ...this.props } /> }
 				</Card>
 			</div>
 		);
@@ -112,23 +119,22 @@ Packages.propTypes = {
 		dimensionUnit: PropTypes.string,
 		weightUnit: PropTypes.string,
 		packageSchema: PropTypes.object,
-		predefinedSchema: PropTypes.object,
+		predefinedSchema: PropTypes.oneOfType( [ PropTypes.object, PropTypes.array ] ),
 	} ).isRequired,
 };
 
 export default connect(
-	( state ) => {
+	state => {
 		const siteId = getSelectedSiteId( state );
 		const form = getPackagesForm( state, siteId );
 		return {
 			siteId,
 			isFetching: ! form || ! form.packages || form.isFetching,
 			form,
-			allSelectedPackages: getAllSelectedPackages( state, siteId ),
+			allSelectedPackages: getAllSelectedPackages( state, siteId ) || [],
 		};
 	},
-	( dispatch ) => (
-		{
-			...bindActionCreators( PackagesActions, dispatch ),
-		} )
+	dispatch => ( {
+		...bindActionCreators( PackagesActions, dispatch ),
+	} )
 )( localize( Packages ) );

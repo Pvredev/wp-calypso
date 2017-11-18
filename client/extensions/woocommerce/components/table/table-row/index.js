@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
@@ -35,14 +38,14 @@ const TableRow = ( { className, isHeader, href, children, ...props } ) => {
 			tabIndex="0"
 			onClick={ goToHref }
 			onKeyDown={ getKeyboardHandler( goToHref ) }
-			{ ...props }>
+			{ ...props }
+		>
 			{ children }
 		</tr>
 	);
 };
 
 TableRow.propTypes = {
-	children: PropTypes.node,
 	className: PropTypes.string,
 	href: PropTypes.string,
 	isHeader: PropTypes.bool,

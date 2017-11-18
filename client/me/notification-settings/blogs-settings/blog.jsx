@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { Component, PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Immutable from 'immutable';
 import classNames from 'classnames';
@@ -23,7 +27,7 @@ class BlogSettings extends Component {
 		hasUnsavedChanges: PropTypes.bool.isRequired,
 		onToggle: PropTypes.func.isRequired,
 		onSave: PropTypes.func.isRequired,
-		onSaveToAll: PropTypes.func.isRequired
+		onSaveToAll: PropTypes.func.isRequired,
 	};
 
 	state = { isExpanded: false };
@@ -42,42 +46,49 @@ class BlogSettings extends Component {
 			hasUnsavedChanges,
 			onToggle,
 			onSave,
-			onSaveToAll
+			onSaveToAll,
 		} = this.props;
 
 		const { isExpanded } = this.state;
 
 		const styles = classNames( 'notification-settings-blog-settings', {
 			'is-compact': ! isExpanded,
-			'is-expanded': isExpanded
+			'is-expanded': isExpanded,
 		} );
+
+		const settingKeys = [
+			'new_comment',
+			'comment_like',
+			'post_like',
+			'follow',
+			'achievement',
+			'mentions',
+			'scheduled_publicize',
+		];
+
+		if ( site.options.is_wpcom_store ) {
+			settingKeys.push( 'store_order' );
+		}
 
 		return (
 			<Card className={ styles }>
-				<Header
-					{ ...{ site, settings, disableToggle } }
-					onToggle={ this.onToggle } />
+				<Header { ...{ site, settings, disableToggle } } onToggle={ this.onToggle } />
 				{ ( () => {
 					if ( isExpanded || disableToggle ) {
-						return <SettingsForm
-							{ ...{
-								sourceId,
-								settings,
-								hasUnsavedChanges,
-								isApplyAllVisible: ! disableToggle,
-								onToggle,
-								onSave,
-								onSaveToAll
-							} }
-							settingKeys={ [
-								'new_comment',
-								'comment_like',
-								'post_like',
-								'follow',
-								'achievement',
-								'mentions',
-								'scheduled_publicize',
-							] } />;
+						return (
+							<SettingsForm
+								{ ...{
+									sourceId,
+									settings,
+									hasUnsavedChanges,
+									isApplyAllVisible: ! disableToggle,
+									onToggle,
+									onSave,
+									onSaveToAll,
+								} }
+								settingKeys={ settingKeys }
+							/>
+						);
 					}
 				} )() }
 			</Card>
@@ -86,7 +97,7 @@ class BlogSettings extends Component {
 }
 
 const mapStateToProps = ( state, { siteId } ) => ( {
-	site: getSite( state, siteId )
+	site: getSite( state, siteId ),
 } );
 
 export default connect( mapStateToProps )( BlogSettings );

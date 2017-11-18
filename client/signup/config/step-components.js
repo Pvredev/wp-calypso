@@ -1,9 +1,14 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import config from 'config';
+import AboutStepComponent from 'signup/steps/about';
 import DesignTypeComponent from 'signup/steps/design-type';
 import DesignTypeWithStoreComponent from 'signup/steps/design-type-with-store';
+import DesignTypeWithAtomicStoreComponent from 'signup/steps/design-type-with-atomic-store';
 import DomainsStepComponent from 'signup/steps/domains';
 import GetDotBlogPlansStepComponent from 'signup/steps/get-dot-blog-plans';
 import PlansStepComponent from 'signup/steps/plans';
@@ -16,10 +21,13 @@ import SurveyStepComponent from 'signup/steps/survey';
 import ThemeSelectionComponent from 'signup/steps/theme-selection';
 import UserSignupComponent from 'signup/steps/user';
 import PlansStepWithoutFreePlan from 'signup/steps/plans-without-free';
+import PlansAtomicStoreComponent from 'signup/steps/plans-atomic-store';
 
 export default {
+	about: AboutStepComponent,
 	'design-type': DesignTypeComponent,
 	'design-type-with-store': DesignTypeWithStoreComponent,
+	'design-type-with-store-nux': DesignTypeWithAtomicStoreComponent,
 	domains: DomainsStepComponent,
 	'domain-only': DomainsStepComponent,
 	'domains-theme-preselected': DomainsStepComponent,
@@ -27,6 +35,7 @@ export default {
 	'get-dot-blog-plans': GetDotBlogPlansStepComponent,
 	'get-dot-blog-themes': ThemeSelectionComponent,
 	plans: PlansStepComponent,
+	'plans-store-nux': PlansAtomicStoreComponent,
 	'plans-site-selected': PlansStepWithoutFreePlan,
 	site: SiteComponent,
 	'rebrand-cities-welcome': RebrandCitiesWelcomeComponent,
@@ -42,5 +51,5 @@ export default {
 	'portfolio-themes': ThemeSelectionComponent,
 	'themes-site-selected': ThemeSelectionComponent,
 	user: UserSignupComponent,
-	'oauth2-user': UserSignupComponent
+	'oauth2-user': UserSignupComponent,
 };

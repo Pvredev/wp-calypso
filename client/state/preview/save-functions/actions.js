@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import debugFactory from 'debug';
 import wpcom from 'lib/wp';
 

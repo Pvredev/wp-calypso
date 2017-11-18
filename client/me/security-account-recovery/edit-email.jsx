@@ -1,90 +1,82 @@
+/** @format */
+
 /**
  * External dependencies
  */
-var ReactDom = require( 'react-dom' ),
-	React = require( 'react' ),
-	LinkedStateMixin = require( 'react-addons-linked-state-mixin' ),
-	emailValidator = require( 'email-validator' );
+
+import PropTypes from 'prop-types';
+import { localize } from 'i18n-calypso';
+import ReactDom from 'react-dom';
+import React from 'react';
+import emailValidator from 'email-validator';
 
 /**
  * Internal dependencies
  */
-var FormFieldset = require( 'components/forms/form-fieldset' ),
-	FormTextInput = require( 'components/forms/form-text-input' ),
-	FormInputValidation = require( 'components/forms/form-input-validation' ),
-	FormSettingExplanation = require( 'components/forms/form-setting-explanation' ),
-	Buttons = require( './buttons' );
+import FormFieldset from 'components/forms/form-fieldset';
+import FormTextInput from 'components/forms/form-text-input';
+import FormInputValidation from 'components/forms/form-input-validation';
+import FormSettingExplanation from 'components/forms/form-setting-explanation';
+import Buttons from './buttons';
 
-module.exports = React.createClass( {
-	displayName: 'SecurityAccountRecoveryRecoveryEmailEdit',
+class SecurityAccountRecoveryRecoveryEmailEdit extends React.Component {
+	static displayName = 'SecurityAccountRecoveryRecoveryEmailEdit';
 
-	mixins: [ LinkedStateMixin ],
+	static propTypes = {
+		storedEmail: PropTypes.string,
+		onSave: PropTypes.func,
+		onCancel: PropTypes.func,
+		onDelete: PropTypes.func,
+	};
 
-	propTypes: {
-		storedEmail: React.PropTypes.string,
-		onSave: React.PropTypes.func,
-		onCancel: React.PropTypes.func,
-		onDelete: React.PropTypes.func
-	},
+	static defaultProps = {
+		storedEmail: null,
+	};
 
-	getDefaultProps: function() {
-		return {
-			storedEmail: null
-		};
-	},
+	state = {
+		email: this.props.storedEmail || null,
+	};
 
-	getInitialState: function() {
-		return {
-			email: this.props.storedEmail || null
-		};
-	},
-
-	componentDidMount: function() {
+	componentDidMount() {
 		this.focusInput();
-	},
+	}
 
-	renderValidation: function() {
+	renderValidation = () => {
 		var validation = null;
 		if ( this.state.validation ) {
-			validation = (
-				<FormInputValidation
-					isError
-					text={ this.state.validation }
-					/>
-			);
+			validation = <FormInputValidation isError text={ this.state.validation } />;
 		}
 		return validation;
-	},
+	};
 
-	renderExplanation: function() {
+	renderExplanation = () => {
 		var explanation = null,
 			text;
 
 		if ( this.props.primaryEmail ) {
-			text = this.translate( 'Your primary email address is {{email/}}', {
+			text = this.props.translate( 'Your primary email address is {{email/}}', {
 				components: {
-					email: <strong>{ this.props.primaryEmail }</strong>
-				}
+					email: <strong>{ this.props.primaryEmail }</strong>,
+				},
 			} );
 
-			explanation = (
-				<FormSettingExplanation>{ text }</FormSettingExplanation>
-			);
+			explanation = <FormSettingExplanation>{ text }</FormSettingExplanation>;
 		}
 		return explanation;
-	},
+	};
 
-	render: function() {
+	render() {
 		return (
 			<div className={ this.props.className }>
 				<FormFieldset>
 					<FormTextInput
-						valueLink={ this.linkState( 'email' ) }
 						isError={ this.state.isInvalid }
 						onKeyUp={ this.onKeyUp }
-						name="recovery-email"
+						name="email"
 						ref="email"
-						/>
+						value={ this.state.email }
+						onChange={ this.handleChange }
+					/>
 
 					{ this.renderValidation() }
 					{ this.renderExplanation() }
@@ -93,20 +85,20 @@ module.exports = React.createClass( {
 				<Buttons
 					isSavable={ this.isSavable() }
 					isDeletable={ !! this.props.storedEmail }
-					saveText={ this.translate( 'Save Email' ) }
+					saveText={ this.props.translate( 'Save Email' ) }
 					onSave={ this.onSave }
 					onDelete={ this.onDelete }
 					onCancel={ this.onCancel }
-					/>
+				/>
 			</div>
 		);
-	},
+	}
 
-	focusInput: function() {
+	focusInput = () => {
 		ReactDom.findDOMNode( this.refs.email ).focus();
-	},
+	};
 
-	isSavable: function() {
+	isSavable = () => {
 		if ( ! this.state.email ) {
 			return false;
 		}
@@ -116,41 +108,53 @@ module.exports = React.createClass( {
 		}
 
 		return true;
-	},
+	};
 
-	onKeyUp: function( event ) {
+	onKeyUp = event => {
 		if ( event.key === 'Enter' ) {
 			this.onSave();
 		}
-	},
+	};
 
-	onSave: function() {
+	onSave = () => {
 		var email = this.state.email;
 
 		if ( ! this.isSavable() ) {
 			return;
 		}
 
-		if ( this.props.primaryEmail &&
-				email === this.props.primaryEmail ) {
-			this.setState( { validation: this.translate( 'You have entered your primary email address. Please enter a different email address.' ) } );
+		if ( this.props.primaryEmail && email === this.props.primaryEmail ) {
+			this.setState( {
+				validation: this.props.translate(
+					'You have entered your primary email address. Please enter a different email address.'
+				),
+			} );
 			return;
 		}
 
 		if ( ! emailValidator.validate( email ) ) {
-			this.setState( { validation: this.translate( 'Please enter a valid email address.' ) } );
+			this.setState( {
+				validation: this.props.translate( 'Please enter a valid email address.' ),
+			} );
 			return;
 		}
 
 		this.setState( { validation: null } );
 		this.props.onSave( email );
-	},
+	};
 
-	onCancel: function() {
+	onCancel = () => {
 		this.props.onCancel();
-	},
+	};
 
-	onDelete: function() {
+	onDelete = () => {
 		this.props.onDelete();
-	}
-} );
+	};
+
+	handleChange = e => {
+		const { name, value } = e.currentTarget;
+		this.setState( { [ name ]: value } );
+	};
+}
+
+export default localize( SecurityAccountRecoveryRecoveryEmailEdit );

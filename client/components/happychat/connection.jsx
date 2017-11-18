@@ -1,20 +1,24 @@
+/** @format */
+
 /**
  * External dependencies
  */
 import { Component } from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 
 /**
  * Internal dependencies
  */
 import config from 'config';
-import { connectChat } from 'state/happychat/actions';
-import { isHappychatConnectionUninitialized } from 'state/happychat/selectors';
+import { getHappychatAuth } from 'state/happychat/utils';
+import isHappychatConnectionUninitialized from 'state/happychat/selectors/is-happychat-connection-uninitialized';
+import { initConnection } from 'state/happychat/connection/actions';
 
-class HappychatConnection extends Component {
+export class HappychatConnection extends Component {
 	componentDidMount() {
-		if ( config.isEnabled( 'happychat' ) && this.props.isUninitialized ) {
-			this.props.connectChat();
+		if ( this.props.isHappychatEnabled && this.props.isConnectionUninitialized ) {
+			this.props.initConnection( this.props.getAuth() );
 		}
 	}
 
@@ -23,9 +27,18 @@ class HappychatConnection extends Component {
 	}
 }
 
+HappychatConnection.propTypes = {
+	getAuth: PropTypes.func,
+	isConnectionUninitialized: PropTypes.bool,
+	isHappychatEnabled: PropTypes.bool,
+	initConnection: PropTypes.func,
+};
+
 export default connect(
 	state => ( {
-		isUninitialized: isHappychatConnectionUninitialized( state )
+		getAuth: getHappychatAuth( state ),
+		isConnectionUninitialized: isHappychatConnectionUninitialized( state ),
+		isHappychatEnabled: config.isEnabled( 'happychat' ),
 	} ),
-	{ connectChat }
+	{ initConnection }
 )( HappychatConnection );

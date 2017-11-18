@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { Component, PropTypes } from 'react';
+
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import Gridicon from 'gridicons';
 import { localize } from 'i18n-calypso';
 
@@ -10,6 +14,7 @@ import { localize } from 'i18n-calypso';
  */
 import CommentDetailAuthor from './comment-detail-author';
 import AutoDirection from 'components/auto-direction';
+import Emojify from 'components/emojify';
 
 export class CommentDetailComment extends Component {
 	static propTypes = {
@@ -24,8 +29,11 @@ export class CommentDetailComment extends Component {
 		blockUser: PropTypes.func,
 		commentContent: PropTypes.string,
 		commentDate: PropTypes.string,
+		commentId: PropTypes.number,
 		commentStatus: PropTypes.string,
+		commentType: PropTypes.string,
 		commentUrl: PropTypes.string,
+		siteBlacklist: PropTypes.string,
 		siteId: PropTypes.number,
 	};
 
@@ -34,16 +42,19 @@ export class CommentDetailComment extends Component {
 			authorAvatarUrl,
 			authorDisplayName,
 			authorEmail,
+			authorId,
 			authorIp,
 			authorIsBlocked,
 			authorUrl,
 			authorUsername,
-			blockUser,
 			commentContent,
 			commentDate,
+			commentId,
 			commentStatus,
+			commentType,
 			commentUrl,
 			repliedToComment,
+			siteBlacklist,
 			siteId,
 			translate,
 		} = this.props;
@@ -55,30 +66,36 @@ export class CommentDetailComment extends Component {
 						authorAvatarUrl={ authorAvatarUrl }
 						authorDisplayName={ authorDisplayName }
 						authorEmail={ authorEmail }
+						authorId={ authorId }
 						authorIp={ authorIp }
 						authorIsBlocked={ authorIsBlocked }
 						authorUrl={ authorUrl }
 						authorUsername={ authorUsername }
-						blockUser={ blockUser }
 						commentDate={ commentDate }
+						commentId={ commentId }
 						commentStatus={ commentStatus }
+						commentType={ commentType }
 						commentUrl={ commentUrl }
+						siteBlacklist={ siteBlacklist }
 						siteId={ siteId }
 					/>
 					<AutoDirection>
-						<div className="comment-detail__comment-body"
-							dangerouslySetInnerHTML={ { __html: commentContent } } //eslint-disable-line react/no-danger
-						/>
+						<Emojify>
+							<div
+								className="comment-detail__comment-body"
+								dangerouslySetInnerHTML={ { __html: commentContent } } //eslint-disable-line react/no-danger
+							/>
+						</Emojify>
 					</AutoDirection>
 
-					{ repliedToComment &&
+					{ repliedToComment && (
 						<div className="comment-detail__comment-reply">
 							<a>
 								<Gridicon icon="reply" />
 								<span>{ translate( 'You replied to this comment' ) }</span>
 							</a>
 						</div>
-					}
+					) }
 				</div>
 			</div>
 		);

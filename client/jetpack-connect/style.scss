@@ -3,14 +3,6 @@
 
 	.logged-out-form__links {
 		max-width: 100%;
-
-		.logged-out-form__link-item {
-			.gridicon {
-				position: relative;
-				top: 4px;
-			}
-		}
-
 	}
 
 	.formatted-header{
@@ -26,6 +18,10 @@
 	.button.is-primary {
 		width: 320px;
 	}
+
+	.jetpack-connect__happychat-button {
+		text-align: center;
+	}
 }
 
 .jetpack-connect__main-error {
@@ -33,11 +29,8 @@
 		margin-top: 15px;
 		text-align: center;
 
-		.logged-out-form__link-item {
-			.gridicon {
-				position: relative;
-				top: 4px;
-			}
+		.jetpack-connect__happychat-button {
+			text-align: center;
 		}
 	}
 }
@@ -105,10 +98,6 @@
 
 	.button {
 		width: 100%;
-	}
-
-	.logged-out-form__links .gridicon {
-		top: 2px;
 	}
 }
 
@@ -474,17 +463,33 @@
 	word-break: break-word;
 }
 
-.jetpack-connect__help-button {
-	.gridicon {
-		width: 18px;
-		height: 18px;
-	}
-}
-
 .jetpack-connect__error-details {
 	margin-bottom: 16px;
 }
 
+.jetpack-connect__plans-nav-buttons {
+	text-align: center;
+	margin-bottom: 17px;
+
+	.button .gridicon {
+		padding-left: 4px;
+		margin-right: -5px;
+	}
+}
+
+.jetpack-connect__happychat-button {
+	background: none;
+	border: none;
+	color: darken( $gray, 20% );
+	font-weight: normal;
+	padding: 16px 24px;
+	text-align: left;
+	width: 100%;
+
+	&:hover {
+		color: $blue-medium;
+	}
+}
 
 .jetpack-connect__plans {
 	.plan-features__header-figure {
@@ -515,5 +520,36 @@
 	.formatted-header,
 	.formatted-header.is-without-subhead {
 		margin-bottom: 8px;
+	}
+
+	.logged-out-form__links,
+	.jetpack-connect__happychat-button {
+		text-align: center;
+	}
+}
+
+.jetpack-connect__auth-form-header-image {
+	text-align: center;
+}
+
+@media ( max-height: 920px ) {
+	.jetpack-connect__hide-plan-icons {
+		.jetpack-connect__plans-nav-buttons {
+			margin-bottom: 0;
+		}
+
+		.jetpack-connect__plans {
+			.plans-wrapper {
+				padding-bottom: 0;
+			}
+
+			.plan-features__graphic {
+				display: none;
+			}
+
+			.plan-features__pricing {
+				padding-top: 16px;
+			}
+		}
 	}
 }

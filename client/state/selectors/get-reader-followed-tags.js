@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { filter, sortBy } from 'lodash';
 
 /**

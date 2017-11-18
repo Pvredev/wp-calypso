@@ -1,25 +1,27 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React from 'react';
 import { isEqual } from 'lodash';
 
-const StoreConnection = React.createClass( {
-	propTypes: {
-		component: React.PropTypes.func,
-		getStateFromStores: React.PropTypes.func.isRequired,
-		isDataLoading: React.PropTypes.func,
-		loadingPlaceholder: React.PropTypes.func,
-		stores: React.PropTypes.array.isRequired
-	},
+class StoreConnection extends React.Component {
+	static propTypes = {
+		component: PropTypes.func,
+		getStateFromStores: PropTypes.func.isRequired,
+		isDataLoading: PropTypes.func,
+		loadingPlaceholder: PropTypes.func,
+		stores: PropTypes.array.isRequired,
+	};
 
-	getInitialState() {
-		return this.props.getStateFromStores( this.props );
-	},
+	state = this.props.getStateFromStores( this.props );
 
 	componentDidMount() {
 		this.addStoreListeners( this.props.stores );
-	},
+	}
 
 	componentWillReceiveProps( nextProps ) {
 		if ( ! isEqual( this.props, nextProps ) ) {
@@ -27,35 +29,35 @@ const StoreConnection = React.createClass( {
 			this.addStoreListeners( nextProps.stores );
 			this.setState( nextProps.getStateFromStores( nextProps ) );
 		}
-	},
+	}
 
 	componentWillUnmount() {
 		this.removeStoreListeners( this.props.stores );
-	},
+	}
 
-	addStoreListeners( stores ) {
+	addStoreListeners = stores => {
 		stores.forEach( function( store ) {
 			store.on( 'change', this.handleStoresChanged );
 		}, this );
-	},
+	};
 
-	removeStoreListeners( stores ) {
+	removeStoreListeners = stores => {
 		stores.forEach( function( store ) {
 			store.off( 'change', this.handleStoresChanged );
 		}, this );
-	},
+	};
 
-	handleStoresChanged() {
+	handleStoresChanged = () => {
 		this.setState( this.props.getStateFromStores( this.props ) );
-	},
+	};
 
-	isDataLoading() {
+	isDataLoading = () => {
 		if ( ! this.props.loadingPlaceholder || ! this.props.isDataLoading ) {
 			return false;
 		}
 
 		return this.props.isDataLoading( this.state );
-	},
+	};
 
 	render() {
 		if ( this.isDataLoading() ) {
@@ -70,6 +72,6 @@ const StoreConnection = React.createClass( {
 
 		return React.cloneElement( child, this.state );
 	}
-} );
+}
 
 export default StoreConnection;

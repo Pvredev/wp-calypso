@@ -1,6 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
+import { localize } from 'i18n-calypso';
 import React from 'react';
 import classnames from 'classnames';
 
@@ -9,31 +14,31 @@ import classnames from 'classnames';
  */
 import Spinner from 'components/spinner';
 
-export default React.createClass( {
-	displayName: 'CustomizerLoadingPanel',
+class CustomizerLoadingPanel extends React.Component {
+	static displayName = 'CustomizerLoadingPanel';
 
-	propTypes: {
-		isLoaded: React.PropTypes.bool,
-	},
+	static propTypes = {
+		isLoaded: PropTypes.bool,
+	};
 
-	getDefaultProps: function() {
-		return {
-			isLoaded: false,
-		};
-	},
+	static defaultProps = {
+		isLoaded: false,
+	};
 
-	render: function() {
+	render() {
 		const noticeClassNames = classnames( 'customizer-loading-panel__notice', {
-			'is-iframe-loaded': this.props.isLoaded
+			'is-iframe-loaded': this.props.isLoaded,
 		} );
 
 		return (
 			<div className={ noticeClassNames }>
 				<div className="customizer-loading-panel__notice-label">
 					<Spinner />
-					{ this.translate( 'Loading the Customizer…' ) }
+					{ this.props.translate( 'Loading the Customizer…' ) }
 				</div>
 			</div>
 		);
 	}
-} );
+}
+
+export default localize( CustomizerLoadingPanel );

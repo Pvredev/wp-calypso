@@ -1,8 +1,10 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
-import { combineReducers, createReducer } from 'state/utils';
 
+import { combineReducers, createReducer } from 'state/utils';
 import {
 	CHECK_YOUR_EMAIL_PAGE,
 	INTERSTITIAL_PAGE,

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
- * External Dependencies
+ * External dependencies
  */
+
 import { uniqBy } from 'lodash';
 
 /**
@@ -34,5 +37,5 @@ export function loaded( state = false, action ) {
 
 export default combineReducers( {
 	items,
-	loaded
+	loaded,
 } );

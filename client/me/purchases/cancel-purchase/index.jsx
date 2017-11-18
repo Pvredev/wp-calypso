@@ -1,9 +1,13 @@
+/** @format */
+
 /**
- * External Dependencies
+ * External dependencies
  */
+
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 import page from 'page';
+import PropTypes from 'prop-types';
 import React from 'react';
 
 /**
@@ -42,13 +46,13 @@ import userFactory from 'lib/user';
 
 const user = userFactory();
 
-const CancelPurchase = React.createClass( {
-	propTypes: {
-		hasLoadedSites: React.PropTypes.bool.isRequired,
-		hasLoadedUserPurchasesFromServer: React.PropTypes.bool.isRequired,
-		selectedPurchase: React.PropTypes.object,
-		selectedSite: React.PropTypes.oneOfType( [ React.PropTypes.bool, React.PropTypes.object ] ),
-	},
+class CancelPurchase extends React.Component {
+	static propTypes = {
+		hasLoadedSites: PropTypes.bool.isRequired,
+		hasLoadedUserPurchasesFromServer: PropTypes.bool.isRequired,
+		selectedPurchase: PropTypes.object,
+		selectedSite: PropTypes.oneOfType( [ PropTypes.bool, PropTypes.object ] ),
+	};
 
 	componentWillMount() {
 		if ( ! this.isDataValid() ) {
@@ -57,7 +61,7 @@ const CancelPurchase = React.createClass( {
 		}
 
 		recordPageView( 'cancel_purchase', this.props );
-	},
+	}
 
 	componentWillReceiveProps( nextProps ) {
 		if ( this.isDataValid() && ! this.isDataValid( nextProps ) ) {
@@ -66,20 +70,22 @@ const CancelPurchase = React.createClass( {
 		}
 
 		recordPageView( 'cancel_purchase', this.props, nextProps );
-	},
+	}
 
-	isDataValid( props = this.props ) {
+	isDataValid = ( props = this.props ) => {
 		if ( isDataLoading( props ) ) {
 			return true;
 		}
 
-		const purchase = getPurchase( props ), selectedSite = getSelectedSite( props );
+		const purchase = getPurchase( props ),
+			selectedSite = getSelectedSite( props );
 
 		return selectedSite && purchase && isCancelable( purchase );
-	},
+	};
 
-	redirect( props ) {
-		const purchase = getPurchase( props ), selectedSite = getSelectedSite( props );
+	redirect = props => {
+		const purchase = getPurchase( props ),
+			selectedSite = getSelectedSite( props );
 		let redirectPath = paths.purchasesRoot();
 
 		if ( selectedSite && purchase && ! isCancelable( purchase ) ) {
@@ -87,10 +93,11 @@ const CancelPurchase = React.createClass( {
 		}
 
 		page.redirect( redirectPath );
-	},
+	};
 
-	renderFooterText() {
-		const purchase = getPurchase( this.props ), { refundText, renewDate } = purchase;
+	renderFooterText = () => {
+		const purchase = getPurchase( this.props ),
+			{ refundText, renewDate } = purchase;
 
 		if ( isRefundable( purchase ) ) {
 			return this.props.translate( '%(refundText)s to be refunded', {
@@ -99,7 +106,7 @@ const CancelPurchase = React.createClass( {
 			} );
 		}
 
-		const renewalDate = this.moment( renewDate ).format( 'LL' );
+		const renewalDate = this.props.moment( renewDate ).format( 'LL' );
 
 		if ( isDomainRegistration( purchase ) ) {
 			return this.props.translate( 'Domain will be removed on %(renewalDate)s', {
@@ -110,7 +117,7 @@ const CancelPurchase = React.createClass( {
 		return this.props.translate( 'Subscription will be removed on %(renewalDate)s', {
 			args: { renewalDate },
 		} );
-	},
+	};
 
 	render() {
 		if ( ! this.isDataValid() ) {
@@ -154,9 +161,7 @@ const CancelPurchase = React.createClass( {
 				</HeaderCake>
 
 				<Card className="cancel-purchase__card">
-					<h2>
-						{ heading }
-					</h2>
+					<h2>{ heading }</h2>
 
 					<CancelPurchaseRefundInformation purchase={ purchase } />
 				</Card>
@@ -174,8 +179,8 @@ const CancelPurchase = React.createClass( {
 				</CompactCard>
 			</Main>
 		);
-	},
-} );
+	}
+}
 
 export default connect( ( state, props ) => ( {
 	hasLoadedSites: ! isRequestingSites( state ),

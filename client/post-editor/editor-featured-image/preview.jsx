@@ -1,7 +1,9 @@
+/** @format */
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { get, some } from 'lodash';
@@ -16,19 +18,19 @@ import SpinnerLine from 'components/spinner-line';
 import ImagePreloader from 'components/image-preloader';
 import { getSelectedSiteId } from 'state/ui/selectors';
 
-const EditorFeaturedImagePreview = React.createClass( {
-	propTypes: {
+class EditorFeaturedImagePreview extends Component {
+	static propTypes = {
 		siteId: PropTypes.number,
 		image: PropTypes.object,
-		maxWidth: PropTypes.number
-	},
+		maxWidth: PropTypes.number,
+	};
 
-	getInitialState() {
-		return {
-			height: null,
-			transientSrc: null
-		};
-	},
+	static initialState = {
+		height: null,
+		transientSrc: null,
+	};
+
+	state = this.constructor.initialState;
 
 	componentWillReceiveProps( nextProps ) {
 		const currentSrc = this.src();
@@ -39,7 +41,7 @@ const EditorFeaturedImagePreview = React.createClass( {
 		// To prevent container height from collapsing and expanding rapidly,
 		// we preserve the current height while the next image loads
 		const nextState = {
-			height: this.refs.preview.clientHeight
+			height: this.refs.preview.clientHeight,
 		};
 
 		// If the next image is the persisted copy of an in-progress upload, we
@@ -50,9 +52,9 @@ const EditorFeaturedImagePreview = React.createClass( {
 		}
 
 		this.setState( nextState );
-	},
+	}
 
-	isReceivingPersistedImage( props, nextProps ) {
+	isReceivingPersistedImage = ( props, nextProps ) => {
 		const { siteId } = this.props;
 		if ( siteId !== nextProps.siteId ) {
 			return false;
@@ -68,32 +70,32 @@ const EditorFeaturedImagePreview = React.createClass( {
 		// to its persisted copy, so we can compare the resolved object IDs
 		const media = MediaStore.get( siteId, image.ID );
 		return media && media.ID === nextProps.image.ID;
-	},
+	};
 
-	src( props = this.props ) {
+	src = ( props = this.props ) => {
 		if ( ! props.image ) {
 			return;
 		}
 
 		return MediaUtils.url( props.image, {
 			maxWidth: this.props.maxWidth,
-			size: 'post-thumbnail'
+			size: 'post-thumbnail',
 		} );
-	},
+	};
 
-	clearState() {
+	clearState = () => {
 		if ( ! some( this.state ) ) {
 			return;
 		}
 
-		this.setState( this.getInitialState() );
-	},
+		this.setState( this.constructor.initialState );
+	};
 
 	render() {
 		const { height } = this.state;
 		const classes = classNames( 'editor-featured-image__preview', {
 			'is-transient': get( this.props.image, 'transient' ),
-			'has-assigned-height': !! height
+			'has-assigned-height': !! height,
 		} );
 
 		let placeholder;
@@ -110,14 +112,15 @@ const EditorFeaturedImagePreview = React.createClass( {
 					placeholder={ placeholder }
 					src={ this.src() }
 					onLoad={ this.clearState }
-					className="editor-featured-image__preview-image" />
+					className="editor-featured-image__preview-image"
+				/>
 			</div>
 		);
 	}
-} );
+}
 
-export default connect( ( state ) => {
+export default connect( state => {
 	return {
-		siteId: getSelectedSiteId( state )
+		siteId: getSelectedSiteId( state ),
 	};
 } )( EditorFeaturedImagePreview );

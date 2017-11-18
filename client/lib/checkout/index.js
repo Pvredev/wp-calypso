@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { cartItems } from 'lib/cart-values';
 import { managePurchase } from 'me/purchases/paths';
 

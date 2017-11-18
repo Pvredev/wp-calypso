@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { get, isEmpty, omit } from 'lodash';
 
 /**
@@ -63,17 +66,12 @@ export const redirectTo = createReducer( null, {
 	[ SOCIAL_LOGIN_REQUEST_SUCCESS ]: ( state, { data } ) => get( data, 'redirect_to', null ),
 	[ SOCIAL_LOGIN_REQUEST_FAILURE ]: () => null,
 	[ SOCIAL_CONNECT_ACCOUNT_REQUEST ]: () => null,
-	[ SOCIAL_CONNECT_ACCOUNT_REQUEST_FAILURE ]: null,
-	[ SOCIAL_CONNECT_ACCOUNT_REQUEST_SUCCESS ]: ( state, action ) => get( action, 'redirect_to', null ),
+	[ SOCIAL_CONNECT_ACCOUNT_REQUEST_FAILURE ]: () => null,
+	[ SOCIAL_CONNECT_ACCOUNT_REQUEST_SUCCESS ]: ( state, action ) =>
+		get( action, 'redirect_to', null ),
 	[ LOGOUT_REQUEST ]: () => null,
 	[ LOGOUT_REQUEST_SUCCESS ]: () => ( state, { data } ) => get( data, 'redirect_to', null ),
 	[ LOGOUT_REQUEST_FAILURE ]: () => null,
-} );
-
-export const rememberMe = createReducer( null, {
-	[ LOGIN_REQUEST ]: () => null,
-	[ LOGIN_REQUEST_SUCCESS ]: ( state, action ) => action.rememberMe,
-	[ LOGIN_REQUEST_FAILURE ]: () => false,
 } );
 
 export const isFormDisabled = createReducer( null, {
@@ -100,7 +98,7 @@ export const requestError = createReducer( null, {
 	[ SOCIAL_CONNECT_ACCOUNT_REQUEST_SUCCESS ]: () => null,
 	[ SOCIAL_DISCONNECT_ACCOUNT_REQUEST ]: () => null,
 	[ SOCIAL_DISCONNECT_ACCOUNT_REQUEST_FAILURE ]: ( state, { error } ) => error,
-	[ SOCIAL_DISCONNECT_ACCOUNT_REQUEST_SUCCESS ]: () => true,
+	[ SOCIAL_DISCONNECT_ACCOUNT_REQUEST_SUCCESS ]: () => null,
 	[ ROUTE_SET ]: () => null,
 	[ LOGIN_FORM_UPDATE ]: () => null,
 } );
@@ -132,9 +130,10 @@ export const requestNotice = createReducer( null, {
 	},
 } );
 
-const updateTwoStepNonce = ( state, { twoStepNonce, nonceType } ) => Object.assign( {}, state, {
-	[ `two_step_nonce_${ nonceType }` ]: twoStepNonce
-} );
+const updateTwoStepNonce = ( state, { twoStepNonce, nonceType } ) =>
+	Object.assign( {}, state, {
+		[ `two_step_nonce_${ nonceType }` ]: twoStepNonce,
+	} );
 
 export const twoFactorAuth = createReducer( null, {
 	[ LOGIN_REQUEST ]: () => null,
@@ -185,28 +184,50 @@ export const twoFactorAuthRequestError = createReducer( null, {
 	[ LOGIN_FORM_UPDATE ]: () => null,
 } );
 
-export const twoFactorAuthPushPoll = createReducer( { inProgress: false, success: false }, {
-	[ TWO_FACTOR_AUTHENTICATION_PUSH_POLL_START ]: state => ( { ...state, inProgress: true, success: false } ),
-	[ TWO_FACTOR_AUTHENTICATION_PUSH_POLL_STOP ]: state => ( { ...state, inProgress: false } ),
-	[ TWO_FACTOR_AUTHENTICATION_PUSH_POLL_COMPLETED ]: state => ( { ...state, inProgress: false, success: true } ),
-} );
+export const twoFactorAuthPushPoll = createReducer(
+	{ inProgress: false, success: false },
+	{
+		[ TWO_FACTOR_AUTHENTICATION_PUSH_POLL_START ]: state => ( {
+			...state,
+			inProgress: true,
+			success: false,
+		} ),
+		[ TWO_FACTOR_AUTHENTICATION_PUSH_POLL_STOP ]: state => ( { ...state, inProgress: false } ),
+		[ TWO_FACTOR_AUTHENTICATION_PUSH_POLL_COMPLETED ]: state => ( {
+			...state,
+			inProgress: false,
+			success: true,
+		} ),
+	}
+);
 
-export const socialAccount = createReducer( { isCreating: false, createError: null, }, {
-	[ SOCIAL_CREATE_ACCOUNT_REQUEST ]: () => ( { isCreating: true } ),
-	[ SOCIAL_CREATE_ACCOUNT_REQUEST_FAILURE ]: ( state, { error } ) => ( { isCreating: false, createError: error } ),
-	[ SOCIAL_CREATE_ACCOUNT_REQUEST_SUCCESS ]: ( state, { data: { username, bearerToken } } ) => ( {
-		isCreating: false,
-		username,
-		bearerToken,
-		createError: null,
-	} ),
-	[ SOCIAL_LOGIN_REQUEST_FAILURE ]: ( state, { error } ) => ( {
-		...state,
-		requestError: error,
-	} ),
-	[ USER_RECEIVE ]: state => ( { ...state, bearerToken: null, username: null, createError: null, } ),
-	[ LOGIN_REQUEST ]: state => ( { ...state, createError: null } ),
-} );
+export const socialAccount = createReducer(
+	{ isCreating: false, createError: null },
+	{
+		[ SOCIAL_CREATE_ACCOUNT_REQUEST ]: () => ( { isCreating: true } ),
+		[ SOCIAL_CREATE_ACCOUNT_REQUEST_FAILURE ]: ( state, { error } ) => ( {
+			isCreating: false,
+			createError: error,
+		} ),
+		[ SOCIAL_CREATE_ACCOUNT_REQUEST_SUCCESS ]: ( state, { data: { username, bearerToken } } ) => ( {
+			isCreating: false,
+			username,
+			bearerToken,
+			createError: null,
+		} ),
+		[ SOCIAL_LOGIN_REQUEST_FAILURE ]: ( state, { error } ) => ( {
+			...state,
+			requestError: error,
+		} ),
+		[ USER_RECEIVE ]: state => ( {
+			...state,
+			bearerToken: null,
+			username: null,
+			createError: null,
+		} ),
+		[ LOGIN_REQUEST ]: state => ( { ...state, createError: null } ),
+	}
+);
 
 const userExistsErrorHandler = ( state, { error, authInfo } ) => {
 	if ( error.code === 'user_exists' ) {
@@ -220,20 +241,22 @@ const userExistsErrorHandler = ( state, { error, authInfo } ) => {
 	return state;
 };
 
-export const socialAccountLink = createReducer( { isLinking: false }, {
-	[ SOCIAL_CREATE_ACCOUNT_REQUEST_FAILURE ]: userExistsErrorHandler,
-	[ SOCIAL_LOGIN_REQUEST_FAILURE ]: userExistsErrorHandler,
-	[ SOCIAL_CREATE_ACCOUNT_REQUEST_SUCCESS ]: () => ( { isLinking: false } ),
-	[ SOCIAL_CONNECT_ACCOUNT_REQUEST_SUCCESS ]: () => ( { isLinking: false } ),
-	[ USER_RECEIVE ]: () => ( { isLinking: false } ),
-} );
+export const socialAccountLink = createReducer(
+	{ isLinking: false },
+	{
+		[ SOCIAL_CREATE_ACCOUNT_REQUEST_FAILURE ]: userExistsErrorHandler,
+		[ SOCIAL_LOGIN_REQUEST_FAILURE ]: userExistsErrorHandler,
+		[ SOCIAL_CREATE_ACCOUNT_REQUEST_SUCCESS ]: () => ( { isLinking: false } ),
+		[ SOCIAL_CONNECT_ACCOUNT_REQUEST_SUCCESS ]: () => ( { isLinking: false } ),
+		[ USER_RECEIVE ]: () => ( { isLinking: false } ),
+	}
+);
 
 export default combineReducers( {
 	isRequesting,
 	isRequestingTwoFactorAuth,
 	magicLogin,
 	redirectTo,
-	rememberMe,
 	isFormDisabled,
 	requestError,
 	requestNotice,

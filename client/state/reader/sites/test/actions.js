@@ -2,11 +2,11 @@
 /**
  * External dependencies
  */
-import sinon from 'sinon';
 import { assert, expect } from 'chai';
+import sinon from 'sinon';
 
 /**
- * Internal deps
+ * Internal dependencies
  */
 import { requestSite } from '../actions';
 import {
@@ -15,6 +15,7 @@ import {
 	READER_SITE_REQUEST_FAILURE,
 } from 'state/action-types';
 import useNock from 'test/helpers/use-nock';
+import { fields } from '../fields';
 
 describe( 'actions', () => {
 	describe( 'a valid fetch', () => {
@@ -25,21 +26,7 @@ describe( 'actions', () => {
 			nock( 'https://public-api.wordpress.com:443' )
 				.get( '/rest/v1.1/read/sites/1' )
 				.query( {
-					fields: [
-						'ID',
-						'name',
-						'title',
-						'URL',
-						'icon',
-						'is_jetpack',
-						'description',
-						'is_private',
-						'feed_ID',
-						'feed_URL',
-						'capabilities',
-						'prefer_feed',
-						'options', // have to include this to get options at all
-					].join( ',' ),
+					fields: fields.join( ',' ),
 					options: [ 'is_mapped_domain', 'unmapped_url', 'is_redirect' ].join( ',' ),
 				} )
 				.reply( 200, {
@@ -49,7 +36,7 @@ describe( 'actions', () => {
 			request = requestSite( 1 )( spy );
 		} );
 
-		it( 'should dispatch request sync', () => {
+		test( 'should dispatch request sync', () => {
 			expect( spy ).to.have.been.calledWith( {
 				type: READER_SITE_REQUEST,
 				payload: {
@@ -58,7 +45,7 @@ describe( 'actions', () => {
 			} );
 		} );
 
-		it( 'should dispatch success, eventually', function() {
+		test( 'should dispatch success, eventually', () => {
 			return request.then(
 				() => {
 					expect( spy ).to.have.been.calledWith( {
@@ -82,11 +69,13 @@ describe( 'actions', () => {
 		let request;
 
 		useNock( nock => {
-			nock( 'https://public-api.wordpress.com:443' ).get( '/rest/v1.1/read/sites/1' ).reply( 404 );
+			nock( 'https://public-api.wordpress.com:443' )
+				.get( '/rest/v1.1/read/sites/1' )
+				.reply( 404 );
 			request = requestSite( 1 )( spy );
 		} );
 
-		it( 'should dispatch request sync', () => {
+		test( 'should dispatch request sync', () => {
 			expect( spy ).to.have.been.calledWith( {
 				type: READER_SITE_REQUEST,
 				payload: {
@@ -95,7 +84,7 @@ describe( 'actions', () => {
 			} );
 		} );
 
-		it( 'should dispatch error, eventually', function() {
+		test( 'should dispatch error, eventually', () => {
 			return request.then(
 				() => {
 					assert.fail( 'callback should not be invoked!', arguments );

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import MediaQueryManager from 'lib/query-manager/media';
 
 /**

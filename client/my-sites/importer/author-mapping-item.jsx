@@ -1,8 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
-import PureRenderMixin from 'react-pure-render/mixin';
+
+import PropTypes from 'prop-types';
+import React from 'react';
 import Gridicon from 'gridicons';
 
 /**
@@ -12,12 +15,10 @@ import AuthorSelector from 'blocks/author-selector';
 import UserItem from 'components/user';
 import user from 'lib/user';
 
-export default React.createClass( {
-	displayName: 'ImporterAuthorMapping',
+export default class extends React.PureComponent {
+	static displayName = 'ImporterAuthorMapping';
 
-	mixins: [ PureRenderMixin ],
-
-	propTypes: {
+	static propTypes = {
 		hasSingleAuthor: PropTypes.bool.isRequired,
 		onSelect: PropTypes.func,
 		siteId: PropTypes.number.isRequired,
@@ -27,10 +28,10 @@ export default React.createClass( {
 			mappedTo: PropTypes.shape( {
 				ID: PropTypes.number.isRequired,
 				name: PropTypes.string.isRequired,
-				avatar_URL: PropTypes.string.isRequired
-			} )
-		} ).isRequired
-	},
+				avatar_URL: PropTypes.string.isRequired,
+			} ),
+		} ).isRequired,
+	};
 
 	componentWillMount() {
 		const { hasSingleAuthor, onSelect: selectAuthor } = this.props;
@@ -38,30 +39,37 @@ export default React.createClass( {
 		if ( hasSingleAuthor ) {
 			selectAuthor( this.getCurrentUser() );
 		}
-	},
+	}
 
-	getCurrentUser() {
+	getCurrentUser = () => {
 		const currentUser = user().get();
 
 		return Object.assign( {}, currentUser, { name: currentUser.display_name } );
-	},
+	};
 
-	render: function() {
-		const { hasSingleAuthor, siteId, onSelect, sourceAuthor: { name, mappedTo: selectedAuthor = { name: /* Don't translate yet */ 'Choose an author…' } } } = this.props;
+	render() {
+		const {
+			hasSingleAuthor,
+			siteId,
+			onSelect,
+			sourceAuthor: {
+				name,
+				mappedTo: selectedAuthor = { name: /* Don't translate yet */ 'Choose an author…' },
+			},
+		} = this.props;
 
 		return (
 			<div className="importer__author-mapping">
-				<span className="importer__source-author">
-					{ name }
-				</span>
+				<span className="importer__source-author">{ name }</span>
 				<Gridicon className="importer__mapping-relation" icon="arrow-right" />
-				{ ! hasSingleAuthor
-					?	<AuthorSelector siteId={ siteId } onSelect={ onSelect }>
-							<UserItem user={ selectedAuthor } />
-						</AuthorSelector>
-					: 	<UserItem user={ this.getCurrentUser() } />
-				}
+				{ ! hasSingleAuthor ? (
+					<AuthorSelector siteId={ siteId } onSelect={ onSelect }>
+						<UserItem user={ selectedAuthor } />
+					</AuthorSelector>
+				) : (
+					<UserItem user={ this.getCurrentUser() } />
+				) }
 			</div>
 		);
 	}
-} );
+}

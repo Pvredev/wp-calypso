@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import { Component, PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import { Component } from 'react';
 import { connect } from 'react-redux';
 
 /**
@@ -12,7 +16,12 @@ import { requestComment } from 'state/comments/actions';
 export class QueryComment extends Component {
 	static propTypes = {
 		commentId: PropTypes.number,
+		forceWpcom: PropTypes.bool,
 		siteId: PropTypes.number,
+	};
+
+	static defaultProps = {
+		forceWpcom: false,
 	};
 
 	componentDidMount() {
@@ -26,9 +35,11 @@ export class QueryComment extends Component {
 	}
 
 	request() {
-		const { siteId, commentId } = this.props;
+		const { siteId, commentId, forceWpcom } = this.props;
 		if ( siteId && commentId ) {
-			this.props.requestComment( { siteId, commentId } );
+			const query = forceWpcom ? { force: 'wpcom' } : {};
+
+			this.props.requestComment( { siteId, commentId, query } );
 		}
 	}
 

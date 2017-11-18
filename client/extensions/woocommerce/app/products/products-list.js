@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
@@ -16,12 +19,12 @@ import { getSelectedSiteWithFallback } from 'woocommerce/state/sites/selectors';
 import {
 	getTotalProducts,
 	areProductsLoaded,
+	getProducts,
 } from 'woocommerce/state/sites/products/selectors';
 import {
-	getProductListCurrentPage,
-	getProductListProducts,
-	getProductListRequestedPage,
- } from 'woocommerce/state/ui/products/selectors';
+	getProductsCurrentPage,
+	getProductsRequestedPage,
+} from 'woocommerce/state/ui/products/selectors';
 import ProductsListPagination from './products-list-pagination';
 import ProductsListTable from './products-list-table';
 
@@ -42,10 +45,12 @@ const ProductsList = ( {
 				{ translate( 'Add your first product' ) }
 			</Button>
 		);
-		return <EmptyContent
-				title={ translate( 'You don\'t have any products yet.' ) }
+		return (
+			<EmptyContent
+				title={ translate( "You don't have any products yet." ) }
 				action={ emptyContentAction }
-		/>;
+			/>
+		);
 	};
 
 	if ( currentPageLoaded === true && totalProducts === 0 ) {
@@ -55,11 +60,7 @@ const ProductsList = ( {
 	const isRequesting = ( requestedPage && ! requestedPageLoaded ) || ! products ? true : false;
 	return (
 		<div className="products__list-wrapper">
-			<ProductsListTable
-				site={ site }
-				products={ products }
-				isRequesting={ isRequesting }
-			/>
+			<ProductsListTable site={ site } products={ products } isRequesting={ isRequesting } />
 			<ProductsListPagination
 				site={ site }
 				totalProducts={ totalProducts }
@@ -74,10 +75,7 @@ const ProductsList = ( {
 
 ProductsList.propTypes = {
 	site: PropTypes.object,
-	products: PropTypes.oneOfType( [
-		PropTypes.array,
-		PropTypes.bool,
-	] ),
+	products: PropTypes.oneOfType( [ PropTypes.array, PropTypes.bool ] ),
 	currentPage: PropTypes.number,
 	currentPageLoaded: PropTypes.bool,
 	requestedPage: PropTypes.number,
@@ -88,12 +86,15 @@ ProductsList.propTypes = {
 
 function mapStateToProps( state ) {
 	const site = getSelectedSiteWithFallback( state );
-	const currentPage = site && getProductListCurrentPage( state, site.ID );
-	const currentPageLoaded = site && currentPage && areProductsLoaded( state, currentPage, site.ID );
-	const requestedPage = site && getProductListRequestedPage( state, site.ID );
-	const requestedPageLoaded = site && requestedPage && areProductsLoaded( state, requestedPage, site.ID );
-	const products = site && getProductListProducts( state, site.ID );
-	const totalProducts = site && getTotalProducts( state, site.ID );
+	const currentPage = site && getProductsCurrentPage( state, site.ID );
+	const currentQuery = { page: currentPage };
+	const currentPageLoaded =
+		site && currentPage && areProductsLoaded( state, currentQuery, site.ID );
+	const requestedPage = site && getProductsRequestedPage( state, site.ID );
+	const requestedPageLoaded =
+		site && requestedPage && areProductsLoaded( state, { page: requestedPage }, site.ID );
+	const products = site && getProducts( state, currentQuery, site.ID );
+	const totalProducts = site && getTotalProducts( state, currentQuery, site.ID );
 
 	return {
 		site,

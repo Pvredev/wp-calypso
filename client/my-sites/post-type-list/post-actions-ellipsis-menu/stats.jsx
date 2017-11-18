@@ -1,7 +1,10 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 
@@ -9,15 +12,19 @@ import { localize } from 'i18n-calypso';
  * Internal dependencies
  */
 import PopoverMenuItem from 'components/popover/menu-item';
-import { mc } from 'lib/analytics';
+import { bumpStat as bumpAnalyticsStat } from 'state/analytics/actions';
+import { bumpStatGenerator } from './utils';
 import { getSiteSlug, isJetpackModuleActive } from 'state/sites/selectors';
 import { getPost } from 'state/posts/selectors';
 
-function bumpStat() {
-	mc.bumpStat( 'calypso_cpt_actions', 'stats' );
-}
-
-function PostActionsEllipsisMenuStats( { translate, siteSlug, postId, status, isStatsActive } ) {
+function PostActionsEllipsisMenuStats( {
+	translate,
+	siteSlug,
+	postId,
+	status,
+	isStatsActive,
+	bumpStat,
+} ) {
 	if ( ! isStatsActive || 'publish' !== status ) {
 		return null;
 	}
@@ -26,7 +33,8 @@ function PostActionsEllipsisMenuStats( { translate, siteSlug, postId, status, is
 		<PopoverMenuItem
 			href={ `/stats/post/${ postId }/${ siteSlug }` }
 			onClick={ bumpStat }
-			icon="stats-alt">
+			icon="stats-alt"
+		>
 			{ translate( 'Stats' ) }
 		</PopoverMenuItem>
 	);
@@ -38,11 +46,12 @@ PostActionsEllipsisMenuStats.propTypes = {
 	siteSlug: PropTypes.string,
 	postId: PropTypes.number,
 	status: PropTypes.string,
-	isStatsActive: PropTypes.bool
+	isStatsActive: PropTypes.bool,
+	bumpStat: PropTypes.func,
 };
 
-export default connect( ( state, ownProps ) => {
-	const post = getPost( state, ownProps.globalId );
+const mapStateToProps = ( state, { globalId } ) => {
+	const post = getPost( state, globalId );
 	if ( ! post ) {
 		return {};
 	}
@@ -51,6 +60,18 @@ export default connect( ( state, ownProps ) => {
 		siteSlug: getSiteSlug( state, post.site_ID ),
 		postId: post.ID,
 		status: post.status,
-		isStatsActive: false !== isJetpackModuleActive( state, post.site_ID, 'stats' )
+		type: post.type,
+		isStatsActive: false !== isJetpackModuleActive( state, post.site_ID, 'stats' ),
 	};
-} )( localize( PostActionsEllipsisMenuStats ) );
+};
+
+const mapDispatchToProps = { bumpAnalyticsStat };
+
+const mergeProps = ( stateProps, dispatchProps, ownProps ) => {
+	const bumpStat = bumpStatGenerator( stateProps.type, 'stats', dispatchProps.bumpAnalyticsStat );
+	return Object.assign( {}, ownProps, stateProps, dispatchProps, { bumpStat } );
+};
+
+export default connect( mapStateToProps, mapDispatchToProps, mergeProps )(
+	localize( PostActionsEllipsisMenuStats )
+);

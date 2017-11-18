@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import {
 	WOOCOMMERCE_PRODUCT_VARIATION_EDIT,
 	WOOCOMMERCE_PRODUCT_VARIATION_EDIT_CLEAR,
@@ -38,4 +41,3 @@ export function clearProductVariationEdits( siteId ) {
 		siteId,
 	};
 }
-

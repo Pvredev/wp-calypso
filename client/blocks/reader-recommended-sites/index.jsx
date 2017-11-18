@@ -2,7 +2,8 @@
 /**
  * External Dependencies
  */
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { map, partial, isEmpty } from 'lodash';
 import { localize } from 'i18n-calypso';
 import Gridicon from 'gridicons';
@@ -13,7 +14,7 @@ import { connect } from 'react-redux';
  */
 import { recordAction, recordTrackWithRailcar, recordTracksRailcarRender } from 'reader/stats';
 import Button from 'components/button';
-import { requestSiteBlock } from 'state/reader/site-blocks/actions';
+import { blockSite } from 'state/reader/site-blocks/actions';
 import ConnectedSubscriptionListItem from 'blocks/reader-subscription-list-item/connected';
 
 export class RecommendedSites extends React.PureComponent {
@@ -28,7 +29,7 @@ export class RecommendedSites extends React.PureComponent {
 			ui_position: uiIndex,
 		} );
 		recordAction( 'calypso_reader_recommended_site_dismissed' );
-		this.props.requestSiteBlock( siteId );
+		this.props.blockSite( siteId );
 	};
 
 	handleSiteClick = ( siteId, uiIndex ) => {
@@ -95,4 +96,4 @@ export class RecommendedSites extends React.PureComponent {
 	}
 }
 
-export default connect( null, { requestSiteBlock } )( localize( RecommendedSites ) );
+export default connect( null, { blockSite } )( localize( RecommendedSites ) );

@@ -1,16 +1,19 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { extend } from 'lodash';
-var update = require( 'react-addons-update' ),
-	i18n = require( 'i18n-calypso' ),
-	config = require( 'config' );
+import update from 'immutability-helper';
+import i18n from 'i18n-calypso';
+import config from 'config';
 
 /**
  * Internal dependencies
  */
-var cartItems = require( './cart-items' ),
-	productsValues = require( 'lib/products-values' );
+import cartItems from './cart-items';
+import productsValues from 'lib/products-values';
 
 /**
  * Create a new empty cart.
@@ -32,7 +35,7 @@ function applyCoupon( coupon ) {
 	return function( cart ) {
 		return update( cart, {
 			coupon: { $set: coupon },
-			is_coupon_applied: { $set: false }
+			is_coupon_applied: { $set: false },
 		} );
 	};
 }
@@ -66,7 +69,11 @@ function getNewMessages( previousCartValue, nextCartValue ) {
 	nextCartMessages = nextCartValue.messages || [];
 
 	// If there is no previous cart then just return the messages for the new cart
-	if ( ! previousCartValue || ! previousCartValue.client_metadata || ! nextCartValue.client_metadata ) {
+	if (
+		! previousCartValue ||
+		! previousCartValue.client_metadata ||
+		! nextCartValue.client_metadata
+	) {
 		return nextCartMessages;
 	}
 
@@ -97,8 +104,8 @@ function fillInAllCartItemAttributes( cart, products ) {
 				return items.map( function( cartItem ) {
 					return fillInSingleCartItemAttributes( cartItem, products );
 				} );
-			}
-		}
+			},
+		},
 	} );
 }
 
@@ -137,6 +144,12 @@ function isPaymentMethodEnabled( cart, method ) {
 			return isCreditCardPaymentsEnabled( cart );
 		case 'paypal':
 			return isPayPalExpressEnabled( cart );
+		case 'ideal':
+			return isNetherlandsIdealEnabled( cart );
+		case 'giropay':
+			return isGermanyGiropayEnabled( cart );
+		case 'bancontact':
+			return isBelgiumBancontactEnabled( cart );
 		default:
 			return false;
 	}
@@ -147,11 +160,37 @@ function isCreditCardPaymentsEnabled( cart ) {
 }
 
 function isPayPalExpressEnabled( cart ) {
-	return config.isEnabled( 'upgrades/paypal' ) &&
-			0 <= cart.allowed_payment_methods.indexOf( 'WPCOM_Billing_PayPal_Express' );
+	return (
+		config.isEnabled( 'upgrades/paypal' ) &&
+		cart.allowed_payment_methods.indexOf( 'WPCOM_Billing_PayPal_Express' ) >= 0
+	);
 }
 
-module.exports = {
+function isNetherlandsIdealEnabled( cart ) {
+	return (
+		config.isEnabled( 'upgrades/netherlands-ideal' ) &&
+		cart.allowed_payment_methods.indexOf( 'WPCOM_Billing_Stripe_Source_Ideal' ) >= 0 &&
+		'EUR' === cart.currency
+	);
+}
+
+function isGermanyGiropayEnabled( cart ) {
+	return (
+		config.isEnabled( 'upgrades/germany-giropay' ) &&
+		cart.allowed_payment_methods.indexOf( 'WPCOM_Billing_Stripe_Source_Giropay' ) >= 0 &&
+		'EUR' === cart.currency
+	);
+}
+
+function isBelgiumBancontactEnabled( cart ) {
+	return (
+		config.isEnabled( 'upgrades/belgium-bancontact' ) &&
+		cart.allowed_payment_methods.indexOf( 'WPCOM_Billing_Stripe_Source_Bancontact' ) >= 0 &&
+		'EUR' === cart.currency
+	);
+}
+
+export default {
 	applyCoupon,
 	canRemoveFromCart,
 	cartItems,
@@ -164,5 +203,6 @@ module.exports = {
 	isPaidForFullyInCredits,
 	isPaymentMethodEnabled,
 	isPayPalExpressEnabled,
-	isCreditCardPaymentsEnabled
+	isNetherlandsIdealEnabled,
+	isCreditCardPaymentsEnabled,
 };

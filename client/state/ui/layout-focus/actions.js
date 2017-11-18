@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import {
 	LAYOUT_FOCUS_SET,
 	LAYOUT_NEXT_FOCUS_SET,
@@ -26,4 +29,3 @@ export function activateNextLayoutFocus() {
 		type: LAYOUT_NEXT_FOCUS_ACTIVATE,
 	};
 }
-

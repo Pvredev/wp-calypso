@@ -1,9 +1,13 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import React, { PureComponent } from 'react';
+import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import React from 'react';
-import Gridicon from 'gridicons';
+import { connect } from 'react-redux';
 
 /**
  * Internal dependencies
@@ -12,144 +16,221 @@ import {
 	isChargeback,
 	isDomainMapping,
 	isDomainRegistration,
+	isDomainTransfer,
 	isGoogleApps,
 	isGuidedTransfer,
 	isPlan,
-	isSiteRedirect
+	isSiteRedirect,
 } from 'lib/products-values';
+import { recordTracksEvent } from 'state/analytics/actions';
 import { localize } from 'i18n-calypso';
+import { preventWidows } from 'lib/formatting';
 
-class CheckoutThankYouHeader extends React.Component {
+class CheckoutThankYouHeader extends PureComponent {
+	static propTypes = {
+		isDataLoaded: PropTypes.bool.isRequired,
+		primaryPurchase: PropTypes.object,
+		hasFailedPurchases: PropTypes.bool,
+	};
+
 	getHeading() {
-		if ( ! this.props.isDataLoaded ) {
+		const { translate, isDataLoaded, hasFailedPurchases, primaryPurchase } = this.props;
+
+		if ( ! isDataLoaded ) {
 			return this.props.translate( 'Loading…' );
 		}
 
-		if ( this.props.hasFailedPurchases ) {
-			return this.props.translate( 'Some items failed.' );
+		if ( hasFailedPurchases ) {
+			return translate( 'Some items failed.' );
 		}
 
-		if ( this.props.primaryPurchase && isChargeback( this.props.primaryPurchase ) ) {
-			return this.props.translate( 'Thank you!' );
+		if ( primaryPurchase && isChargeback( primaryPurchase ) ) {
+			return translate( 'Thank you!' );
 		}
 
-		return this.props.translate( 'Thank you for your purchase!' );
+		if ( primaryPurchase && isDomainTransfer( primaryPurchase ) ) {
+			return preventWidows(
+				translate( 'Check your email! There are important next steps waiting in your inbox.' )
+			);
+		}
+
+		return translate( 'Congratulations on your purchase!' );
 	}
 
 	getText() {
-		if ( this.props.hasFailedPurchases ) {
-			return this.props.translate( 'Some of the items in your cart could not be added.' );
+		const { translate, isDataLoaded, hasFailedPurchases, primaryPurchase } = this.props;
+
+		if ( hasFailedPurchases ) {
+			return translate( 'Some of the items in your cart could not be added.' );
 		}
 
-		if ( ! this.props.isDataLoaded || ! this.props.primaryPurchase ) {
-			return this.props.translate( 'You will receive an email confirmation shortly.' );
+		if ( ! isDataLoaded || ! primaryPurchase ) {
+			return translate( 'You will receive an email confirmation shortly.' );
 		}
 
-		if ( isPlan( this.props.primaryPurchase ) ) {
-			return this.props.translate(
+		if ( isPlan( primaryPurchase ) ) {
+			return translate(
 				'Your site is now on the {{strong}}%(productName)s{{/strong}} plan. ' +
-				"It's doing somersaults in excitement!", {
-					args: { productName: this.props.primaryPurchase.productName },
-					components: { strong: <strong /> }
-				}
-			);
-		}
-
-		if ( isDomainRegistration( this.props.primaryPurchase ) ) {
-			return this.props.translate(
-				'Your new domain {{strong}}%(domainName)s{{/strong}} is ' +
-				'being set up. Your site is doing somersaults in excitement!', {
-					args: { domainName: this.props.primaryPurchase.meta },
-					components: { strong: <strong /> }
-				}
-			);
-		}
-
-		if ( isDomainMapping( this.props.primaryPurchase ) ) {
-			return this.props.translate(
-				'Your domain {{strong}}%(domainName)s{{/strong}} was added to your site. ' +
-				'It may take a little while to start working – see below for more information.', {
-					args: { domainName: this.props.primaryPurchase.meta },
-					components: { strong: <strong /> }
-				}
-			);
-		}
-
-		if ( isGoogleApps( this.props.primaryPurchase ) ) {
-			return this.props.translate(
-				'Your domain {{strong}}%(domainName)s{{/strong}} is now set up to use G Suite. ' +
-				"It's doing somersaults in excitement!", {
-					args: { domainName: this.props.primaryPurchase.meta },
-					components: { strong: <strong /> }
-				}
-			);
-		}
-
-		if ( isGuidedTransfer( this.props.primaryPurchase ) ) {
-			if ( typeof this.props.primaryPurchase.meta === 'string' ) {
-				return this.props.translate( 'The guided transfer for {{strong}}%(siteName)s{{/strong}} ' +
-					'will begin very soon. We will be in touch with you via email.', {
-						args: { siteName: this.props.primaryPurchase.meta },
-						components: { strong: <strong /> },
-					}
-				);
-			}
-
-			return this.props.translate( 'The guided transfer for your site will ' +
-				'begin very soon. We will be in touch with you via email.', {
+					"It's doing somersaults in excitement!",
+				{
+					args: { productName: primaryPurchase.productName },
 					components: { strong: <strong /> },
 				}
 			);
 		}
 
-		if ( isSiteRedirect( this.props.primaryPurchase ) ) {
-			return this.props.translate(
-				'Your site is now redirecting to {{strong}}%(domainName)s{{/strong}}. ' +
-				"It's doing somersaults in excitement!", {
-					args: { domainName: this.props.primaryPurchase.meta },
-					components: { strong: <strong /> }
+		if ( isDomainRegistration( primaryPurchase ) ) {
+			return translate(
+				'Your new domain {{strong}}%(domainName)s{{/strong}} is ' +
+					'being set up. Your site is doing somersaults in excitement!',
+				{
+					args: { domainName: primaryPurchase.meta },
+					components: { strong: <strong /> },
 				}
 			);
 		}
 
-		if ( isChargeback( this.props.primaryPurchase ) ) {
-			return this.props.translate( 'Your chargeback fee is paid. Your site is doing somersaults in excitement!' );
+		if ( isDomainMapping( primaryPurchase ) ) {
+			return translate(
+				'Your domain {{strong}}%(domainName)s{{/strong}} was added to your site. ' +
+					'It may take a little while to start working – see below for more information.',
+				{
+					args: { domainName: primaryPurchase.meta },
+					components: { strong: <strong /> },
+				}
+			);
 		}
 
-		return this.props.translate(
-			"You will receive an email confirmation shortly for your purchase of {{strong}}%(productName)s{{/strong}}. What's next?", {
+		if ( isGoogleApps( primaryPurchase ) ) {
+			return translate(
+				'Your domain {{strong}}%(domainName)s{{/strong}} is now set up to use G Suite. ' +
+					"It's doing somersaults in excitement!",
+				{
+					args: { domainName: primaryPurchase.meta },
+					components: { strong: <strong /> },
+				}
+			);
+		}
+
+		if ( isGuidedTransfer( primaryPurchase ) ) {
+			if ( typeof primaryPurchase.meta === 'string' ) {
+				return translate(
+					'The guided transfer for {{strong}}%(siteName)s{{/strong}} ' +
+						'will begin very soon. We will be in touch with you via email.',
+					{
+						args: { siteName: primaryPurchase.meta },
+						components: { strong: <strong /> },
+					}
+				);
+			}
+
+			return translate(
+				'The guided transfer for your site will ' +
+					'begin very soon. We will be in touch with you via email.',
+				{
+					components: { strong: <strong /> },
+				}
+			);
+		}
+
+		if ( isSiteRedirect( primaryPurchase ) ) {
+			return translate(
+				'Your site is now redirecting to {{strong}}%(domainName)s{{/strong}}. ' +
+					"It's doing somersaults in excitement!",
+				{
+					args: { domainName: primaryPurchase.meta },
+					components: { strong: <strong /> },
+				}
+			);
+		}
+
+		if ( isDomainTransfer( primaryPurchase ) ) {
+			return translate(
+				'We sent an email with an important link. Please open the email and click the link to confirm ' +
+					'that you want to transfer {{strong}}%(domainName)s{{/strong}} to WordPress.com. ' +
+					"The transfer can't complete until you do!",
+				{
+					args: { domainName: primaryPurchase.meta },
+					components: { strong: <strong /> },
+				}
+			);
+		}
+
+		if ( isChargeback( primaryPurchase ) ) {
+			return translate(
+				'Your chargeback fee is paid. Your site is doing somersaults in excitement!'
+			);
+		}
+
+		return translate(
+			"You will receive an email confirmation shortly for your purchase of {{strong}}%(productName)s{{/strong}}. What's next?",
+			{
 				args: {
-					productName: this.props.primaryPurchase.productName
+					productName: primaryPurchase.productName,
 				},
 				components: {
-					strong: <strong />
-				}
+					strong: <strong />,
+				},
 			}
 		);
 	}
 
+	visitSite = event => {
+		event.preventDefault();
+
+		const { primaryPurchase, selectedSite } = this.props;
+
+		this.props.recordTracksEvent( 'calypso_thank_you_view_site', {
+			product: primaryPurchase.productName,
+		} );
+		window.location.href = selectedSite.URL;
+	};
+
+	getButton() {
+		const { hasFailedPurchases, translate, primaryPurchase, selectedSite } = this.props;
+		const headerButtonClassName = 'button is-primary';
+
+		if (
+			! hasFailedPurchases &&
+			isPlan( primaryPurchase ) &&
+			selectedSite &&
+			! selectedSite.jetpack
+		) {
+			return (
+				<div className="checkout-thank-you__header-button">
+					<button className={ headerButtonClassName } onClick={ this.visitSite }>
+						{ translate( 'View your site' ) }
+					</button>
+				</div>
+			);
+		}
+
+		return null;
+	}
+
 	render() {
-		const icon = this.props.hasFailedPurchases ? 'notice' : 'trophy',
-			classes = {
-				'checkout-thank-you__header': true,
-				'is-placeholder': ! this.props.isDataLoaded
-			};
+		const { isDataLoaded, hasFailedPurchases, primaryPurchase } = this.props;
+		const classes = { 'is-placeholder': ! isDataLoaded };
+
+		let svg = 'thank-you.svg';
+		if ( hasFailedPurchases ) {
+			svg = 'items-failed.svg';
+		} else if ( isDomainTransfer( primaryPurchase ) ) {
+			svg = 'check-emails-desktop.svg';
+		}
 
 		return (
-			<div className={ classNames( classes ) }>
+			<div className={ classNames( 'checkout-thank-you__header', classes ) }>
+				<div className="checkout-thank-you__header-icon">
+					<img src={ `/calypso/images/upgrades/${ svg }` } />
+				</div>
 				<div className="checkout-thank-you__header-content">
-					<span className="checkout-thank-you__header-icon">
-						<Gridicon icon={ icon } size={ 72 } />
-					</span>
-
 					<div className="checkout-thank-you__header-copy">
-						<h1 className="checkout-thank-you__header-heading">
-							{ this.getHeading() }
-						</h1>
+						<h1 className="checkout-thank-you__header-heading">{ this.getHeading() }</h1>
 
-						<h2 className="checkout-thank-you__header-text">
-							{ this.getText() }
-						</h2>
+						<h2 className="checkout-thank-you__header-text">{ this.getText() }</h2>
+
+						{ this.getButton() }
 					</div>
 				</div>
 			</div>
@@ -157,10 +238,6 @@ class CheckoutThankYouHeader extends React.Component {
 	}
 }
 
-CheckoutThankYouHeader.propTypes = {
-	isDataLoaded: React.PropTypes.bool.isRequired,
-	primaryPurchase: React.PropTypes.object,
-	hasFailedPurchases: React.PropTypes.bool
-};
-
-export default localize( CheckoutThankYouHeader );
+export default connect( null, {
+	recordTracksEvent,
+} )( localize( CheckoutThankYouHeader ) );

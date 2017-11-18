@@ -1,63 +1,66 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { assign, isEqual, noop, omit } from 'lodash';
-var React = require( 'react' ),
-	classNames = require( 'classnames' );
+import PropTypes from 'prop-types';
+import React from 'react';
+import classNames from 'classnames';
 
 /**
  * Internal dependencies
  */
-var Spinner = require( 'components/spinner' ),
-	Gridicon = require( 'gridicons' ),
-	ListItemImage = require( './list-item-image' ),
-	ListItemVideo = require( './list-item-video' ),
-	ListItemAudio = require( './list-item-audio' ),
-	ListItemDocument = require( './list-item-document' ),
-	MediaUtils = require( 'lib/media/utils' );
-
+import Spinner from 'components/spinner';
+import Gridicon from 'gridicons';
+import ListItemImage from './list-item-image';
+import ListItemVideo from './list-item-video';
+import ListItemAudio from './list-item-audio';
+import ListItemDocument from './list-item-document';
+import MediaUtils from 'lib/media/utils';
 import EditorMediaModalGalleryHelp from 'post-editor/media-modal/gallery-help';
 import { MEDIA_IMAGE_PHOTON } from 'lib/media/constants';
 
-export default React.createClass( {
-	displayName: 'MediaLibraryListItem',
+export default class extends React.Component {
+	static displayName = 'MediaLibraryListItem';
 
-	propTypes: {
-		media: React.PropTypes.object,
-		scale: React.PropTypes.number.isRequired,
-		maxImageWidth: React.PropTypes.number,
-		thumbnailType: React.PropTypes.string,
-		showGalleryHelp: React.PropTypes.bool,
-		selectedIndex: React.PropTypes.number,
-		onToggle: React.PropTypes.func,
-		onEditItem: React.PropTypes.func,
-		style: React.PropTypes.object,
-	},
+	static propTypes = {
+		media: PropTypes.object,
+		scale: PropTypes.number.isRequired,
+		maxImageWidth: PropTypes.number,
+		thumbnailType: PropTypes.string,
+		showGalleryHelp: PropTypes.bool,
+		selectedIndex: PropTypes.number,
+		onToggle: PropTypes.func,
+		onEditItem: PropTypes.func,
+		style: PropTypes.object,
+	};
 
-	getDefaultProps: function() {
-		return {
-			maxImageWidth: 450,
-			thumbnailType: MEDIA_IMAGE_PHOTON,
-			selectedIndex: -1,
-			onToggle: noop,
-			onEditItem: noop,
-		};
-	},
+	static defaultProps = {
+		maxImageWidth: 450,
+		thumbnailType: MEDIA_IMAGE_PHOTON,
+		selectedIndex: -1,
+		onToggle: noop,
+		onEditItem: noop,
+	};
 
-	shouldComponentUpdate: function( nextProps ) {
-		return ! ( nextProps.media === this.props.media &&
+	shouldComponentUpdate( nextProps ) {
+		return ! (
+			nextProps.media === this.props.media &&
 			nextProps.scale === this.props.scale &&
 			nextProps.maxImageWidth === this.props.maxImageWidth &&
 			nextProps.thumbnailType === this.props.thumbnailType &&
 			nextProps.selectedIndex === this.props.selectedIndex &&
-			isEqual( nextProps.style, this.props.style ) );
-	},
+			isEqual( nextProps.style, this.props.style )
+		);
+	}
 
-	clickItem: function( event ) {
+	clickItem = event => {
 		this.props.onToggle( this.props.media, event.shiftKey );
-	},
+	};
 
-	renderItem: function() {
+	renderItem = () => {
 		var component;
 
 		if ( ! this.props.media ) {
@@ -65,38 +68,49 @@ export default React.createClass( {
 		}
 
 		switch ( MediaUtils.getMimePrefix( this.props.media ) ) {
-			case 'image': component = ListItemImage; break;
-			case 'video': component = ListItemVideo; break;
-			case 'audio': component = ListItemAudio; break;
-			default: component = ListItemDocument; break;
+			case 'image':
+				component = ListItemImage;
+				break;
+			case 'video':
+				component = ListItemVideo;
+				break;
+			case 'audio':
+				component = ListItemAudio;
+				break;
+			default:
+				component = ListItemDocument;
+				break;
 		}
 
 		return React.createElement( component, this.props );
-	},
+	};
 
-	renderSpinner: function() {
+	renderSpinner = () => {
 		if ( ! this.props.media || ! this.props.media.transient ) {
 			return;
 		}
 
 		return <Spinner className="media-library__list-item-spinner" />;
-	},
+	};
 
-	render: function() {
+	render() {
 		var classes, props, style, title;
 
 		classes = classNames( 'media-library__list-item', {
 			'is-placeholder': ! this.props.media,
 			'is-selected': -1 !== this.props.selectedIndex,
 			'is-transient': this.props.media && this.props.media.transient,
-			'is-small': this.props.scale <= 0.125
+			'is-small': this.props.scale <= 0.125,
 		} );
 
 		props = omit( this.props, Object.keys( this.constructor.propTypes ) );
 
-		style = assign( {
-			width: ( this.props.scale * 100 ) + '%'
-		}, this.props.style );
+		style = assign(
+			{
+				width: this.props.scale * 100 + '%',
+			},
+			this.props.style
+		);
 
 		if ( this.props.media ) {
 			title = this.props.media.file;
@@ -119,4 +133,4 @@ export default React.createClass( {
 			</div>
 		);
 	}
-} );
+}

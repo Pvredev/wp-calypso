@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { EDITOR_LAST_DRAFT_SET } from 'state/action-types';
 import { combineReducers } from 'state/utils';
 
@@ -40,5 +43,5 @@ export function postId( state = null, action ) {
 
 export default combineReducers( {
 	siteId,
-	postId
+	postId,
 } );

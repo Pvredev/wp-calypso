@@ -1,18 +1,13 @@
+/** @format */
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+import React from 'react';
 
 const HrWithText = ( { children } ) => (
 	<div className="hr-with-text">
-		<div>
-			{ children }
-		</div>
+		<div>{ children }</div>
 	</div>
 );
-
-HrWithText.propTypes = {
-	children: PropTypes.node,
-};
 
 export default HrWithText;

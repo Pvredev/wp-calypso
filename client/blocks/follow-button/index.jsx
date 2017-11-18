@@ -1,6 +1,10 @@
+/** @format */
+
 /**
- * External Dependencies
+ * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { noop, omitBy, isUndefined } from 'lodash';
 import { connect } from 'react-redux';
@@ -14,18 +18,19 @@ import { follow, unfollow } from 'state/reader/follows/actions';
 
 class FollowButtonContainer extends Component {
 	static propTypes = {
-		siteUrl: React.PropTypes.string.isRequired,
-		iconSize: React.PropTypes.number,
-		onFollowToggle: React.PropTypes.func,
-		followLabel: React.PropTypes.string,
-		followingLabel: React.PropTypes.string,
-		feedId: React.PropTypes.number,
-		siteId: React.PropTypes.number,
+		siteUrl: PropTypes.string.isRequired,
+		iconSize: PropTypes.number,
+		onFollowToggle: PropTypes.func,
+		followLabel: PropTypes.string,
+		followingLabel: PropTypes.string,
+		feedId: PropTypes.number,
+		siteId: PropTypes.number,
 	};
 
 	static defaultProps = {
 		onFollowToggle: noop,
 	};
+
 	handleFollowToggle = following => {
 		if ( following ) {
 			const followData = omitBy(

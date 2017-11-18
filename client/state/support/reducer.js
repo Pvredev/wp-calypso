@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { combineReducers } from 'state/utils';
 import {
 	SUPPORT_USER_ACTIVATE,

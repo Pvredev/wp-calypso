@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { pickBy } from 'lodash';
 
 export function isProductsListFetching( state ) {

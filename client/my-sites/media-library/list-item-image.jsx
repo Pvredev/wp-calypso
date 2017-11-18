@@ -1,38 +1,38 @@
+/** @format */
+
 /**
  * External dependencies
  */
-var React = require( 'react' );
+
+import PropTypes from 'prop-types';
+import React from 'react';
 
 /**
  * Internal dependencies
  */
-var MediaUtils = require( 'lib/media/utils' ),
-	MediaLibraryListItemFileDetails = require( './list-item-file-details' );
+import MediaUtils from 'lib/media/utils';
+import MediaLibraryListItemFileDetails from './list-item-file-details';
 
 import { MEDIA_IMAGE_PHOTON, MEDIA_IMAGE_THUMBNAIL } from 'lib/media/constants';
 
-module.exports = React.createClass( {
-	displayName: 'MediaLibraryListItemImage',
+export default class extends React.Component {
+	static displayName = 'MediaLibraryListItemImage';
 
-	propTypes: {
-		media: React.PropTypes.object,
-		scale: React.PropTypes.number,
-		maxImageWidth: React.PropTypes.number,
-		thumbnailType: React.PropTypes.string,
-	},
+	static propTypes = {
+		media: PropTypes.object,
+		scale: PropTypes.number,
+		maxImageWidth: PropTypes.number,
+		thumbnailType: PropTypes.string,
+	};
 
-	getDefaultProps: function() {
-		return {
-			maxImageWidth: 450,
-			thumbnailType: MEDIA_IMAGE_PHOTON,
-		};
-	},
+	static defaultProps = {
+		maxImageWidth: 450,
+		thumbnailType: MEDIA_IMAGE_PHOTON,
+	};
 
-	getInitialState: function() {
-		return {};
-	},
+	state = {};
 
-	getImageDimensions: function() {
+	getImageDimensions = () => {
 		var width, height;
 
 		if ( this.props.media.width ) {
@@ -49,34 +49,34 @@ module.exports = React.createClass( {
 
 		return {
 			width: width,
-			height: height
+			height: height,
 		};
-	},
+	};
 
-	getImageStyle: function() {
+	getImageStyle = () => {
 		var dimensions = this.getImageDimensions();
 
 		return {
 			maxHeight: dimensions.height > dimensions.width ? 'none' : '100%',
-			maxWidth: dimensions.height < dimensions.width ? 'none' : '100%'
+			maxWidth: dimensions.height < dimensions.width ? 'none' : '100%',
 		};
-	},
+	};
 
-	setUnknownImageDimensions: function( event ) {
+	setUnknownImageDimensions = event => {
 		if ( ! this.props.media.width ) {
 			this.setState( {
-				imageWidth: event.target.clientWidth
+				imageWidth: event.target.clientWidth,
 			} );
 		}
 
 		if ( ! this.props.media.height ) {
 			this.setState( {
-				imageHeight: event.target.clientHeight
+				imageHeight: event.target.clientHeight,
 			} );
 		}
-	},
+	};
 
-	render: function() {
+	render() {
 		var url = MediaUtils.url( this.props.media, {
 			photon: this.props.thumbnailType === MEDIA_IMAGE_PHOTON,
 			maxWidth: this.props.maxImageWidth,
@@ -88,7 +88,8 @@ module.exports = React.createClass( {
 				<MediaLibraryListItemFileDetails
 					scale={ this.props.scale }
 					media={ this.props.media }
-					icon="image" />
+					icon="image"
+				/>
 			);
 		}
 
@@ -99,7 +100,8 @@ module.exports = React.createClass( {
 				alt={ this.props.media.alt || this.props.media.title }
 				style={ this.getImageStyle() }
 				className="media-library__list-item-centered"
-				draggable="false" />
+				draggable="false"
+			/>
 		);
 	}
-} );
+}

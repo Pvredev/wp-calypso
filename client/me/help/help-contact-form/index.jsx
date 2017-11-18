@@ -1,9 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
-import LinkedStateMixin from 'react-addons-linked-state-mixin';
-import PureRenderMixin from 'react-pure-render/mixin';
+
+import PropTypes from 'prop-types';
+import React from 'react';
 import { debounce, isEqual, find } from 'lodash';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
@@ -28,32 +30,26 @@ import { selectSiteId } from 'state/help/actions';
 import { getHelpSelectedSite } from 'state/help/selectors';
 import wpcomLib from 'lib/wp';
 import HelpResults from 'me/help/help-results';
-import {
-	bumpStat,
-	recordTracksEvent,
-	composeAnalytics,
-} from 'state/analytics/actions';
+import { bumpStat, recordTracksEvent, composeAnalytics } from 'state/analytics/actions';
 
 /**
  * Module variables
  */
 const wpcom = wpcomLib.undocumented();
 
-const trackSibylClick = ( event, helpLink ) => composeAnalytics(
-	bumpStat( 'sibyl_question_clicks', helpLink.id ),
-	recordTracksEvent( 'calypso_sibyl_question_click', {
-		question_id: helpLink.id
-	} )
-);
+const trackSibylClick = ( event, helpLink ) =>
+	composeAnalytics(
+		bumpStat( 'sibyl_question_clicks', helpLink.id ),
+		recordTracksEvent( 'calypso_sibyl_question_click', {
+			question_id: helpLink.id,
+		} )
+	);
 
-const trackSupportAfterSibylClick = () => composeAnalytics(
-	recordTracksEvent( 'calypso_sibyl_support_after_question_click' )
-);
+const trackSupportAfterSibylClick = () =>
+	composeAnalytics( recordTracksEvent( 'calypso_sibyl_support_after_question_click' ) );
 
-export const HelpContactForm = React.createClass( {
-	mixins: [ LinkedStateMixin, PureRenderMixin ],
-
-	propTypes: {
+export class HelpContactForm extends React.PureComponent {
+	static propTypes = {
 		formDescription: PropTypes.node,
 		buttonLabel: PropTypes.string.isRequired,
 		onSubmit: PropTypes.func.isRequired,
@@ -68,44 +64,40 @@ export const HelpContactForm = React.createClass( {
 		disabled: PropTypes.bool,
 		valueLink: PropTypes.shape( {
 			value: PropTypes.any,
-			requestChange: PropTypes.func.isRequired
+			requestChange: PropTypes.func.isRequired,
 		} ),
-	},
+	};
 
-	getDefaultProps() {
-		return {
-			formDescription: '',
-			showHowCanWeHelpField: false,
-			showHowYouFeelField: false,
-			showSubjectField: false,
-			showSiteField: false,
-			showHelpLanguagePrompt: false,
-			disabled: false,
-			valueLink: {
-				value: null,
-				requestChange: () => {}
-			}
-		};
-	},
+	static defaultProps = {
+		formDescription: '',
+		showHowCanWeHelpField: false,
+		showHowYouFeelField: false,
+		showSubjectField: false,
+		showSiteField: false,
+		showHelpLanguagePrompt: false,
+		disabled: false,
+		valueLink: {
+			value: null,
+			requestChange: () => {},
+		},
+	};
 
 	/**
 	 * Setup our initial state
 	 * @return {Object} An object representing our initial state
 	 */
-	getInitialState() {
-		return this.props.valueLink.value || {
-			howCanWeHelp: 'gettingStarted',
-			howYouFeel: 'unspecified',
-			message: '',
-			subject: '',
-			sibylClicked: false,
-			qanda: [],
-		};
-	},
+	state = this.props.valueLink.value || {
+		howCanWeHelp: 'gettingStarted',
+		howYouFeel: 'unspecified',
+		message: '',
+		subject: '',
+		sibylClicked: false,
+		qanda: [],
+	};
 
 	componentDidMount() {
 		this.debouncedQandA = debounce( this.doQandASearch, 500 );
-	},
+	}
 
 	componentWillReceiveProps( nextProps ) {
 		if ( ! nextProps.valueLink.value || isEqual( nextProps.valueLink.value, this.state ) ) {
@@ -113,27 +105,27 @@ export const HelpContactForm = React.createClass( {
 		}
 
 		this.setState( nextProps.valueLink.value );
-	},
+	}
 
 	componentDidUpdate( prevProps, prevState ) {
 		if ( prevState.subject !== this.state.subject || prevState.message !== this.state.message ) {
 			this.debouncedQandA();
 		}
 		this.props.valueLink.requestChange( this.state );
-	},
+	}
 
-	trackClickStats( selectionName, selectedOption ) {
+	trackClickStats = ( selectionName, selectedOption ) => {
 		const tracksEvent = {
 			howCanWeHelp: 'calypso_help_how_can_we_help_click',
-			howYouFeel: 'calypso_help_how_you_feel_click'
+			howYouFeel: 'calypso_help_how_you_feel_click',
 		}[ selectionName ];
 
 		if ( tracksEvent ) {
 			analytics.tracks.recordEvent( tracksEvent, { selected_option: selectedOption } );
 		}
-	},
+	};
 
-	doQandASearch() {
+	doQandASearch = () => {
 		const query = this.state.subject + ' ' + this.state.message;
 		const areSameQuestions = ( existingQuestions, newQuestions ) => {
 			const existingIDs = existingQuestions.map( question => question.id );
@@ -142,21 +134,24 @@ export const HelpContactForm = React.createClass( {
 			newIDs.sort();
 			return existingIDs.toString() === newIDs.toString();
 		};
-		wpcom.getQandA( query, config( 'happychat_support_blog' ) )
-			.then( qanda => this.setState( {
-				qanda,
-				// only keep sibylClicked true if the user is seeing the same set of questions
-				// we don't want to track "questions -> question click -> different questions -> support click",
-				// so we need to set sibylClicked to false here if the questions have changed
-				sibylClicked: this.state.sibylClicked && areSameQuestions( this.state.qanda, qanda )
-			} ) )
+		wpcom
+			.getQandA( query, config( 'happychat_support_blog' ) )
+			.then( qanda =>
+				this.setState( {
+					qanda,
+					// only keep sibylClicked true if the user is seeing the same set of questions
+					// we don't want to track "questions -> question click -> different questions -> support click",
+					// so we need to set sibylClicked to false here if the questions have changed
+					sibylClicked: this.state.sibylClicked && areSameQuestions( this.state.qanda, qanda ),
+				} )
+			)
 			.catch( () => this.setState( { qanda: [], sibylClicked: false } ) );
-	},
+	};
 
-	trackSibylClick( event, helpLink ) {
+	trackSibylClick = ( event, helpLink ) => {
 		this.props.trackSibylClick( event, helpLink );
 		this.setState( { sibylClicked: true } );
-	},
+	};
 
 	/**
 	 * Render both a SegmentedControl and SelectDropdown component.
@@ -170,11 +165,13 @@ export const HelpContactForm = React.createClass( {
 	 *                                   is used for the second line of text displayed in the SegmentedControl
 	 * @return {object}                  A JSX object containing both the SegmentedControl and the SelectDropdown.
 	 */
-	renderFormSelection( selectionName, selectionOptions ) {
+	renderFormSelection = ( selectionName, selectionOptions ) => {
 		const { translate } = this.props;
 		const options = selectionOptions.map( option => ( {
 			label: option.label,
-			subtext: option.subtext ? <span className="help-contact-form__selection-subtext">{ option.subtext }</span> : null,
+			subtext: option.subtext ? (
+				<span className="help-contact-form__selection-subtext">{ option.subtext }</span>
+			) : null,
 			props: {
 				key: option.value,
 				selected: option.value === this.state[ selectionName ],
@@ -183,28 +180,37 @@ export const HelpContactForm = React.createClass( {
 				onClick: () => {
 					this.setState( { [ selectionName ]: option.value } );
 					this.trackClickStats( selectionName, option.value );
-				}
-			}
+				},
+			},
 		} ) );
 		const selectedItem = find( options, 'props.selected' );
 
 		return (
 			<div className="help-contact-form__selection">
 				<SegmentedControl primary>
-					{ options.map( option => <ControlItem { ...option.props }>{ option.label }{ option.subtext }</ControlItem> ) }
+					{ options.map( option => (
+						<ControlItem { ...option.props }>
+							{ option.label }
+							{ option.subtext }
+						</ControlItem>
+					) ) }
 				</SegmentedControl>
-				<SelectDropdown selectedText={ selectedItem ? selectedItem.label : translate( 'Select an option' ) }>
-					{ options.map( option => <DropdownItem { ...option.props }>{ option.label }</DropdownItem> ) }
+				<SelectDropdown
+					selectedText={ selectedItem ? selectedItem.label : translate( 'Select an option' ) }
+				>
+					{ options.map( option => (
+						<DropdownItem { ...option.props }>{ option.label }</DropdownItem>
+					) ) }
 				</SelectDropdown>
 			</div>
 		);
-	},
+	};
 
 	/**
 	 * Determine if this form is ready to submit
 	 * @return {bool}	Return true if this form can be submitted
 	 */
-	canSubmitForm() {
+	canSubmitForm = () => {
 		const { disabled, showSubjectField } = this.props;
 		const { subject, message } = this.state;
 
@@ -217,19 +223,14 @@ export const HelpContactForm = React.createClass( {
 		}
 
 		return !! message.trim();
-	},
+	};
 
 	/**
 	 * Start a chat using the info set in state
 	 * @param  {object} event Event object
 	 */
-	submitForm() {
-		const {
-			howCanWeHelp,
-			howYouFeel,
-			message,
-			subject
-		} = this.state;
+	submitForm = () => {
+		const { howCanWeHelp, howYouFeel, message, subject } = this.state;
 
 		if ( this.state.sibylClicked ) {
 			// track that the user had clicked a Sibyl result, but still contacted support
@@ -244,7 +245,7 @@ export const HelpContactForm = React.createClass( {
 			subject,
 			site: this.props.selectedSite,
 		} );
-	},
+	};
 
 	/**
 	 * Render the contact form
@@ -262,9 +263,21 @@ export const HelpContactForm = React.createClass( {
 			translate,
 		} = this.props;
 		const howCanWeHelpOptions = [
-			{ value: 'gettingStarted', label: translate( 'Help getting started' ), subtext: translate( 'Can you show me how to…' ) },
-			{ value: 'somethingBroken', label: translate( 'Something is broken' ), subtext: translate( 'Can you check this out…' ) },
-			{ value: 'suggestion', label: translate( 'I have a suggestion' ), subtext: translate( 'I think it would be cool if…' ) }
+			{
+				value: 'gettingStarted',
+				label: translate( 'Help getting started' ),
+				subtext: translate( 'Can you show me how to…' ),
+			},
+			{
+				value: 'somethingBroken',
+				label: translate( 'Something is broken' ),
+				subtext: translate( 'Can you check this out…' ),
+			},
+			{
+				value: 'suggestion',
+				label: translate( 'I have a suggestion' ),
+				subtext: translate( 'I think it would be cool if…' ),
+			},
 		];
 		const howYouFeelOptions = [
 			{ value: 'unspecified', label: translate( "I'd rather not" ) },
@@ -272,7 +285,7 @@ export const HelpContactForm = React.createClass( {
 			{ value: 'confused', label: translate( 'Confused' ) },
 			{ value: 'discouraged', label: translate( 'Discouraged' ) },
 			{ value: 'upset', label: translate( 'Upset' ) },
-			{ value: 'panicked', label: translate( 'Panicked' ) }
+			{ value: 'panicked', label: translate( 'Panicked' ) },
 		];
 
 		return (
@@ -283,12 +296,9 @@ export const HelpContactForm = React.createClass( {
 					to="2017-01-02T00:00:00Z"
 				/>
 
-				{ formDescription && ( <p>{ formDescription }</p> ) }
+				{ formDescription && <p>{ formDescription }</p> }
 
-				<ChatBusinessConciergeNotice
-					from="2017-07-19T00:00:00Z"
-					to="2017-07-21T00:00:00Z"
-				/>
+				<ChatBusinessConciergeNotice from="2017-07-19T00:00:00Z" to="2017-07-21T00:00:00Z" />
 
 				{ showHowCanWeHelpField && (
 					<div>
@@ -309,19 +319,29 @@ export const HelpContactForm = React.createClass( {
 						<FormLabel>{ translate( 'Which site do you need help with?' ) }</FormLabel>
 						<SitesDropdown
 							selectedSiteId={ this.props.selectedSite.ID }
-							onSiteSelect={ this.props.onChangeSite } />
+							onSiteSelect={ this.props.onChangeSite }
+						/>
 					</div>
 				) }
 
 				{ showSubjectField && (
 					<div className="help-contact-form__subject">
 						<FormLabel>{ translate( 'Subject' ) }</FormLabel>
-						<FormTextInput valueLink={ this.linkState( 'subject' ) } />
+						<FormTextInput
+							name="subject"
+							value={ this.state.subject }
+							onChange={ this.handleChange }
+						/>
 					</div>
 				) }
 
 				<FormLabel>{ translate( 'What are you trying to do?' ) }</FormLabel>
-				<FormTextarea valueLink={ this.linkState( 'message' ) } placeholder={ translate( 'Please be descriptive' ) } />
+				<FormTextarea
+					placeholder={ translate( 'Please be descriptive' ) }
+					name="message"
+					value={ this.state.message }
+					onChange={ this.handleChange }
+				/>
 
 				{ showHelpLanguagePrompt && (
 					<strong className="help-contact-form__help-language-prompt">
@@ -336,20 +356,27 @@ export const HelpContactForm = React.createClass( {
 					onClick={ this.trackSibylClick }
 				/>
 
-				<FormButton disabled={ ! this.canSubmitForm() } type="button" onClick={ this.submitForm }>{ buttonLabel }</FormButton>
+				<FormButton disabled={ ! this.canSubmitForm() } type="button" onClick={ this.submitForm }>
+					{ buttonLabel }
+				</FormButton>
 			</div>
 		);
 	}
-} );
 
-const mapStateToProps = ( state ) => ( {
+	handleChange = e => {
+		const { name, value } = e.currentTarget;
+		this.setState( { [ name ]: value } );
+	};
+}
+
+const mapStateToProps = state => ( {
 	selectedSite: getHelpSelectedSite( state ),
 } );
 
 const mapDispatchToProps = {
 	onChangeSite: selectSiteId,
 	trackSibylClick,
-	trackSupportAfterSibylClick
+	trackSupportAfterSibylClick,
 };
 
 export default connect( mapStateToProps, mapDispatchToProps )( localize( HelpContactForm ) );

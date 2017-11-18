@@ -1,14 +1,14 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import {
-	noop,
-	isEqual,
-	partial
-} from 'lodash';
+import { noop, isEqual, partial } from 'lodash';
 import path from 'path';
 import { localize } from 'i18n-calypso';
 import classNames from 'classnames';
@@ -26,25 +26,20 @@ import {
 	resetImageEditorState,
 	resetAllImageEditorState,
 	setImageEditorFileInfo,
-	setImageEditorDefaultAspectRatio
+	setImageEditorDefaultAspectRatio,
 } from 'state/ui/editor/image-editor/actions';
 import {
 	getImageEditorFileInfo,
-	isImageEditorImageLoaded
+	isImageEditorImageLoaded,
 } from 'state/ui/editor/image-editor/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import { getSite } from 'state/sites/selectors';
 import QuerySites from 'components/data/query-sites';
-import {
-	AspectRatios,
-	AspectRatiosValues
-} from 'state/ui/editor/image-editor/constants';
-import {
-	getDefaultAspectRatio
-} from './utils';
+import { AspectRatios, AspectRatiosValues } from 'state/ui/editor/image-editor/constants';
+import { getDefaultAspectRatio } from './utils';
 
-const ImageEditor = React.createClass( {
-	propTypes: {
+class ImageEditor extends React.Component {
+	static propTypes = {
 		// Component props
 		media: PropTypes.object,
 		siteId: PropTypes.number,
@@ -61,33 +56,27 @@ const ImageEditor = React.createClass( {
 		setImageEditorFileInfo: PropTypes.func,
 		setImageEditorDefaultAspectRatio: PropTypes.func,
 		translate: PropTypes.func,
-		isImageLoaded: PropTypes.bool
-	},
+		isImageLoaded: PropTypes.bool,
+	};
 
-	getDefaultProps() {
-		return {
-			media: null,
-			onDone: noop,
-			onCancel: null,
-			onReset: noop,
-			isImageLoaded: false,
-			defaultAspectRatio: AspectRatios.FREE,
-			allowedAspectRatios: AspectRatiosValues,
-			setImageEditorDefaultAspectRatio: noop
-		};
-	},
+	static defaultProps = {
+		media: null,
+		onDone: noop,
+		onCancel: null,
+		onReset: noop,
+		isImageLoaded: false,
+		defaultAspectRatio: AspectRatios.FREE,
+		allowedAspectRatios: AspectRatiosValues,
+		setImageEditorDefaultAspectRatio: noop,
+	};
 
-	getInitialState() {
-		return {
-			noticeText: null,
-			noticeStatus: 'is-info'
-		};
-	},
+	state = {
+		noticeText: null,
+		noticeStatus: 'is-info',
+	};
 
 	componentWillReceiveProps( newProps ) {
-		const {
-			media: currentMedia
-		} = this.props;
+		const { media: currentMedia } = this.props;
 
 		if ( newProps.media && ! isEqual( newProps.media, currentMedia ) ) {
 			this.props.resetAllImageEditorState();
@@ -96,27 +85,24 @@ const ImageEditor = React.createClass( {
 
 			this.setDefaultAspectRatio();
 		}
-	},
+	}
 
 	componentDidMount() {
 		this.updateFileInfo( this.props.media );
 
 		this.setDefaultAspectRatio();
-	},
+	}
 
-	setDefaultAspectRatio() {
-		const {
-			defaultAspectRatio,
-			allowedAspectRatios
-		} = this.props;
+	setDefaultAspectRatio = () => {
+		const { defaultAspectRatio, allowedAspectRatios } = this.props;
 
 		this.props.setImageEditorDefaultAspectRatio(
 			getDefaultAspectRatio( defaultAspectRatio, allowedAspectRatios )
 		);
-	},
+	};
 
-	updateFileInfo( media ) {
-		const {	site } = this.props;
+	updateFileInfo = media => {
+		const { site } = this.props;
 
 		let src,
 			fileName = 'default',
@@ -124,9 +110,11 @@ const ImageEditor = React.createClass( {
 			title = 'default';
 
 		if ( media ) {
-			src = media.src || MediaUtils.url( media, {
-				photon: site && ! site.is_private
-			} );
+			src =
+				media.src ||
+				MediaUtils.url( media, {
+					photon: site && ! site.is_private,
+				} );
 
 			fileName = media.file || path.basename( src );
 
@@ -137,9 +125,9 @@ const ImageEditor = React.createClass( {
 
 		this.props.resetImageEditorState();
 		this.props.setImageEditorFileInfo( src, fileName, mimeType, title );
-	},
+	};
 
-	convertBlobToImage( blob ) {
+	convertBlobToImage = blob => {
 		const { onDone } = this.props;
 
 		// Create a new image from the canvas blob
@@ -155,7 +143,7 @@ const ImageEditor = React.createClass( {
 			onDone( null, blob, {
 				...imageProperties,
 				width: transientImage.width,
-				height: transientImage.height
+				height: transientImage.height,
 			} );
 		};
 
@@ -166,9 +154,9 @@ const ImageEditor = React.createClass( {
 		};
 
 		transientImage.src = transientImageUrl;
-	},
+	};
 
-	onDone() {
+	onDone = () => {
 		const { isImageLoaded, onDone } = this.props;
 
 		if ( ! isImageLoaded ) {
@@ -179,27 +167,20 @@ const ImageEditor = React.createClass( {
 		const canvasComponent = this.refs.editCanvas.getWrappedInstance();
 
 		canvasComponent.toBlob( this.convertBlobToImage );
-	},
+	};
 
-	onCancel() {
+	onCancel = () => {
 		this.props.onCancel( this.getImageEditorProps() );
-	},
+	};
 
-	onReset() {
+	onReset = () => {
 		this.props.resetImageEditorState();
 
 		this.props.onReset( this.getImageEditorProps() );
-	},
+	};
 
-	getImageEditorProps() {
-		const {
-			src,
-			fileName,
-			media,
-			mimeType,
-			title,
-			site
-		} = this.props;
+	getImageEditorProps = () => {
+		const { src, fileName, media, mimeType, title, site } = this.props;
 
 		const imageProperties = {
 			src,
@@ -207,7 +188,7 @@ const ImageEditor = React.createClass( {
 			mimeType,
 			title,
 			site,
-			resetAllImageEditorState: this.props.resetAllImageEditorState
+			resetAllImageEditorState: this.props.resetAllImageEditorState,
 		};
 
 		if ( media && media.ID ) {
@@ -215,23 +196,23 @@ const ImageEditor = React.createClass( {
 		}
 
 		return imageProperties;
-	},
+	};
 
-	showNotice( noticeText, noticeStatus = 'is-info' ) {
+	showNotice = ( noticeText, noticeStatus = 'is-info' ) => {
 		this.setState( {
 			noticeText,
-			noticeStatus
+			noticeStatus,
 		} );
-	},
+	};
 
-	clearNoticeState() {
+	clearNoticeState = () => {
 		this.setState( {
 			noticeText: null,
-			noticeStatus: 'is-info'
+			noticeStatus: 'is-info',
 		} );
-	},
+	};
 
-	renderNotice() {
+	renderNotice = () => {
 		if ( ! this.state.noticeText ) {
 			return null;
 		}
@@ -245,33 +226,27 @@ const ImageEditor = React.createClass( {
 				text={ this.state.noticeText }
 				isCompact={ false }
 				onDismissClick={ this.clearNoticeState }
-				className="image-editor__notice" />
+				className="image-editor__notice"
+			/>
 		);
-	},
+	};
 
-	onLoadCanvasError() {
+	onLoadCanvasError = () => {
 		const { translate } = this.props;
 		this.showNotice(
-			translate( 'Sorry, there was a problem loading the image. Please close this editor and try selecting the image again.' ),
+			translate(
+				'Sorry, there was a problem loading the image. Please close this editor and try selecting the image again.'
+			),
 			'is-error'
 		);
-	},
+	};
 
 	render() {
-		const {
-			className,
-			siteId,
-			allowedAspectRatios
-		} = this.props;
+		const { className, siteId, allowedAspectRatios } = this.props;
 
-		const {
-			noticeText
-		} = this.state;
+		const { noticeText } = this.state;
 
-		const classes = classNames(
-			'image-editor',
-			className
-		);
+		const classes = classNames( 'image-editor', className );
 
 		return (
 			<div className={ classes }>
@@ -282,10 +257,7 @@ const ImageEditor = React.createClass( {
 
 				<figure>
 					<div className="image-editor__content">
-						<ImageEditorCanvas
-							ref="editCanvas"
-							onLoadError={ this.onLoadCanvasError }
-						/>
+						<ImageEditorCanvas ref="editCanvas" onLoadError={ this.onLoadCanvasError } />
 						<ImageEditorToolbar
 							onShowNotice={ this.showNotice }
 							allowedAspectRatios={ allowedAspectRatios }
@@ -301,7 +273,7 @@ const ImageEditor = React.createClass( {
 			</div>
 		);
 	}
-} );
+}
 
 export default connect(
 	( state, ownProps ) => {
@@ -314,7 +286,7 @@ export default connect(
 		return {
 			...getImageEditorFileInfo( state ),
 			site: getSite( state, siteId ),
-			isImageLoaded: isImageEditorImageLoaded( state )
+			isImageLoaded: isImageEditorImageLoaded( state ),
 		};
 	},
 	( dispatch, ownProp ) => {
@@ -324,15 +296,17 @@ export default connect(
 		);
 
 		const resetActionsAdditionalData = {
-			aspectRatio: defaultAspectRatio
+			aspectRatio: defaultAspectRatio,
 		};
 
-		return bindActionCreators( {
-			setImageEditorFileInfo,
-			setImageEditorDefaultAspectRatio,
-			resetImageEditorState: partial( resetImageEditorState, resetActionsAdditionalData ),
-			resetAllImageEditorState: partial( resetAllImageEditorState, resetActionsAdditionalData )
-
-		}, dispatch );
+		return bindActionCreators(
+			{
+				setImageEditorFileInfo,
+				setImageEditorDefaultAspectRatio,
+				resetImageEditorState: partial( resetImageEditorState, resetActionsAdditionalData ),
+				resetAllImageEditorState: partial( resetAllImageEditorState, resetActionsAdditionalData ),
+			},
+			dispatch
+		);
 	}
 )( localize( ImageEditor ) );

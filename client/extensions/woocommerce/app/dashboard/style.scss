@@ -1,9 +1,28 @@
 .dashboard__manage-has-orders,
 .dashboard__manage-no-orders,
+.dashboard__placeholder,
 .dashboard__setup-wrapper {
 	@include breakpoint( ">660px" ) {
 		margin-top: 58px;
 	}
+}
+
+.dashboard__placeholder .card {
+	@include placeholder();
+}
+
+.dashboard__placeholder-large button,
+.dashboard__placeholder-small button {
+	display: none;
+}
+
+.dashboard__placeholder-small {
+	height: 250px;
+}
+
+.dashboard__placeholder-large {
+	margin-bottom: 16px;
+	height: 200px;
 }
 
 .dashboard__setup-header {
@@ -317,6 +336,42 @@
 			&:last-child {
 				margin-bottom: 0;
 			}
+		}
+	}
+}
+
+@include breakpoint( ">960px" ) {
+	.dashboard__queue-widgets {
+		display: flex;
+
+		div {
+			flex-grow: 1;
+		}
+
+		div:nth-child( 2 ) {
+			margin-left: 8px;
+		}
+	}
+}
+
+.dashboard__reviews-widget {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	min-width: 30%;
+
+
+	div {
+		min-width: 50%;
+		text-align: center;
+
+		span:first-child {
+			display: block;
+			font-size: 24px;
+		}
+
+		span:nth-child( 2 ) {
+			color: $gray-text-min;
 		}
 	}
 }

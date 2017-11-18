@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
@@ -16,39 +19,29 @@ import Card from 'components/card';
 import ExtendedHeader from 'woocommerce/components/extended-header';
 import FormToggle from 'components/forms/form-toggle';
 import LabelSettings from './label-settings';
-import {
-	fetchSettings,
-	setFormDataValue,
-} from '../../state/label-settings/actions';
+import QueryLabelSettings from 'woocommerce/woocommerce-services/components/query-label-settings';
+import { setFormDataValue, restorePristineSettings } from '../../state/label-settings/actions';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import {
 	getLabelSettingsFormData,
 	getLabelSettingsFormMeta,
-	getLabelSettingsStoreOptions
+	getLabelSettingsStoreOptions,
 } from '../../state/label-settings/selectors';
 
 class AccountSettingsRootView extends Component {
-
-	componentWillMount() {
-		if ( this.props.siteId ) {
-			this.props.fetchSettings( this.props.siteId );
-		}
-	}
-
-	componentWillReceiveProps( props ) {
-		if ( props.siteId !== this.props.siteId ) {
-			this.props.fetchSettings( props.siteId );
-		}
+	componentWillUnmount() {
+		this.props.restorePristineSettings( this.props.siteId );
 	}
 
 	render() {
 		const { formData, formMeta, storeOptions, siteId, translate } = this.props;
 
 		if ( ! formMeta || ( ! formMeta.isFetching && ! formMeta.can_manage_payments ) ) {
-			return null;
+			return <QueryLabelSettings siteId={ siteId } />;
 		}
-		const setValue = ( key, value ) => ( this.props.setFormDataValue( siteId, key, value ) );
-		const onEnabledToggle = () => ( this.props.setFormDataValue( siteId, 'enabled', ! formData.enabled ) );
+		const setValue = ( key, value ) => this.props.setFormDataValue( siteId, key, value );
+		const onEnabledToggle = () =>
+			this.props.setFormDataValue( siteId, 'enabled', ! formData.enabled );
 
 		const renderContent = () => {
 			if ( ! formData && ! formMeta.isFetching ) {
@@ -78,10 +71,16 @@ class AccountSettingsRootView extends Component {
 
 		return (
 			<div>
+				<QueryLabelSettings siteId={ siteId } />
 				<ExtendedHeader
 					label={ translate( 'Shipping Labels' ) }
-					description={ translate( 'Print shipping labels yourself and save a trip to the post office.' ) }>
-					{ renderToggle && <FormToggle checked={ formData.enabled } onChange={ onEnabledToggle } /> }
+					description={ translate(
+						'Print shipping labels yourself and save a trip to the post office.'
+					) }
+				>
+					{ renderToggle && (
+						<FormToggle checked={ formData.enabled } onChange={ onEnabledToggle } />
+					) }
 				</ExtendedHeader>
 				<Card className={ classNames( 'label-settings__labels-container', { hidden } ) }>
 					{ renderContent() }
@@ -105,13 +104,15 @@ function mapStateToProps( state ) {
 }
 
 function mapDispatchToProps( dispatch ) {
-	return bindActionCreators( {
-		fetchSettings,
-		setFormDataValue,
-	}, dispatch );
+	return bindActionCreators(
+		{
+			setFormDataValue,
+			restorePristineSettings,
+		},
+		dispatch
+	);
 }
 
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)( localize( AccountSettingsRootView ) );
+export default connect( mapStateToProps, mapDispatchToProps )(
+	localize( AccountSettingsRootView )
+);

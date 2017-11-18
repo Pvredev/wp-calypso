@@ -1,21 +1,15 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 import debugFactory from 'debug';
-import {
-	castArray,
-	defaults,
-	get,
-	identity,
-	isEmpty,
-	isString,
-	map,
-	noop
-} from 'lodash';
+import { castArray, defaults, get, identity, isEmpty, isString, map, noop, toUpper } from 'lodash';
 
 /**
  * Internal dependencies
@@ -40,6 +34,14 @@ function onlyNumericCharacters( string ) {
 	return isString( string ) ? string.replace( /[^0-9]/g, '' ) : '';
 }
 
+/*
+ * Sanitize a VAT string by removing everything except digits,
+ * letters, plus or star symbols.
+ */
+export function sanitizeVat( string ) {
+	return isString( string ) ? toUpper( string ).replace( /[^0-9A-Z+*]/g, '' ) : '';
+}
+
 // If we set a field to null, react decides it's uncontrolled and complains
 // and we don't particularly want to make the parent remember all our fields
 // so we use these values to plug missing.
@@ -55,7 +57,6 @@ function renderValidationError( message ) {
 
 class RegistrantExtraInfoFrForm extends React.PureComponent {
 	static propTypes = {
-		children: PropTypes.node,
 		contactDetails: PropTypes.object,
 		contactDetailsValidationErrors: PropTypes.object,
 		isVisible: PropTypes.bool,
@@ -72,6 +73,7 @@ class RegistrantExtraInfoFrForm extends React.PureComponent {
 	sanitizeFunctions = {
 		sirenSiret: onlyNumericCharacters,
 		trademarkNumber: onlyNumericCharacters,
+		registrantVatId: sanitizeVat,
 	};
 
 	componentWillMount() {
@@ -81,12 +83,14 @@ class RegistrantExtraInfoFrForm extends React.PureComponent {
 		//    fields so we can keep them together in one place
 		defaultRegistrantType = this.props.contactDetails.organization ? 'organization' : 'individual';
 
-		this.props.updateContactDetailsCache( { extra: {
-			registrantType: defaultRegistrantType
-		} } );
+		this.props.updateContactDetailsCache( {
+			extra: {
+				registrantType: defaultRegistrantType,
+			},
+		} );
 	}
 
-	handleChangeEvent = ( event ) => {
+	handleChangeEvent = event => {
 		const field = event.target.id;
 		const value = this.sanitizeField( event.target.value, field );
 
@@ -94,42 +98,39 @@ class RegistrantExtraInfoFrForm extends React.PureComponent {
 		this.props.updateContactDetailsCache( {
 			extra: { [ field ]: value },
 		} );
-	}
+	};
 
 	render() {
-		const {
-			contactDetails,
-			contactDetailsValidationErrors,
-			translate,
-		} = this.props;
+		const { contactDetails, contactDetailsValidationErrors, translate } = this.props;
 		const registrantType = get( contactDetails, 'extra.registrantType', defaultRegistrantType );
 		const formIsValid = isEmpty( contactDetailsValidationErrors );
 
 		return (
 			<form className="registrant-extra-info__form">
 				<p className="registrant-extra-info__form-desciption">
-					{ translate(
-						'Almost done! We need some extra details to register your %(tld)s domain.',
-						{ args: { tld: '.fr' } }
-					) }
+					{ translate( 'Almost done! We need some extra details to register your %(tld)s domain.', {
+						args: { tld: '.fr' },
+					} ) }
 				</p>
 				<FormFieldset>
-					<FormLegend>
-						{ translate( "Who's this domain for?" ) }
-					</FormLegend>
+					<FormLegend>{ translate( "Who's this domain for?" ) }</FormLegend>
 					<FormLabel>
-						<FormRadio value="individual"
+						<FormRadio
+							value="individual"
 							id="registrantType"
 							checked={ 'individual' === registrantType }
-							onChange={ this.handleChangeEvent } />
+							onChange={ this.handleChangeEvent }
+						/>
 						<span>{ translate( 'An individual' ) }</span>
 					</FormLabel>
 
 					<FormLabel>
-						<FormRadio value="organization"
+						<FormRadio
+							value="organization"
 							id="registrantType"
 							checked={ 'organization' === registrantType }
-							onChange={ this.handleChangeEvent } />
+							onChange={ this.handleChangeEvent }
+						/>
 						<span>{ translate( 'A company or organization' ) }</span>
 					</FormLabel>
 				</FormFieldset>
@@ -139,56 +140,58 @@ class RegistrantExtraInfoFrForm extends React.PureComponent {
 				{ formIsValid
 					? this.props.children
 					: map(
-						castArray( this.props.children ),
-						( child ) =>
-							child.props.className.match( /submit-button/ )
-								? React.cloneElement( child, {
-									disabled: true
-								} )
-								: child	) }
+							castArray( this.props.children ),
+							child =>
+								child.props.className.match( /submit-button/ )
+									? React.cloneElement( child, {
+											disabled: true,
+										} )
+									: child
+						) }
 			</form>
 		);
 	}
 
 	renderOrganizationFields() {
-		const {
-			contactDetails,
-			contactDetailsValidationErrors,
-			translate,
-		} = this.props;
-		const {
-			registrantVatId,
-			sirenSiret,
-			trademarkNumber
-		} = defaults( {}, contactDetails.extra, emptyValues );
+		const { contactDetails, contactDetailsValidationErrors, translate } = this.props;
+		const { registrantVatId, sirenSiret, trademarkNumber } = defaults(
+			{},
+			contactDetails.extra,
+			emptyValues
+		);
 		const validationErrors = get( contactDetailsValidationErrors, 'extra', {} );
-		const registrantVatIdValidationMessage = validationErrors.registrantVatId &&
+		const registrantVatIdValidationMessage =
+			validationErrors.registrantVatId &&
 			renderValidationError(
-				translate( 'The VAT Number field is a pattern ' +
-					'of letters and numbers that depends on the country, ' +
-					'but it always includes a 2 letter country code' ) );
+				translate(
+					'The VAT Number field is a pattern ' +
+						'of letters and numbers that depends on the country, ' +
+						'but it always starts with a 2 letter country code'
+				)
+			);
 
-		const sirenSiretValidationMessage = validationErrors.sirenSiret &&
+		const sirenSiretValidationMessage =
+			validationErrors.sirenSiret &&
 			renderValidationError(
-				translate( 'The SIREN/SIRET field must be either a ' +
-					'9 digit SIREN number, or a 14 digit SIRET number' ) );
+				translate(
+					'The SIREN/SIRET field must be either a ' +
+						'9 digit SIREN number, or a 14 digit SIRET number'
+				)
+			);
 
 		const trademarkNumberStrings = {
 			maxLength: this.props.translate( 'Too long. An EU Trademark number has 9 digits.' ),
 			oneOf: this.props.translate( 'Too short. An EU Trademark number has 9 digits.' ),
 		};
 
-		const trademarkNumberValidationMessage = map(
-				validationErrors.trademarkNumber,
-				( error ) =>
-					renderValidationError( trademarkNumberStrings[ error ] )
-			);
+		const trademarkNumberValidationMessage = map( validationErrors.trademarkNumber, error =>
+			renderValidationError( trademarkNumberStrings[ error ] )
+		);
 
 		return (
 			<div>
 				<FormFieldset>
-					<FormLabel className="registrant-extra-info__optional"
-						htmlFor="registrantVatId">
+					<FormLabel className="registrant-extra-info__optional" htmlFor="registrantVatId">
 						{ translate( 'VAT Number' ) }
 						{ this.renderOptional() }
 					</FormLabel>
@@ -200,13 +203,13 @@ class RegistrantExtraInfoFrForm extends React.PureComponent {
 						autoCorrect="off"
 						placeholder={ translate( 'ex. FRXX123456789' ) }
 						onChange={ this.handleChangeEvent }
-						isError={ Boolean( registrantVatIdValidationMessage ) } />
-						{ registrantVatIdValidationMessage }
+						isError={ Boolean( registrantVatIdValidationMessage ) }
+					/>
+					{ registrantVatIdValidationMessage }
 				</FormFieldset>
 
 				<FormFieldset>
-					<FormLabel className="registrant-extra-info__optional"
-						htmlFor="sirenSiret">
+					<FormLabel className="registrant-extra-info__optional" htmlFor="sirenSiret">
 						{ translate( 'SIREN or SIRET Number' ) }
 						{ this.renderOptional() }
 					</FormLabel>
@@ -216,22 +219,20 @@ class RegistrantExtraInfoFrForm extends React.PureComponent {
 						type="text"
 						inputMode="numeric"
 						pattern="[0-9]*"
-						placeholder={
-							translate( 'ex. 123 456 789 or 123 456 789 01234',
-								{ comment: 'ex is short for "example". The numbers are examples of the EU VAT format' }
-							)
-						}
+						placeholder={ translate( 'ex. 123 456 789 or 123 456 789 01234', {
+							comment: 'ex is short for "example". The numbers are examples of the EU VAT format',
+						} ) }
 						autoCapitalize="off"
 						autoComplete="off"
 						autoCorrect="off"
 						isError={ Boolean( sirenSiretValidationMessage ) }
-						onChange={ this.handleChangeEvent } />
-						{ sirenSiretValidationMessage }
+						onChange={ this.handleChangeEvent }
+					/>
+					{ sirenSiretValidationMessage }
 				</FormFieldset>
 
 				<FormFieldset>
-					<FormLabel className="registrant-extra-info__optional"
-						htmlFor="trademarkNumber">
+					<FormLabel className="registrant-extra-info__optional" htmlFor="trademarkNumber">
 						{ translate( 'EU Trademark Number' ) }
 						{ this.renderOptional() }
 					</FormLabel>
@@ -244,13 +245,12 @@ class RegistrantExtraInfoFrForm extends React.PureComponent {
 						autoCapitalize="off"
 						autoComplete="off"
 						autoCorrect="off"
-						placeholder={
-							translate( 'ex. 012345678',
-								{ comment: 'ex is short for example. The number is the EU trademark number format.' }
-							)
-						}
+						placeholder={ translate( 'ex. 012345678', {
+							comment: 'ex is short for example. The number is the EU trademark number format.',
+						} ) }
 						isError={ ! isEmpty( trademarkNumberValidationMessage ) }
-						onChange={ this.handleChangeEvent } />
+						onChange={ this.handleChangeEvent }
+					/>
 					{ trademarkNumberValidationMessage }
 				</FormFieldset>
 			</div>
@@ -259,7 +259,9 @@ class RegistrantExtraInfoFrForm extends React.PureComponent {
 
 	renderOptional() {
 		return (
-			<span className="registrant-extra-info__optional-label">{ this.props.translate( 'Optional' ) }</span>
+			<span className="registrant-extra-info__optional-label">
+				{ this.props.translate( 'Optional' ) }
+			</span>
 		);
 	}
 

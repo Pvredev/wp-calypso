@@ -1,3 +1,4 @@
+/** @format */
 /**
  * External dependencies
  */
@@ -7,19 +8,22 @@ import page from 'page';
  * Internal dependencies
  */
 import controller from './controller';
-import sitesController from 'my-sites/controller';
+import { siteSelection } from 'my-sites/controller';
 
 const redirectToStoreWithInterval = context => {
-	const interval = context && context.params && context.params.interval
-		? context.params.interval
-		: '';
+	const interval =
+		context && context.params && context.params.interval ? context.params.interval : '';
 	page.redirect( `/jetpack/connect/store/${ interval }` );
 };
 
 export default function() {
-	page( '/jetpack/connect/:type(personal|premium|pro)/:interval(yearly|monthly)?', controller.connect );
+	page(
+		'/jetpack/connect/:type(personal|premium|pro)/:interval(yearly|monthly)?',
+		controller.connect
+	);
 
-	page( '/jetpack/connect/:type(install)/:locale?',
+	page(
+		'/jetpack/connect/:type(install)/:locale?',
 		controller.redirectWithoutLocaleifLoggedIn,
 		controller.connect
 	);
@@ -57,17 +61,8 @@ export default function() {
 		controller.connect
 	);
 
-	page(
-		'/jetpack/connect/plans/:site',
-		sitesController.siteSelection,
-		controller.plansSelection
-	);
-
-	page(
-		'/jetpack/connect/plans/:interval/:site',
-		sitesController.siteSelection,
-		controller.plansSelection
-	);
+	page( '/jetpack/connect/plans/:site', siteSelection, controller.plansSelection );
+	page( '/jetpack/connect/plans/:interval/:site', siteSelection, controller.plansSelection );
 
 	page( '/jetpack/sso/:siteId?/:ssoNonce?', controller.sso );
 	page( '/jetpack/sso/*', controller.sso );

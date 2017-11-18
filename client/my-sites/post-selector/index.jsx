@@ -1,8 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
-import PureRenderMixin from 'react-pure-render/mixin';
+
+import PropTypes from 'prop-types';
+import React from 'react';
 import { reduce, snakeCase } from 'lodash';
 
 /**
@@ -10,12 +13,10 @@ import { reduce, snakeCase } from 'lodash';
  */
 import PostSelectorPosts from './selector';
 
-export default React.createClass( {
-	displayName: 'PostSelector',
+export default class extends React.PureComponent {
+	static displayName = 'PostSelector';
 
-	mixins: [ PureRenderMixin ],
-
-	propTypes: {
+	static propTypes = {
 		type: PropTypes.string,
 		excludePrivateTypes: PropTypes.bool,
 		siteId: PropTypes.number.isRequired,
@@ -30,58 +31,67 @@ export default React.createClass( {
 		order: PropTypes.oneOf( [ 'ASC', 'DESC' ] ),
 		showTypeLabels: PropTypes.bool,
 		suppressFirstPageLoad: PropTypes.bool,
-	},
+	};
 
-	getDefaultProps() {
-		return {
-			type: 'post',
-			status: 'publish,private',
-			multiple: false,
-			orderBy: 'title',
-			order: 'ASC',
-			suppressFirstPageLoad: false,
-		};
-	},
+	static defaultProps = {
+		type: 'post',
+		status: 'publish,private',
+		multiple: false,
+		orderBy: 'title',
+		order: 'ASC',
+		suppressFirstPageLoad: false,
+	};
 
-	getInitialState() {
-		return {
-			search: ''
-		};
-	},
+	state = {
+		search: '',
+	};
 
-	onSearch( term ) {
+	onSearch = term => {
 		if ( term !== this.state.search ) {
 			this.setState( {
-				search: term
+				search: term,
 			} );
 		}
-	},
+	};
 
-	getQuery() {
+	getQuery = () => {
 		const { type, status, excludeTree, orderBy, order, excludePrivateTypes } = this.props;
 		const { search } = this.state;
 
-		return reduce( { type, status, excludeTree, orderBy, order, excludePrivateTypes, search }, ( memo, value, key ) => {
-			if ( null === value || undefined === value ) {
+		return reduce(
+			{ type, status, excludeTree, orderBy, order, excludePrivateTypes, search },
+			( memo, value, key ) => {
+				if ( null === value || undefined === value ) {
+					return memo;
+				}
+
+				// if we don't have a search term, default to ordering by date
+				if ( key === 'orderBy' && search !== '' ) {
+					value = 'date';
+				}
+
+				if ( key === 'order' && search !== '' ) {
+					value = 'DESC';
+				}
+
+				memo[ snakeCase( key ) ] = value;
 				return memo;
-			}
-
-			// if we don't have a search term, default to ordering by date
-			if ( key === 'orderBy' && search !== '' ) {
-				value = 'date';
-			}
-
-			if ( key === 'order' && search !== '' ) {
-				value = 'DESC';
-			}
-
-			memo[ snakeCase( key ) ] = value;
-			return memo;
-		}, {} );
-	},
+			},
+			{}
+		);
+	};
 
 	render() {
-		const { siteId, multiple, onChange, emptyMessage, createLink, selected, showTypeLabels, suppressFirstPageLoad } = this.props;
+		const {
+			siteId,
+			multiple,
+			onChange,
+			emptyMessage,
+			createLink,
+			selected,
+			showTypeLabels,
+			suppressFirstPageLoad,
+		} = this.props;
 
 		return (
 			<PostSelectorPosts
@@ -98,4 +108,4 @@ export default React.createClass( {
 			/>
 		);
 	}
-} );
+}

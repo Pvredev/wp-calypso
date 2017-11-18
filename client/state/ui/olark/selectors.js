@@ -1,11 +1,10 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
-import {
-	STATUS_READY,
-	STATUS_TIMEOUT,
-	OPERATOR_STATUS_AVAILABLE
-} from './constants';
+
+import { STATUS_READY, STATUS_TIMEOUT, OPERATOR_STATUS_AVAILABLE } from './constants';
 
 /**
  * Returns if olark is ready for use.

@@ -1,3 +1,5 @@
+/** @format */
+
 /**
  * External dependencies
  */
@@ -6,69 +8,88 @@ import { expect } from 'chai';
 /**
  * Internal dependencies
  */
+import { productsRequest, productsRequestSuccess } from '../list-reducer';
 import {
-	productsDeleteSuccess,
-	productsRequest,
-	productsRequestSuccess,
-} from '../list-reducer';
-
-import {
-	WOOCOMMERCE_PRODUCTS_DELETE_SUCCESS,
 	WOOCOMMERCE_PRODUCTS_REQUEST,
 	WOOCOMMERCE_PRODUCTS_REQUEST_SUCCESS,
 } from 'woocommerce/state/action-types';
 
-import products from 'woocommerce/state/sites/products/test/fixtures/products';
-import product from 'woocommerce/state/sites/products/test/fixtures/product';
-
 describe( 'reducer', () => {
 	describe( 'productsRequest', () => {
-		it( 'should store the requested page', () => {
+		test( 'should store the requested page', () => {
 			const action = {
 				type: WOOCOMMERCE_PRODUCTS_REQUEST,
 				siteId: 123,
-				page: 3,
+				params: { page: 3 },
 			};
 			const newState = productsRequest( undefined, action );
 			expect( newState.requestedPage ).to.eql( 3 );
+			expect( newState.requestedSearch ).to.be.null;
+		} );
+		test( 'should store the requested search', () => {
+			const action = {
+				type: WOOCOMMERCE_PRODUCTS_REQUEST,
+				siteId: 123,
+				params: { search: 'example' },
+			};
+			const newState = productsRequest( undefined, action );
+			expect( newState.requestedPage ).to.be.null;
+			expect( newState.requestedSearch ).to.eql( 'example' );
+		} );
+		test( 'should update the requested query', () => {
+			const action = {
+				type: WOOCOMMERCE_PRODUCTS_REQUEST,
+				siteId: 123,
+				params: { page: 2 },
+			};
+			const originalState = { requestedPage: 1, requestedSearch: null };
+			const newState = productsRequest( originalState, action );
+			expect( newState.requestedPage ).to.eql( 2 );
 		} );
 	} );
+
 	describe( 'productsRequestSuccess', () => {
-		it( 'should store the current page', () => {
+		test( 'should store the current page', () => {
 			const action = {
 				type: WOOCOMMERCE_PRODUCTS_REQUEST_SUCCESS,
 				siteId: 123,
-				page: 2,
-				totalPages: 3,
-				totalProducts: 30,
-				products,
+				params: { page: 2 },
 			};
 			const newState = productsRequestSuccess( undefined, action );
 			expect( newState.currentPage ).to.eql( 2 );
+			expect( newState.currentSearch ).to.eql( '' );
+			expect( newState.requestedPage ).to.be.null;
+			expect( newState.requestedSearch ).to.be.null;
 		} );
-		it( 'should store product ids for the current page', () => {
+		test( 'should store the current search', () => {
 			const action = {
 				type: WOOCOMMERCE_PRODUCTS_REQUEST_SUCCESS,
 				siteId: 123,
-				page: 2,
-				totalPages: 3,
-				totalProducts: 30,
-				products,
+				params: { search: 'example' },
 			};
 			const newState = productsRequestSuccess( undefined, action );
-			expect( newState.productIds ).to.eql( [ 15, 389 ] );
+			expect( newState.currentPage ).to.eql( 1 );
+			expect( newState.currentSearch ).to.eql( 'example' );
+			expect( newState.requestedPage ).to.be.null;
+			expect( newState.requestedSearch ).to.be.null;
 		} );
-	} );
-	describe( 'productsDeleteSuccess', () => {
-		it( 'should remove the product from the products list', () => {
+		test( 'should update the current query', () => {
 			const action = {
-				type: WOOCOMMERCE_PRODUCTS_DELETE_SUCCESS,
+				type: WOOCOMMERCE_PRODUCTS_REQUEST_SUCCESS,
 				siteId: 123,
-				data: product,
+				params: { page: 2 },
 			};
-
-			const newState = productsDeleteSuccess( { productIds: [ 31, 15, 389 ] }, action );
-			expect( newState.productIds ).to.eql( [ 15, 389 ] );
+			const originalState = {
+				requestedPage: 2,
+				requestedSearch: null,
+				currentPage: 1,
+				currentSearch: '',
+			};
+			const newState = productsRequestSuccess( originalState, action );
+			expect( newState.currentPage ).to.eql( 2 );
+			expect( newState.currentSearch ).to.eql( '' );
+			expect( newState.requestedPage ).to.be.null;
+			expect( newState.requestedSearch ).to.be.null;
 		} );
 	} );
 } );

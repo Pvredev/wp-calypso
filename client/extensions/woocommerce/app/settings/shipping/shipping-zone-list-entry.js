@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
@@ -28,7 +31,7 @@ const ShippingZoneEntry = ( { translate, id, name, methods, currency, loaded, is
 					<p className="shipping__zones-row-location-name" />
 					<p className="shipping__zones-row-location-description" />
 				</div>
-				<div className="shipping__zones-row-methods" >
+				<div className="shipping__zones-row-methods">
 					<div className="shipping__zones-row-method">
 						<p className="shipping__zones-row-method-name" />
 						<p className="shipping__zones-row-method-description" />
@@ -38,7 +41,7 @@ const ShippingZoneEntry = ( { translate, id, name, methods, currency, loaded, is
 						<p className="shipping__zones-row-method-description" />
 					</div>
 				</div>
-				<div className="shipping__zones-row-actions" >
+				<div className="shipping__zones-row-actions">
 					<Button compact>{ translate( 'Edit' ) }</Button>
 				</div>
 			</div>
@@ -54,7 +57,7 @@ const ShippingZoneEntry = ( { translate, id, name, methods, currency, loaded, is
 		);
 	};
 
-	const renderMethod = ( methodKey ) => {
+	const renderMethod = methodKey => {
 		const method = methods[ methodKey ];
 		let summary = getMethodSummary( method, currency );
 		if ( ! method.enabled ) {
@@ -68,7 +71,7 @@ const ShippingZoneEntry = ( { translate, id, name, methods, currency, loaded, is
 
 	const icon = 0 === id ? 'globe' : 'location';
 
-	const onEditClick = ( event ) => {
+	const onEditClick = event => {
 		if ( ! isValid ) {
 			event.preventDefault();
 		}
@@ -93,7 +96,8 @@ const ShippingZoneEntry = ( { translate, id, name, methods, currency, loaded, is
 					compact
 					href={ getLink( `/store/settings/shipping/zone/:site/${ id }`, site ) }
 					disabled={ ! isValid }
-					onClick={ onEditClick }>
+					onClick={ onEditClick }
+				>
 					{ translate( 'Edit' ) }
 				</Button>
 			</div>
@@ -108,10 +112,8 @@ ShippingZoneEntry.propTypes = {
 	isValid: PropTypes.bool.isRequired,
 };
 
-export default connect(
-	( state, ownProps ) => ( {
-		site: getSelectedSite( state ),
-		methods: ownProps.loaded && getShippingZoneMethods( state, ownProps.id ),
-		currency: ownProps.loaded && getCurrencyWithEdits( state ),
-	} )
-)( localize( ShippingZoneEntry ) );
+export default connect( ( state, ownProps ) => ( {
+	site: getSelectedSite( state ),
+	methods: ownProps.loaded && getShippingZoneMethods( state, ownProps.id ),
+	currency: ownProps.loaded && getCurrencyWithEdits( state ),
+} ) )( localize( ShippingZoneEntry ) );

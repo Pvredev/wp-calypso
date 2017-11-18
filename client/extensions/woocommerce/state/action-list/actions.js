@@ -1,7 +1,9 @@
+/** @format */
 
 /**
  * Internal dependencies
  */
+
 import {
 	WOOCOMMERCE_ACTION_LIST_ANNOTATE,
 	WOOCOMMERCE_ACTION_LIST_CLEAR,
@@ -72,4 +74,3 @@ export function actionListStepFailure( actionList, error ) {
 		error,
 	};
 }
-

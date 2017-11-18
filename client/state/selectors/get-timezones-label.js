@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { getTimezonesLabels } from 'state/selectors';
 
 /**

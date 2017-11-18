@@ -1,7 +1,12 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React from 'react';
+import createReactClass from 'create-react-class';
 import { noop } from 'lodash';
 
 /**
@@ -17,7 +22,7 @@ import MediaLibrarySelectedStore from 'lib/media/library-selected-store';
 import MediaValidationStore from 'lib/media/validation-store';
 import markup from 'post-editor/media-modal/markup';
 
-export default React.createClass( {
+export default createReactClass( {
 	displayName: 'TinyMCEDropZone',
 
 	mixins: [ observe( 'sites' ) ],
@@ -26,19 +31,19 @@ export default React.createClass( {
 		editor: PropTypes.object,
 		sites: PropTypes.object,
 		onInsertMedia: PropTypes.func,
-		onRenderModal: PropTypes.func
+		onRenderModal: PropTypes.func,
 	},
 
 	getInitialState() {
 		return {
-			isDragging: false
+			isDragging: false,
 		};
 	},
 
 	getDefaultProps() {
 		return {
 			onInsertMedia: noop,
-			onRenderModal: noop
+			onRenderModal: noop,
 		};
 	},
 
@@ -67,7 +72,7 @@ export default React.createClass( {
 		// See: https://core.trac.wordpress.org/ticket/19845#comment:36
 		window.dispatchEvent( new CustomEvent( event.type, { detail: event } ) );
 		this.setState( {
-			isDragging: true
+			isDragging: true,
 		} );
 	},
 
@@ -80,14 +85,16 @@ export default React.createClass( {
 			return;
 		}
 
-		this.redirectEditorDragEvent( Object.assign( {}, event, {
-			type: 'dragenter'
-		} ) );
+		this.redirectEditorDragEvent(
+			Object.assign( {}, event, {
+				type: 'dragenter',
+			} )
+		);
 	},
 
 	stopDragging() {
 		this.setState( {
-			isDragging: false
+			isDragging: false,
 		} );
 	},
 
@@ -102,7 +109,8 @@ export default React.createClass( {
 		// Find selected images. Non-images will still be uploaded, but not
 		// inserted directly into the post contents.
 		const selectedItems = MediaLibrarySelectedStore.getAll( site.ID );
-		const isSingleImage = 1 === selectedItems.length && 'image' === MediaUtils.getMimePrefix( selectedItems[ 0 ] );
+		const isSingleImage =
+			1 === selectedItems.length && 'image' === MediaUtils.getMimePrefix( selectedItems[ 0 ] );
 
 		if ( isSingleImage && ! MediaValidationStore.hasErrors( site.ID ) ) {
 			// For single image upload, insert into post content, blocking save
@@ -134,7 +142,8 @@ export default React.createClass( {
 				site={ site }
 				fullScreen={ false }
 				trackStats={ false }
-				onAddMedia={ this.insertMedia } />
+				onAddMedia={ this.insertMedia }
+			/>
 		);
-	}
+	},
 } );

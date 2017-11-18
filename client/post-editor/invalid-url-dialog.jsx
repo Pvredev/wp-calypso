@@ -1,6 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
+import { localize } from 'i18n-calypso';
 import React from 'react';
 import { noop, startsWith } from 'lodash';
 import page from 'page';
@@ -12,79 +17,73 @@ import Dialog from 'components/dialog';
 import FormButton from 'components/forms/form-button';
 import { getSiteFragment } from 'lib/route/path';
 
-export default React.createClass( {
+class EditorTrashedDialog extends React.Component {
+	static displayName = 'EditorTrashedDialog';
 
-	displayName: 'EditorTrashedDialog',
+	static defaultProps = {
+		onClose: noop,
+		onSave: noop,
+	};
 
-	getInitialState() {
-		return {
-			isPage: this.isPage()
-		};
-	},
+	static propTypes = {
+		onClose: PropTypes.func,
+		onSave: PropTypes.func,
+	};
 
-	isPage() {
+	isPage = () => {
 		return startsWith( page.current, '/page/' );
-	},
+	};
 
-	getDefaultProps() {
-		return {
-			onClose: noop,
-			onSave: noop
-		};
-	},
-
-	propTypes: {
-		onClose: React.PropTypes.func,
-		onSave: React.PropTypes.func
-	},
-
-	getDialogButtons() {
-		const newText = this.state.isPage ? this.translate( 'New Page' ) : this.translate( 'New Post' );
+	getDialogButtons = () => {
+		const newText = this.state.isPage
+			? this.props.translate( 'New Page' )
+			: this.props.translate( 'New Post' );
 		return [
-			<FormButton
-				key="startNewPage"
-				isPrimary={ true }
-				onClick={ this.startNewPage }>
-					{ newText }
+			<FormButton key="startNewPage" isPrimary={ true } onClick={ this.startNewPage }>
+				{ newText }
 			</FormButton>,
-			<FormButton
-				key="back"
-				isPrimary={ false }
-				onClick={ this.props.onClose }>
-					{ this.translate( 'Close' ) }
-			</FormButton>
+			<FormButton key="back" isPrimary={ false } onClick={ this.props.onClose }>
+				{ this.props.translate( 'Close' ) }
+			</FormButton>,
 		];
-	},
+	};
 
-	startNewPage() {
+	startNewPage = () => {
 		const siteFragment = getSiteFragment( page.current );
 		const postSegment = this.state.isPage ? '/page/' : '/post/';
 		page( postSegment + siteFragment );
-	},
+	};
 
-	getStrings( isPage ) {
+	getStrings = isPage => {
 		if ( isPage ) {
 			return {
-				dialogTitle: this.translate( 'Invalid Page Address' ),
-				dialogContent: this.translate( 'This page cannot be found. Check the web address or start a new page.' ),
+				dialogTitle: this.props.translate( 'Invalid Page Address' ),
+				dialogContent: this.props.translate(
+					'This page cannot be found. Check the web address or start a new page.'
+				),
 			};
 		}
 		return {
-			dialogTitle: this.translate( 'Invalid Post Address' ),
-			dialogContent: this.translate( 'This post cannot be found. Check the web address or start a new post.' ),
+			dialogTitle: this.props.translate( 'Invalid Post Address' ),
+			dialogContent: this.props.translate(
+				'This post cannot be found. Check the web address or start a new post.'
+			),
 		};
-	},
+	};
+
+	state = {
+		isPage: this.isPage(),
+	};
 
 	render() {
 		const strings = this.getStrings( this.state.isPage );
 		return (
-			<Dialog
-				isVisible={ true }
-				buttons={ this.getDialogButtons() }
-			>
+			<Dialog isVisible={ true } buttons={ this.getDialogButtons() }>
 				<h1>{ strings.dialogTitle }</h1>
 				<p>{ strings.dialogContent }</p>
 			</Dialog>
 		);
 	}
-} );
+}
+
+export default localize( EditorTrashedDialog );

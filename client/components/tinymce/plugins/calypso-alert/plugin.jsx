@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import tinymce from 'tinymce/tinymce';
 import ReactDom from 'react-dom';
 import React from 'react';

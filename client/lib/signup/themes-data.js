@@ -1,30 +1,13 @@
+/** @format */
 export const themes = [
 	{
-		name: 'Button',
-		slug: 'button-2',
-		repo: 'pub',
-		fallback: false,
-		design: 'blog',
-		demo_uri: 'https://button2demo.wordpress.com',
-		verticals: []
-	},
-	{
-		name: 'Franklin',
-		slug: 'franklin',
-		repo: 'pub',
-		fallback: false,
-		design: 'blog',
-		demo_uri: 'https://franklindemo.wordpress.com',
-		verticals: []
-	},
-	{
-		name: 'Hemingway Rewritten',
-		slug: 'hemingway-rewritten',
+		name: 'Shoreditch',
+		slug: 'shoreditch',
 		repo: 'pub',
 		fallback: true,
-		design: 'blog',
-		demo_uri: 'https://hemingwayrewrittendemo.wordpress.com',
-		verticals: []
+		design: [ 'page', 'store' ],
+		demo_uri: 'https://wordpress.com/theme/shoreditch',
+		verticals: [],
 	},
 	{
 		name: 'Independent Publisher',
@@ -33,34 +16,16 @@ export const themes = [
 		fallback: false,
 		design: 'blog',
 		demo_uri: 'http://independentpublisher2demo.wordpress.com',
-		verticals: []
+		verticals: [],
 	},
 	{
-		name: 'Intergalactic 2',
-		slug: 'intergalactic-2',
+		name: 'Hemingway Rewritten',
+		slug: 'hemingway-rewritten',
 		repo: 'pub',
 		fallback: true,
 		design: 'blog',
-		demo_uri: 'https://intergalactic2demo.wordpress.com',
-		verticals: []
-	},
-	{
-		name: 'Libre',
-		slug: 'libre-2',
-		repo: 'pub',
-		fallback: false,
-		design: 'blog',
-		demo_uri: 'https://libre2demo.wordpress.com',
-		verticals: []
-	},
-	{
-		name: 'Libretto',
-		slug: 'libretto',
-		repo: 'pub',
-		fallback: false,
-		design: 'blog',
-		demo_uri: 'https://librettodemo.wordpress.com',
-		verticals: []
+		demo_uri: 'https://hemingwayrewrittendemo.wordpress.com',
+		verticals: [],
 	},
 	{
 		name: 'Penscratch',
@@ -69,106 +34,70 @@ export const themes = [
 		fallback: true,
 		design: 'blog',
 		demo_uri: 'https://penscratch2demo.wordpress.com',
-		verticals: []
+		verticals: [],
 	},
 	{
-		name: 'Sapor',
-		slug: 'sapor',
-		repo: 'pub',
-		fallback: false,
-		design: 'blog',
-		demo_uri: 'https://sapordemo.wordpress.com',
-		verticals: []
-	},
-	{
-		name: 'Twenty Sixteen',
-		slug: 'twentysixteen',
+		name: 'Cols',
+		slug: 'cols',
 		repo: 'pub',
 		fallback: true,
 		design: 'blog',
-		demo_uri: 'https://twentysixteendemo.wordpress.com',
-		verticals: []
+		demo_uri: 'https://colsdemo.wordpress.com',
+		verticals: [],
 	},
 	{
-		name: 'Affinity',
-		slug: 'affinity',
-		repo: 'pub',
-		fallback: false,
-		design: 'page',
-		demo_uri: 'https://affinitydemo.wordpress.com',
-		verticals: []
-	},
-	{
-		name: 'Edin',
-		slug: 'edin',
+		name: 'Twenty Fifteen',
+		slug: 'twentyfifteen',
 		repo: 'pub',
 		fallback: true,
-		design: 'page',
-		demo_uri: 'https://edindemo.wordpress.com',
-		verticals: []
+		design: 'blog',
+		demo_uri: 'https://twentyfifteendemo.wordpress.com',
+		verticals: [],
 	},
 	{
-		name: 'Gateway',
-		slug: 'gateway',
-		repo: 'pub',
-		fallback: false,
-		design: 'page',
-		demo_uri: 'https://gatewaydemo.wordpress.com',
-		verticals: []
-	},
-	{
-		name: 'Goran',
-		slug: 'goran',
-		repo: 'pub',
-		fallback: false,
-		design: 'page',
-		demo_uri: 'https://gorandemo.wordpress.com',
-		verticals: []
-	},
-	{
-		name: 'Twenty Seventeen',
-		slug: 'twentyseventeen',
+		name: 'Bushwick',
+		slug: 'bushwick',
 		repo: 'pub',
 		fallback: true,
+		design: 'blog',
+		demo_uri: 'https://bushwickdemo.wordpress.com',
+		verticals: [],
+	},
+	{
+		name: 'Radcliffe',
+		slug: 'radcliffe-2',
+		repo: 'pub',
+		fallback: false,
 		design: 'page',
-		demo_uri: 'https://twentyseventeendemo.wordpress.com',
-		verticals: []
+		demo_uri: 'https://radcliffe2demo.wordpress.com',
+		verticals: [],
 	},
 	{
 		name: 'Karuna',
 		slug: 'karuna',
 		repo: 'pub',
 		fallback: false,
-		design: 'page',
+		design: [ 'page', 'store' ],
 		demo_uri: 'https://karunademo.wordpress.com',
-		verticals: []
-	},
-	{
-		name: 'Pique',
-		slug: 'pique',
-		repo: 'pub',
-		fallback: false,
-		design: 'page',
-		demo_uri: 'https://piquedemo.wordpress.com',
-		verticals: []
+		verticals: [],
 	},
 	{
 		name: 'Dara',
 		slug: 'dara',
 		repo: 'pub',
 		fallback: true,
-		design: 'page',
+		design: [ 'page', 'store' ],
 		demo_uri: 'https://darademo.wordpress.com',
-		verticals: []
+		verticals: [],
 	},
 	{
-		name: 'Shoreditch',
-		slug: 'shoreditch',
+		name: 'Lodestar',
+		slug: 'lodestar',
 		repo: 'pub',
-		fallback: false,
+		fallback: true,
 		design: 'page',
-		demo_uri: 'https://shoreditchdemo.wordpress.com',
-		verticals: []
+		demo_uri: 'https://lodestardemo.wordpress.com',
+		verticals: [],
 	},
 	{
 		name: 'AltoFocus',
@@ -177,7 +106,7 @@ export const themes = [
 		fallback: false,
 		design: 'grid',
 		demo_uri: 'https://altofocusdemo.wordpress.com',
-		verticals: []
+		verticals: [],
 	},
 	{
 		name: 'Apostrophe',
@@ -186,7 +115,7 @@ export const themes = [
 		fallback: false,
 		design: 'grid',
 		demo_uri: 'https://apostrophe2demo.wordpress.com',
-		verticals: []
+		verticals: [],
 	},
 	{
 		name: 'Dyad',
@@ -195,6 +124,42 @@ export const themes = [
 		fallback: true,
 		design: 'grid',
 		demo_uri: 'https://dyad2demo.wordpress.com',
-		verticals: []
+		verticals: [],
+	},
+	{
+		name: 'Cubic',
+		slug: 'cubic',
+		repo: 'pub',
+		fallback: true,
+		design: 'grid',
+		demo_uri: 'https://cubicdemo.wordpress.com',
+		verticals: [],
+	},
+	{
+		name: 'Baskerville',
+		slug: 'baskerville-2',
+		repo: 'pub',
+		fallback: true,
+		design: 'grid',
+		demo_uri: 'https://baskerville2demo.wordpress.com',
+		verticals: [],
+	},
+	{
+		name: 'Rowling',
+		slug: 'rowling',
+		repo: 'pub',
+		fallback: true,
+		design: 'grid',
+		demo_uri: 'https://rowlingdemo.wordpress.com',
+		verticals: [],
+	},
+	{
+		name: 'Boardwalk',
+		slug: 'boardwalk',
+		repo: 'pub',
+		fallback: true,
+		design: 'grid',
+		demo_uri: 'https://boardwalkdemo.wordpress.com',
+		verticals: [],
 	},
 ];

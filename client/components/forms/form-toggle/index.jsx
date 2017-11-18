@@ -1,10 +1,13 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import { noop } from 'lodash';
+import { noop } from 'lodash';
 
 export default class FormToggle extends PureComponent {
 	static propTypes = {
@@ -16,7 +19,6 @@ export default class FormToggle extends PureComponent {
 		className: PropTypes.string,
 		toggling: PropTypes.bool,
 		'aria-label': PropTypes.string,
-		children: PropTypes.node,
 	};
 
 	static defaultProps = {
@@ -45,7 +47,11 @@ export default class FormToggle extends PureComponent {
 		this.props.onKeyDown( event );
 	};
 
-	onClick = () => {
+	onClick = event => {
+		if ( event ) {
+			event.stopPropagation && event.stopPropagation();
+		}
+
 		if ( ! this.props.disabled ) {
 			this.props.onChange( ! this.props.checked );
 		}

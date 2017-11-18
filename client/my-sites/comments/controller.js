@@ -1,66 +1,137 @@
+/** @format */
 /**
  * External dependencies
  */
-import { renderWithReduxStore } from 'lib/react-helpers';
 import React from 'react';
 import page from 'page';
-import { each, includes, startsWith } from 'lodash';
+import { each, isNaN, startsWith } from 'lodash';
 
 /**
  * Internal dependencies
  */
+import { isEnabled } from 'config';
+import { renderWithReduxStore } from 'lib/react-helpers';
+import route, { addQueryArgs } from 'lib/route';
 import CommentsManagement from './main';
-import config from 'config';
-import route from 'lib/route';
+import CommentView from 'my-sites/comment/main';
 import { removeNotice } from 'state/notices/actions';
 import { getNotices } from 'state/notices/selectors';
 
-const VALID_STATUSES = [ 'pending', 'approved', 'spam', 'trash' ];
-if ( config.isEnabled( 'comments/management/all-list' ) ) {
-	VALID_STATUSES.push( 'all' );
-}
+const mapPendingStatusToUnapproved = status => ( 'pending' === status ? 'unapproved' : status );
 
-export const isValidStatus = status => includes( VALID_STATUSES, status );
-
-export const getRedirectUrl = ( status, siteFragment ) => {
-	const statusValidity = isValidStatus( status );
-	if ( status === siteFragment ) {
-		return `/comments/pending/${ siteFragment }`;
-	}
-	if ( ! statusValidity && ! siteFragment ) {
-		return '/comments/pending';
-	}
-	if ( ! statusValidity && siteFragment ) {
-		return `/comments/pending/${ siteFragment }`;
-	}
-	if ( statusValidity && ! siteFragment ) {
-		return `/comments/${ status }`;
-	}
-	return null;
+const sanitizeInt = number => {
+	const integer = parseInt( number, 10 );
+	return ! isNaN( integer ) && integer > 0 ? integer : false;
 };
 
-export const redirect = function( context, next ) {
-	const { status, site } = context.params;
-	const siteFragment = route.getSiteFragment( context.path );
-	const redirectUrl = getRedirectUrl( status, siteFragment );
-	if ( redirectUrl && ( site || '/comments/' + status !== redirectUrl ) ) {
-		return page.redirect( redirectUrl );
+const sanitizeQueryAction = action => {
+	if ( ! action ) {
+		return null;
 	}
-	next();
+
+	const validActions = {
+		approve: 'approved',
+		unapprove: 'unapproved',
+		trash: 'trash',
+		spam: 'spam',
+		delete: 'delete',
+	};
+	return validActions.hasOwnProperty( action.toLowerCase() )
+		? validActions[ action.toLowerCase() ]
+		: null;
 };
 
-export const comments = function( context ) {
-	const { status } = context.params;
-	const siteFragment = route.getSiteFragment( context.path );
+const changePage = path => pageNumber => {
+	if ( window ) {
+		window.scrollTo( 0, 0 );
+	}
+	return page( addQueryArgs( { page: pageNumber }, path ) );
+};
+
+export const siteComments = context => {
+	const { params, path, query, store } = context;
+	const siteFragment = route.getSiteFragment( path );
+
+	if ( ! siteFragment ) {
+		return page.redirect( '/comments/all' );
+	}
+
+	const status = mapPendingStatusToUnapproved( params.status );
+
+	const pageNumber = sanitizeInt( query.page );
+	if ( ! pageNumber ) {
+		return changePage( path )( 1 );
+	}
+
 	renderWithReduxStore(
 		<CommentsManagement
-			basePath={ context.path }
+			changePage={ changePage( path ) }
+			page={ pageNumber }
 			siteFragment={ siteFragment }
-			status={ 'pending' === status ? 'unapproved' : status }
+			status={ status }
 		/>,
 		'primary',
-		context.store
+		store
 	);
+};
+
+export const postComments = ( { params, path, query, store } ) => {
+	const siteFragment = route.getSiteFragment( path );
+
+	if ( ! siteFragment ) {
+		return page.redirect( '/comments/all' );
+	}
+
+	const status = mapPendingStatusToUnapproved( params.status );
+	const postId = sanitizeInt( params.post );
+
+	if ( ! postId ) {
+		return page.redirect( `/comments/${ params.status }/${ siteFragment }` );
+	}
+
+	const pageNumber = sanitizeInt( query.page );
+	if ( ! pageNumber ) {
+		return changePage( path )( 1 );
+	}
+
+	renderWithReduxStore(
+		<CommentsManagement
+			changePage={ changePage( path ) }
+			page={ pageNumber }
+			postId={ postId }
+			siteFragment={ siteFragment }
+			status={ status }
+		/>,
+		'primary',
+		store
+	);
+};
+
+export const comment = ( { query, params, path, store } ) => {
+	const siteFragment = route.getSiteFragment( path );
+	const commentId = sanitizeInt( params.comment );
+
+	if ( ! commentId || ! isEnabled( 'comments/management/m3-design' ) ) {
+		return siteFragment
+			? page.redirect( `/comments/all/${ siteFragment }` )
+			: page.redirect( '/comments/all' );
+	}
+
+	const action = sanitizeQueryAction( query.action );
+
+	renderWithReduxStore(
+		<CommentView { ...{ action, commentId, siteFragment } } />,
+		'primary',
+		store
+	);
+};
+
+export const redirect = ( { path } ) => {
+	const siteFragment = route.getSiteFragment( path );
+	if ( siteFragment ) {
+		return page.redirect( `/comments/all/${ siteFragment }` );
+	}
+	return page.redirect( '/comments/all' );
 };
 
 export const clearCommentNotices = ( { store }, next ) => {

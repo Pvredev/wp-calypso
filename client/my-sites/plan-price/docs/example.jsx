@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 
 /**
@@ -26,4 +29,3 @@ function PlanPriceExample() {
 PlanPriceExample.displayName = 'PlanPrice';
 
 export default PlanPriceExample;
-

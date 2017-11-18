@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 
@@ -8,23 +11,29 @@ import PropTypes from 'prop-types';
  * Internal dependencies
  */
 import Pagination from 'components/pagination';
+import { DEFAULT_QUERY } from 'woocommerce/state/sites/products/utils';
 
-const ProductsListPagination = ( { site, totalProducts, currentPage, currentPageLoaded, requestedPage, onSwitchPage } ) => {
-	const perPage = 10;
-
-	if ( totalProducts && totalProducts < ( perPage + 1 ) ) {
+const ProductsListPagination = ( {
+	site,
+	totalProducts,
+	currentPage,
+	currentPageLoaded,
+	requestedPage,
+	onSwitchPage,
+} ) => {
+	if ( totalProducts && totalProducts < DEFAULT_QUERY.per_page + 1 ) {
 		return null;
 	}
 
 	if ( ! site || ! currentPageLoaded ) {
-		return ( <div className="products__list-placeholder pagination"></div> );
+		return <div className="products__list-placeholder pagination" />;
 	}
 
 	const page = requestedPage || currentPage;
 	return (
 		<Pagination
 			page={ page }
-			perPage={ perPage }
+			perPage={ DEFAULT_QUERY.per_page }
 			total={ totalProducts }
 			pageClick={ onSwitchPage }
 		/>

@@ -1,17 +1,16 @@
 /* Progress Indicator */
+
 .wizard__progress-indicator {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-
-	color: darken( $gray, 20 );
-	font-size: 14px;
-	font-weight: 300;
-	margin-bottom: 10px;
+	color: $gray-text-min;
+	font-size: 12px;
+	margin-bottom: 8px;
 	text-align: center;
 
 	@include breakpoint( '<660px' ) {
-		padding-top: 10px;
+		padding-top: 8px;
 	}
 }
 

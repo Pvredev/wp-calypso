@@ -2,6 +2,7 @@
 /**
  * External Dependencies
  */
+import PropTypes from 'prop-types';
 import React from 'react';
 import { has } from 'lodash';
 import ReactDom from 'react-dom';
@@ -18,7 +19,7 @@ import ReaderExcerpt from 'blocks/reader-excerpt';
 import ReaderVisitLink from 'blocks/reader-visit-link';
 import ReaderAuthorLink from 'blocks/reader-author-link';
 import { recordPermalinkClick } from 'reader/stats';
-import PostTime from 'reader/post-time';
+import TimeSince from 'components/time-since';
 import ReaderFeaturedImage from 'blocks/reader-featured-image';
 import ReaderFeaturedVideo from 'blocks/reader-featured-video';
 import * as stats from 'reader/stats';
@@ -27,10 +28,10 @@ import { isAuthorNameBlacklisted } from 'reader/lib/author-name-blacklist';
 
 class ReaderCombinedCardPost extends React.Component {
 	static propTypes = {
-		post: React.PropTypes.object.isRequired,
-		streamUrl: React.PropTypes.string,
-		onClick: React.PropTypes.func,
-		showFeaturedAsset: React.PropTypes.bool,
+		post: PropTypes.object.isRequired,
+		streamUrl: PropTypes.string,
+		onClick: PropTypes.func,
+		showFeaturedAsset: PropTypes.bool,
 	};
 
 	static defaultProps = {
@@ -116,17 +117,14 @@ class ReaderCombinedCardPost extends React.Component {
 
 		return (
 			<li className={ classes } onClick={ this.handleCardClick }>
-				{ this.props.showFeaturedAsset &&
-					<div className="reader-combined-card__featured-asset-wrapper">
-						{ featuredAsset }
-					</div> }
+				{ this.props.showFeaturedAsset && (
+					<div className="reader-combined-card__featured-asset-wrapper">{ featuredAsset }</div>
+				) }
 				<div className="reader-combined-card__post-details">
 					<AutoDirection>
 						<h1 className="reader-combined-card__post-title">
 							<a className="reader-combined-card__post-title-link" href={ post.URL }>
-								<Emojify>
-									{ post.title }
-								</Emojify>
+								<Emojify>{ post.title }</Emojify>
 							</a>
 						</h1>
 					</AutoDirection>
@@ -135,7 +133,7 @@ class ReaderCombinedCardPost extends React.Component {
 						<ReaderVisitLink href={ post.URL } iconSize={ 14 }>
 							{ this.props.translate( 'Visit' ) }
 						</ReaderVisitLink>
-						{ hasAuthorName &&
+						{ hasAuthorName && (
 							<ReaderAuthorLink
 								className="reader-combined-card__author-link"
 								author={ post.author }
@@ -143,21 +141,23 @@ class ReaderCombinedCardPost extends React.Component {
 								post={ post }
 							>
 								{ post.author.name }
-							</ReaderAuthorLink> }
+							</ReaderAuthorLink>
+						) }
 						{ post.date &&
-							post.URL &&
-							<span className="reader-combined-card__timestamp">
-								{ hasAuthorName && <span>, </span> }
-								<a
-									className="reader-combined-card__timestamp-link"
-									onClick={ recordDateClick }
-									href={ post.URL }
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									<PostTime date={ post.date } />
-								</a>
-							</span> }
+							post.URL && (
+								<span className="reader-combined-card__timestamp">
+									{ hasAuthorName && <span>, </span> }
+									<a
+										className="reader-combined-card__timestamp-link"
+										onClick={ recordDateClick }
+										href={ post.URL }
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										<TimeSince date={ post.date } />
+									</a>
+								</span>
+							) }
 					</div>
 				</div>
 			</li>

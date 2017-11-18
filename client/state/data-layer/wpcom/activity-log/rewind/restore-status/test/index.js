@@ -1,14 +1,15 @@
+/** @format */
 /**
  * External dependencies
  */
-import deepFreeze from 'deep-freeze';
 import { expect } from 'chai';
+import deepFreeze from 'deep-freeze';
 import sinon from 'sinon';
 
 /**
  * Internal dependencies
  */
-import { receiveRestoreProgress } from '../';
+import { fromApi, updateProgress } from '../';
 import { updateRewindRestoreProgress } from 'state/activity-log/actions';
 
 const siteId = 77203074;
@@ -24,23 +25,20 @@ const FINISHED_RESPONSE = deepFreeze( {
 		message: '',
 		percent: 100,
 		status: 'finished',
-	}
+	},
 } );
 
 describe( 'receiveRestoreProgress', () => {
-	it( 'should dispatch updateRewindRestoreProgress', () => {
+	test( 'should dispatch updateRewindRestoreProgress', () => {
 		const dispatch = sinon.spy();
-		receiveRestoreProgress( { dispatch }, { siteId, timestamp, restoreId }, FINISHED_RESPONSE );
-		const expectedAction = updateRewindRestoreProgress(
-			siteId, timestamp, restoreId, {
-				errorCode: '',
-				failureReason: '',
-				message: '',
-				percent: 100,
-				status: 'finished',
-			}
-		);
-		expectedAction.freshness = sinon.match.number;
+		updateProgress( { dispatch }, { siteId, timestamp, restoreId }, fromApi( FINISHED_RESPONSE ) );
+		const expectedAction = updateRewindRestoreProgress( siteId, timestamp, restoreId, {
+			errorCode: '',
+			failureReason: '',
+			message: '',
+			percent: 100,
+			status: 'finished',
+		} );
 		expect( dispatch ).to.have.been.calledWith( expectedAction );
 	} );
 } );

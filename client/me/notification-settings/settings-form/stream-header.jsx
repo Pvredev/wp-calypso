@@ -1,8 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
-import PureRenderMixin from 'react-pure-render/mixin';
+
+import PropTypes from 'prop-types';
+import React from 'react';
 import Gridicon from 'gridicons';
 
 /**
@@ -10,19 +13,17 @@ import Gridicon from 'gridicons';
  */
 import { getLabelForStream } from './locales';
 
-export default React.createClass( {
-	displayName: 'NotificationSettingsFormHeader',
+export default class extends React.PureComponent {
+	static displayName = 'NotificationSettingsFormHeader';
 
-	mixins: [ PureRenderMixin ],
-
-	propTypes: {
+	static propTypes = {
 		stream: PropTypes.string,
-		title: PropTypes.string
-	},
+		title: PropTypes.string,
+	};
 
-	renderTitle() {
+	renderTitle = () => {
 		return getLabelForStream( this.props.stream ) || this.props.title;
-	},
+	};
 
 	render() {
 		return (
@@ -33,4 +34,4 @@ export default React.createClass( {
 			</div>
 		);
 	}
-} );
+}

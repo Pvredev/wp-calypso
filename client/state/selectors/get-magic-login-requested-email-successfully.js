@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { get } from 'lodash';
 
 export default function getMagicLoginRequestedEmailSuccessfully( state ) {

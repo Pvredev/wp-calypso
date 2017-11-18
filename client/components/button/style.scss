@@ -122,7 +122,8 @@ button {
 		color: $white;
 	}
 	&[disabled],
-	&:disabled {
+	&:disabled,
+	&.disabled {
 		color: lighten( $gray, 30% );
 		background: $white;
 		border-color: lighten( $gray, 30% );
@@ -173,7 +174,7 @@ button {
 .button.is-borderless {
 	border: none;
 	background: none;
-	color: $gray-text-min;
+	color: var( --button-is-borderless-color );
 	padding-left: 0;
 	padding-right: 0;
 

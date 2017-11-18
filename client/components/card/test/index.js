@@ -1,9 +1,9 @@
+/** @format */
 /**
  * External dependencies
  */
-import React from 'react';
-import { expect } from 'chai';
 import { shallow } from 'enzyme';
+import React from 'react';
 
 /**
  * Internal dependencies
@@ -13,54 +13,62 @@ import CompactCard from '../compact';
 
 describe( 'Card', () => {
 	// it should have a class of `card`
-	it( 'should have `card` class', () => {
+	test( 'should have `card` class', () => {
 		const card = shallow( <Card /> );
-		expect( card.is( '.card' ) ).to.equal( true );
+		expect( card.is( '.card' ) ).toBe( true );
+		expect( card ).toMatchSnapshot();
 	} );
 
 	// it should accept a custom class of `test__ace`
-	it( 'should have custom class of `test__ace`', () => {
+	test( 'should have custom class of `test__ace`', () => {
 		const card = shallow( <Card className="test__ace" /> );
-		expect( card.is( '.test__ace' ) ).to.equal( true );
+		expect( card.is( '.test__ace' ) ).toBe( true );
+		expect( card ).toMatchSnapshot();
 	} );
 
 	// check that content within a card renders correctly
-	it( 'should render children', () => {
+	test( 'should render children', () => {
 		const card = shallow( <Card>This is a card</Card> );
-		expect( card.contains( 'This is a card' ) ).to.equal( true );
+		expect( card.contains( 'This is a card' ) ).toBe( true );
+		expect( card ).toMatchSnapshot();
 	} );
 
 	// check it will accept a href
-	it( 'should be linkable', () => {
+	test( 'should be linkable', () => {
 		const card = shallow( <Card href="/test">This is a linked card</Card> );
-		expect( card.find( 'a[href="/test"]' ) ).to.have.length( 1 );
-		expect( card.props().href ).to.equal( '/test' );
-		expect( card.is( '.is-card-link' ) ).to.equal( true );
+		expect( card.find( 'a[href="/test"]' ) ).toHaveLength( 1 );
+		expect( card.props().href ).toBe( '/test' );
+		expect( card.is( '.is-card-link' ) ).toBe( true );
+		expect( card ).toMatchSnapshot();
 	} );
 } );
 
 describe( 'CompactCard', () => {
 	// it should have a class of `is-compact`
-	it( 'should have `is-compact` class', () => {
+	test( 'should have `is-compact` class', () => {
 		const compactCard = shallow( <CompactCard /> );
-		expect( compactCard.find( '.is-compact' ) ).to.have.length( 1 );
+		expect( compactCard.find( '.is-compact' ) ).toHaveLength( 1 );
+		expect( compactCard ).toMatchSnapshot();
 	} );
 
 	// it should accept a custom class of `test__ace`
-	it( 'should have custom class of `test__ace`', () => {
+	test( 'should have custom class of `test__ace`', () => {
 		const compactCard = shallow( <CompactCard className="test__ace" /> );
-		expect( compactCard.is( '.test__ace' ) ).to.equal( true );
+		expect( compactCard.is( '.test__ace' ) ).toBe( true );
+		expect( compactCard ).toMatchSnapshot();
 	} );
 
-	// check that content within a card renders correctly
-	it( 'should render children', () => {
+	// check that content within a CompactCard renders correctly
+	test( 'should render children', () => {
 		const compactCard = shallow( <CompactCard>This is a compact card</CompactCard> );
-		expect( compactCard.contains( 'This is a compact card' ) ).to.equal( true );
+		expect( compactCard.contains( 'This is a compact card' ) ).toBe( true );
+		expect( compactCard ).toMatchSnapshot();
 	} );
 
 	// test for card component
-	it( 'should use the card component', () => {
+	test( 'should use the card component', () => {
 		const compactCard = shallow( <CompactCard /> );
-		expect( compactCard.find( 'Card' ) ).to.have.length( 1 );
+		expect( compactCard.find( 'Card' ) ).toHaveLength( 1 );
+		expect( compactCard ).toMatchSnapshot();
 	} );
 } );

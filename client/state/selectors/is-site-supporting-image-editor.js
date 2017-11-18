@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { isJetpackModuleActive } from 'state/sites/selectors';
 import { isPrivateSite } from './';
 

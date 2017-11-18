@@ -1,15 +1,17 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import { get } from 'lodash';
+import { get, includes } from 'lodash';
 
 /**
  * Internal dependencies
  */
+import { AUTH_ATTEMPS_TTL } from './constants';
 import { getSiteByUrl } from 'state/sites/selectors';
 import { isStale } from './utils';
 import { urlToSlug } from 'lib/url';
-import { AUTH_ATTEMPS_TTL } from './constants';
 
 const getJetpackSiteByUrl = ( state, url ) => {
 	const site = getSiteByUrl( state, url );
@@ -19,23 +21,23 @@ const getJetpackSiteByUrl = ( state, url ) => {
 	return site;
 };
 
-const getConnectingSite = ( state ) => {
+const getConnectingSite = state => {
 	return get( state, [ 'jetpackConnect', 'jetpackConnectSite' ] );
 };
 
-const getAuthorizationData = ( state ) => {
+const getAuthorizationData = state => {
 	return get( state, [ 'jetpackConnect', 'jetpackConnectAuthorize' ] );
 };
 
-const getAuthorizationRemoteQueryData = ( state ) => {
-	return get( getAuthorizationData( state ), [ 'queryObject' ] );
+const getAuthorizationRemoteQueryData = state => {
+	return get( getAuthorizationData( state ), 'queryObject' );
 };
 
-const getAuthorizationRemoteSite = ( state ) => {
+const getAuthorizationRemoteSite = state => {
 	return get( getAuthorizationRemoteQueryData( state ), [ 'site' ] );
 };
 
-const isRemoteSiteOnSitesList = ( state ) => {
+const isRemoteSiteOnSitesList = state => {
 	const remoteUrl = getAuthorizationRemoteSite( state ),
 		authorizationData = getAuthorizationData( state );
 
@@ -50,11 +52,11 @@ const isRemoteSiteOnSitesList = ( state ) => {
 	return !! getJetpackSiteByUrl( state, remoteUrl );
 };
 
-const getSessions = ( state ) => {
+const getSessions = state => {
 	return get( state, [ 'jetpackConnect', 'jetpackConnectSessions' ] );
 };
 
-const getSSO = ( state ) => {
+const getSSO = state => {
 	return get( state, [ 'jetpackConnect', 'jetpackSSO' ] );
 };
 
@@ -95,38 +97,46 @@ const getAuthAttempts = ( state, slug ) => {
 	return attemptsData ? attemptsData.attempt || 0 : 0;
 };
 
-const getUserAlreadyConnected = ( state ) => {
-	return get( state, 'jetpackConnectAuthorize.userAlreadyConnected' );
+/**
+ * Returns true if the user is already connected, otherwise false
+ *
+ * @param  {Object}  state Global state tree
+ * @return {boolean}       True if the user is connected otherwise false
+ */
+const getUserAlreadyConnected = state => {
+	return get( getAuthorizationData( state ), 'userAlreadyConnected', false );
 };
 
 /**
- * XMLRPC errors can be identified by the presence of an error message, the presence of an authorization code
- * and if the error message contains the string 'error'
+ * Returns true if there is an XMLRPC error.
  *
- * @param {object} state Global state tree
- * @returns {Boolean} If there's an xmlrpc error or not
+ * XMLRPC errors can be identified by the presence of an error message, the presence of an
+ * authorization code, and if the error message contains the string 'error'.
+ *
+ * @param  {object}  state Global state tree
+ * @return {Boolean}       True if there's an xmlrpc error otherwise false
  */
 const hasXmlrpcError = function( state ) {
 	const authorizeData = getAuthorizationData( state );
 
 	return (
-		authorizeData &&
-		authorizeData.authorizeError &&
-		authorizeData.authorizeError.message &&
-		authorizeData.authorizationCode &&
-		authorizeData.authorizeError.message.indexOf( 'error' ) > -1
+		!! get( authorizeData, 'authorizationCode', false ) &&
+		includes( get( authorizeData, [ 'authorizeError', 'message' ] ), 'error' )
 	);
 };
 
+/**
+ * Returns true if there is an expired secret error.
+ *
+ * @param  {object}  state Global state tree
+ * @return {Boolean}       True if there's an xmlrpc error otherwise false
+ */
 const hasExpiredSecretError = function( state ) {
 	const authorizeData = getAuthorizationData( state );
 
 	return (
-		authorizeData &&
-		authorizeData.authorizeError &&
-		authorizeData.authorizeError.message &&
-		authorizeData.authorizationCode &&
-		authorizeData.authorizeError.message.indexOf( 'verify_secrets_expired' ) > -1
+		!! get( authorizeData, 'authorizationCode', false ) &&
+		includes( get( authorizeData, [ 'authorizeError', 'message' ] ), 'verify_secrets_expired' )
 	);
 };
 
@@ -144,11 +154,17 @@ const getJetpackPlanSelected = function( state ) {
 };
 
 const getSiteSelectedPlan = function( state, siteSlug ) {
-	return state.jetpackConnect.jetpackConnectSelectedPlans && state.jetpackConnect.jetpackConnectSelectedPlans[ siteSlug ];
+	return (
+		state.jetpackConnect.jetpackConnectSelectedPlans &&
+		state.jetpackConnect.jetpackConnectSelectedPlans[ siteSlug ]
+	);
 };
 
 const getGlobalSelectedPlan = function( state ) {
-	return state.jetpackConnect.jetpackConnectSelectedPlans && state.jetpackConnect.jetpackConnectSelectedPlans[ '*' ];
+	return (
+		state.jetpackConnect.jetpackConnectSelectedPlans &&
+		state.jetpackConnect.jetpackConnectSelectedPlans[ '*' ]
+	);
 };
 
 const getSiteIdFromQueryObject = function( state ) {
@@ -178,5 +194,5 @@ export default {
 	getGlobalSelectedPlan,
 	getAuthAttempts,
 	getSiteIdFromQueryObject,
-	getUserAlreadyConnected
+	getUserAlreadyConnected,
 };

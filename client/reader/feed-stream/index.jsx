@@ -2,6 +2,7 @@
 /**
  * External dependencies
  */
+import PropTypes from 'prop-types';
 import React from 'react';
 import { localize } from 'i18n-calypso';
 import { connect } from 'react-redux';
@@ -25,9 +26,9 @@ const getReaderSiteId = feed => ( feed && feed.blog_ID === 0 ? null : feed && fe
 
 class FeedStream extends React.Component {
 	static propTypes = {
-		feedId: React.PropTypes.number.isRequired,
-		className: React.PropTypes.string,
-		showBack: React.PropTypes.bool,
+		feedId: PropTypes.number.isRequired,
+		className: PropTypes.string,
+		showBack: PropTypes.bool,
 	};
 
 	static defaultProps = {
@@ -40,7 +41,7 @@ class FeedStream extends React.Component {
 		const emptyContent = <EmptyContent />;
 		const title = getSiteName( { feed, site } ) || this.props.translate( 'Loading Feed' );
 
-		if ( feed && feed.is_error ) {
+		if ( ( feed && feed.is_error ) || ( site && site.is_error && site.error.code === 410 ) ) {
 			return <FeedError sidebarTitle={ title } />;
 		}
 

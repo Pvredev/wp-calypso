@@ -1,3 +1,4 @@
+/** @format */
 // External dependencies
 import Dispatcher from 'dispatcher';
 import wpcom from 'lib/wp';
@@ -108,7 +109,8 @@ const ReaderListActions = {
 		wpcom.undocumented().readList( {
 			owner: owner,
 			slug: slug,
-		}, function( error, data ) {
+		},
+		function( error, data ) {
 			delete fetchingLists[ key ];
 			ReaderListsStore.setIsFetching( false );
 
@@ -170,4 +172,4 @@ const ReaderListActions = {
 	},
 };
 
-module.exports = ReaderListActions;
+export default ReaderListActions;

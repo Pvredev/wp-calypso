@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { pullAll, union } from 'lodash';
 
 /**

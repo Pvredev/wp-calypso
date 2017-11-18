@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 
 /**
@@ -30,5 +33,5 @@ export default {
 				context.store
 			);
 		}
-	}
+	},
 };

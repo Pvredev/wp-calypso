@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { lowerCase, upperCase } from 'lodash';
 
 /**
@@ -19,16 +22,16 @@ import { getGeoCountryShort } from 'state/geo/selectors';
 const DEFAULT_PAYMENT_METHODS = [ 'credit-card', 'paypal' ];
 
 const paymentMethods = {
-	byLocale: {
-		'de-DE': [ 'paypal', 'credit-card' ],
-		'en-DE': [ 'paypal', 'credit-card' ]
-	},
+	byLocale: {},
 
 	byCountry: {
-		US: DEFAULT_PAYMENT_METHODS
+		US: DEFAULT_PAYMENT_METHODS,
+		NL: [ 'credit-card', 'ideal', 'paypal' ],
+		DE: [ 'credit-card', 'giropay', 'paypal' ],
+		BE: [ 'credit-card', 'bancontact', 'paypal' ],
 	},
 
-	byWpcomLang: {}
+	byWpcomLang: {},
 };
 
 /**
@@ -42,8 +45,9 @@ export default function getCurrentUserPaymentMethods( state ) {
 	const wpcomLang = getCurrentUserLocale( state );
 	const generatedLocale = lowerCase( wpcomLang ) + '-' + upperCase( countryCode );
 
-	return paymentMethods.byLocale[ generatedLocale ] ||
+	return (
+		paymentMethods.byLocale[ generatedLocale ] ||
 		paymentMethods.byCountry[ countryCode ] ||
-		paymentMethods.byWpcomLang[ wpcomLang ] ||
-		[ ...DEFAULT_PAYMENT_METHODS ];
+		paymentMethods.byWpcomLang[ wpcomLang ] || [ ...DEFAULT_PAYMENT_METHODS ]
+	);
 }

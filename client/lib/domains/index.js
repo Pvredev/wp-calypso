@@ -1,18 +1,19 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import inherits from 'inherits';
-import {
-	some,
-	includes,
-	find
-} from 'lodash';
+import { includes, find, replace, some } from 'lodash';
 
 /**
  * Internal dependencies
  */
 import wpcom from 'lib/wp';
 import { type as domainTypes, domainAvailability } from './constants';
+import { parseDomainAgainstTldList } from './utils';
+import wpcomMultiLevelTlds from './tlds/wpcom-multi-level-tlds.json';
 
 const GOOGLE_APPS_INVALID_TLDS = [ 'in' ],
 	GOOGLE_APPS_BANNED_PHRASES = [ 'google' ];
@@ -42,6 +43,54 @@ function checkDomainAvailability( domainName, onComplete ) {
 	wpcom.undocumented().isDomainAvailable( domainName, function( serverError, result ) {
 		if ( serverError ) {
 			onComplete( serverError.error );
+			return;
+		}
+
+		onComplete( null, result );
+	} );
+}
+
+function checkInboundTransferStatus( domainName, onComplete ) {
+	if ( ! domainName ) {
+		onComplete( null );
+		return;
+	}
+
+	wpcom.undocumented().getInboundTransferStatus( domainName, function( serverError, result ) {
+		if ( serverError ) {
+			onComplete( serverError.error );
+			return;
+		}
+
+		onComplete( null, result );
+	} );
+}
+
+function restartInboundTransfer( siteId, domainName, onComplete ) {
+	if ( ! domainName || ! siteId ) {
+		onComplete( null );
+		return;
+	}
+
+	wpcom.undocumented().restartInboundTransfer( siteId, domainName, function( serverError, result ) {
+		if ( serverError ) {
+			onComplete( serverError.error );
+			return;
+		}
+
+		onComplete( null, result );
+	} );
+}
+
+function resendInboundTransferEmail( domainName, onComplete ) {
+	if ( ! domainName ) {
+		onComplete( null );
+		return;
+	}
+
+	wpcom.undocumented().resendInboundTransferEmail( domainName, function( serverError, result ) {
+		if ( serverError ) {
+			onComplete( serverError );
 			return;
 		}
 
@@ -80,7 +129,12 @@ function getPrimaryDomain( siteId, onComplete ) {
 }
 
 function getFixedDomainSearch( domainName ) {
-	return domainName.trim().toLowerCase().replace( /^(https?:\/\/)?(www\.)?/, '' ).replace( /\/$/, '' );
+	return domainName
+		.trim()
+		.toLowerCase()
+		.replace( /^(https?:\/\/)?(www\.)?/, '' )
+		.replace( /\/$/, '' )
+		.replace( /_/g, '-' );
 }
 
 function isSubdomain( domainName ) {
@@ -102,7 +156,10 @@ function isMappedDomain( domain ) {
 
 function getGoogleAppsSupportedDomains( domains ) {
 	return domains.filter( function( domain ) {
-		return ( includes( [ domainTypes.REGISTERED, domainTypes.MAPPED ], domain.type ) && canAddGoogleApps( domain.name ) );
+		return (
+			includes( [ domainTypes.REGISTERED, domainTypes.MAPPED ], domain.type ) &&
+			canAddGoogleApps( domain.name )
+		);
 	} );
 }
 
@@ -111,17 +168,29 @@ function hasGoogleAppsSupportedDomain( domains ) {
 }
 
 function hasPendingGoogleAppsUsers( domain ) {
-	return domain.googleAppsSubscription &&
+	return (
+		domain.googleAppsSubscription &&
 		domain.googleAppsSubscription.pendingUsers &&
-		domain.googleAppsSubscription.pendingUsers.length !== 0;
+		domain.googleAppsSubscription.pendingUsers.length !== 0
+	);
 }
 
-function getSelectedDomain( { domains, selectedDomainName } ) {
-	return find( domains.list, { name: selectedDomainName } );
+function getSelectedDomain( { domains, selectedDomainName, isTransfer } ) {
+	return find( domains.list, domain => {
+		if ( domain.name !== selectedDomainName ) {
+			return false;
+		}
+
+		if ( isTransfer && domain.type === domainTypes.TRANSFER ) {
+			return true;
+		}
+
+		return domain.type !== domainTypes.TRANSFER;
+	} );
 }
 
 function isRegisteredDomain( domain ) {
-	return ( domain.type === domainTypes.REGISTERED );
+	return domain.type === domainTypes.REGISTERED;
 }
 
 function getRegisteredDomains( domains ) {
@@ -136,16 +205,50 @@ function hasMappedDomain( domains ) {
 	return getMappedDomains( domains ).length > 0;
 }
 
+/**
+ * Parse the tld from a given domain name, semi-naively. The function
+ * first parses against a list of tlds that have been sold on WP.com
+ * and falls back to a simplistic "everything after the last dot" approach
+ * if the whitelist failed. This is ultimately not comprehensive as that
+ * is a poor base assumption (lots of second level tlds, etc). However,
+ * for our purposes, the approach should be "good enough" for a long time.
+ *
+ * @param {string}     domainName     The domain name parse the tld from
+ * @return {string}                   The TLD or an empty string
+ */
 function getTld( domainName ) {
 	const lastIndexOfDot = domainName.lastIndexOf( '.' );
 
-	return lastIndexOfDot !== -1 && domainName.substring( lastIndexOfDot + 1 );
+	if ( lastIndexOfDot === -1 ) {
+		return '';
+	}
+
+	let tld = parseDomainAgainstTldList( domainName, wpcomMultiLevelTlds );
+
+	if ( ! tld ) {
+		tld = domainName.substring( lastIndexOfDot + 1 );
+	}
+
+	return tld;
+}
+
+function getDomainProductSlug( domain ) {
+	const tld = getTld( domain );
+	const tldSlug = replace( tld, /\./g, 'dot' );
+
+	if ( includes( [ 'com', 'net', 'org' ], tldSlug ) ) {
+		return 'domain_reg';
+	}
+
+	return `dot${ tldSlug }_domain`;
 }
 
 export {
 	canAddGoogleApps,
 	canRedirect,
 	checkDomainAvailability,
+	checkInboundTransferStatus,
+	getDomainProductSlug,
 	getFixedDomainSearch,
 	getGoogleAppsSupportedDomains,
 	getPrimaryDomain,
@@ -160,5 +263,7 @@ export {
 	isInitialized,
 	isMappedDomain,
 	isRegisteredDomain,
-	isSubdomain
+	isSubdomain,
+	restartInboundTransfer,
+	resendInboundTransferEmail,
 };

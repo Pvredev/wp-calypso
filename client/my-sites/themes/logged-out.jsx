@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 
 /**
@@ -12,7 +15,8 @@ import { connectOptions } from './theme-options';
 const ConnectedThemeShowcase = connectOptions( ThemeShowcase );
 
 export default props => (
-	<ConnectedThemeShowcase { ...props }
+	<ConnectedThemeShowcase
+		{ ...props }
 		origin="wpcom"
 		defaultOption="signup"
 		getScreenshotOption={ function() {

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { keyToString } from 'lib/feed-stream-store/post-key';
 
 export default function isReaderCardExpanded( state, postKey ) {

@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React from 'react';
 import { connect } from 'react-redux';
 import debugFactory from 'debug';
 
@@ -9,8 +13,7 @@ import debugFactory from 'debug';
  * Internal dependencies
  */
 import { closePreview } from 'state/ui/preview/actions';
-import { getSelectedSite, getSelectedSiteId } from 'state/ui/selectors';
-import { getPreviewUrl } from 'state/ui/preview/selectors';
+import { getPreviewSite, getPreviewSiteId, getPreviewUrl } from 'state/ui/preview/selectors';
 import { getSiteOption, getSiteSlug } from 'state/sites/selectors';
 import addQueryArgs from 'lib/route/add-query-args';
 import isDomainOnlySite from 'state/selectors/is-domain-only-site';
@@ -49,12 +52,15 @@ export default function urlPreview( WebPreview ) {
 				debug( 'no preview url and no site url were found for this site' );
 				return null;
 			}
-			const previewUrl = addQueryArgs( {
-				iframe: true,
-				theme_preview: true,
-				'frame-nonce': this.props.selectedSiteNonce,
-				cachebust: this.state.previewCount,
-			}, this.getBasePreviewUrl() );
+			const previewUrl = addQueryArgs(
+				{
+					iframe: true,
+					theme_preview: true,
+					'frame-nonce': this.props.selectedSiteNonce,
+					cachebust: this.state.previewCount,
+				},
+				this.getBasePreviewUrl()
+			);
 			debug( 'using this preview url', previewUrl );
 			return previewUrl;
 		}
@@ -96,12 +102,12 @@ export default function urlPreview( WebPreview ) {
 	};
 
 	function mapStateToProps( state ) {
-		const selectedSiteId = getSelectedSiteId( state );
+		const selectedSiteId = getPreviewSiteId( state );
 		// Force https to prevent mixed content errors in the iframe
 		const siteUrl = 'https://' + getSiteSlug( state, selectedSiteId );
 
 		return {
-			selectedSite: getSelectedSite( state ),
+			selectedSite: getPreviewSite( state ),
 			selectedSiteId,
 			selectedSiteUrl: siteUrl.replace( /::/g, '/' ),
 			selectedSiteNonce: getSiteOption( state, selectedSiteId, 'frame_nonce' ) || '',
@@ -110,8 +116,5 @@ export default function urlPreview( WebPreview ) {
 		};
 	}
 
-	return connect(
-		mapStateToProps,
-		{ closePreview }
-	)( UrlPreview );
+	return connect( mapStateToProps, { closePreview } )( UrlPreview );
 }

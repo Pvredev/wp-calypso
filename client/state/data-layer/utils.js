@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { extendAction } from 'state/utils';
 
 const doBypassDataLayer = {

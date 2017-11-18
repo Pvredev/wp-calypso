@@ -1,10 +1,13 @@
+/** @format */
+
 /**
- * Internal Dependencies
+ * Internal dependencies
  */
 import AddGoogleApps from './add-google-apps';
 import ContactsPrivacy from './contacts-privacy';
 import Dns from './dns';
 import Edit from './edit';
+import TransferIn from './edit/transfer-in.jsx';
 import EditContactInfo from './edit-contact-info';
 import Email from './email';
 import EmailForwarding from './email-forwarding';
@@ -31,6 +34,7 @@ export default {
 	PrimaryDomain,
 	PrivacyProtection,
 	SiteRedirect,
+	TransferIn,
 	TransferOut,
 	TransferToOtherSite,
 	TransferToOtherUser,

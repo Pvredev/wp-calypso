@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import {
 	WOOCOMMERCE_SHIPPING_ZONE_METHOD_SET_CONDITION,
 	WOOCOMMERCE_SHIPPING_ZONE_METHOD_SET_MIN_COST,

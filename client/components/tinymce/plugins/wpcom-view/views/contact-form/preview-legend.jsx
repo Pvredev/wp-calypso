@@ -1,15 +1,25 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 
 /**
- * Internal dependecies
+ * Internal dependencies
  */
 import PreviewRequired from './preview-required';
 
-export default React.createClass( {
+export default class extends React.Component {
+	static displayName = 'PreviewLegend';
+
 	render() {
-		return ( <legend>{ this.props.label }<PreviewRequired { ...this.props } /></legend> );
+		return (
+			<legend>
+				{ this.props.label }
+				<PreviewRequired { ...this.props } />
+			</legend>
+		);
 	}
-} );
+}

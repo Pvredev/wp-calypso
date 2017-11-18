@@ -1,22 +1,25 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
-import PureRenderMixin from 'react-pure-render/mixin';
+import { localize } from 'i18n-calypso';
 import classNames from 'classnames';
-import { omit } from 'lodash';
+import { omit, get } from 'lodash';
+import { recordTrack } from 'reader/stats';
+import page from 'page';
 
 /**
  * Internal dependencies
  */
 import Gravatar from 'components/gravatar';
 
-module.exports = React.createClass( {
-	displayName: 'PeopleProfile',
+class PeopleProfile extends React.PureComponent {
+	static displayName = 'PeopleProfile';
 
-	mixins: [ PureRenderMixin ],
-
-	getRole() {
+	getRole = () => {
 		const user = this.props.user;
 		if ( ! user ) {
 			return 'subscriber';
@@ -27,69 +30,112 @@ module.exports = React.createClass( {
 		}
 
 		return;
-	},
+	};
 
-	getRoleBadgeText( role ) {
+	getRoleBadgeText = role => {
 		let text;
 		role = 'undefined' === typeof role ? this.getRole() : role;
 
 		switch ( role ) {
 			case 'super admin':
-				text = this.translate( 'Super Admin', { context: 'Noun: A user role displayed in a badge' } );
+				text = this.props.translate( 'Super Admin', {
+					context: 'Noun: A user role displayed in a badge',
+				} );
 				break;
 			case 'administrator':
-				text = this.translate( 'Admin', { context: 'Noun: A user role displayed in a badge' } );
+				text = this.props.translate( 'Admin', {
+					context: 'Noun: A user role displayed in a badge',
+				} );
 				break;
 			case 'editor':
-				text = this.translate( 'Editor', { context: 'Noun: A user role displayed in a badge' } );
+				text = this.props.translate( 'Editor', {
+					context: 'Noun: A user role displayed in a badge',
+				} );
 				break;
 			case 'author':
-				text = this.translate( 'Author', { context: 'Noun: A user role displayed in a badge' } );
+				text = this.props.translate( 'Author', {
+					context: 'Noun: A user role displayed in a badge',
+				} );
 				break;
 			case 'contributor':
-				text = this.translate( 'Contributor', { context: 'Noun: A user role displayed in a badge' } );
+				text = this.props.translate( 'Contributor', {
+					context: 'Noun: A user role displayed in a badge',
+				} );
 				break;
 			case 'subscriber':
-				text = this.translate( 'Subscriber', { context: 'Noun: A user role displayed in a badge' } );
+				text = this.props.translate( 'Subscriber', {
+					context: 'Noun: A user role displayed in a badge',
+				} );
 				break;
 			default:
 				text = role;
 		}
 
 		return text;
-	},
+	};
 
-	getRoleBadgeClass( role ) {
+	getRoleBadgeClass = role => {
 		role = 'undefined' === typeof role ? this.getRole() : role;
 		return 'role-' + role;
-	},
+	};
 
-	renderName() {
+	handleLinkToReaderSiteStream = event => {
+		const modifierPressed =
+			event.button > 0 || event.metaKey || event.controlKey || event.shiftKey || event.altKey;
+
+		recordTrack( 'calypso_sites_people_followers_link_click', {
+			modifier_pressed: modifierPressed,
+		} );
+
+		if ( modifierPressed ) {
+			return;
+		}
+
+		const blogId = get( this.props.user, 'follow_data.params.blog_id', false );
+
+		if ( ! blogId ) {
+			return;
+		}
+
+		event.preventDefault();
+		page( `/read/blogs/${ blogId }` );
+	};
+
+	renderName = () => {
 		const user = this.props.user;
 		let name;
 		if ( ! user ) {
-			name = this.translate( 'Loading Users', { context: 'Placeholder text while fetching users.' } );
+			name = this.props.translate( 'Loading Users', {
+				context: 'Placeholder text while fetching users.',
+			} );
 		} else if ( user.name ) {
 			name = user.name;
 		} else if ( user.label ) {
 			name = user.label;
 		}
 
-		if ( name ) {
+		const blogId = get( user, 'follow_data.params.blog_id', false );
+
+		if ( name && blogId ) {
 			name = (
 				<div className="people-profile__username">
-					{ name }
+					<a href={ user.url } onClick={ this.handleLinkToReaderSiteStream }>
+						{ name }
+					</a>
 				</div>
 			);
+		} else if ( name ) {
+			name = <div className="people-profile__username">{ name }</div>;
 		}
-
 		return name;
-	},
+	};
 
-	renderLogin() {
+	renderLogin = () => {
 		let login;
 		if ( ! this.props.user ) {
-			login = this.translate( 'Loading Users', { context: 'Placeholder text while fetching users.' } );
+			login = this.props.translate( 'Loading Users', {
+				context: 'Placeholder text while fetching users.',
+			} );
 		} else if ( this.props.user.login ) {
 			login = this.props.user.login;
 		}
@@ -103,11 +149,10 @@ module.exports = React.createClass( {
 		}
 
 		return login;
-	},
+	};
 
-	renderRole() {
-		let superAdminBadge,
-			roleBadge;
+	renderRole = () => {
+		let superAdminBadge, roleBadge;
 
 		if ( this.props.user && this.props.user.is_super_admin ) {
 			superAdminBadge = (
@@ -135,39 +180,40 @@ module.exports = React.createClass( {
 				{ roleBadge }
 			</div>
 		);
-	},
+	};
 
-	renderSubscribedDate() {
+	renderSubscribedDate = () => {
 		if ( ! this.props.user || ! this.props.user.date_subscribed ) {
 			return;
 		}
 
 		return (
 			<div className="people-profile__subscribed">
-				{
-					this.translate( 'Since %(formattedDate)s', {
-						context: 'How long a user has been subscribed to a blog. Example: "Since Sep 16, 2015"',
-						args: {
-							formattedDate: this.moment( this.props.user.date_subscribed ).format( 'll' )
-						}
-					} )
-				}
+				{ this.props.translate( 'Since %(formattedDate)s', {
+					context: 'How long a user has been subscribed to a blog. Example: "Since Sep 16, 2015"',
+					args: {
+						formattedDate: this.props.moment( this.props.user.date_subscribed ).format( 'll' ),
+					},
+				} ) }
 			</div>
 		);
-	},
+	};
 
-	isFollowerType() {
+	isFollowerType = () => {
 		return this.props.user && ! this.props.user.roles && this.props.user.date_subscribed;
-	},
+	};
 
-	render: function() {
+	render() {
 		const user = this.props.user,
 			classes = classNames( 'people-profile', {
-				'is-placeholder': ! user
+				'is-placeholder': ! user,
 			} );
 
 		return (
-			<div { ...omit( this.props, 'className', 'user' ) } className={ classes }>
+			<div
+				{ ...omit( this.props, 'className', 'user', 'moment', 'numberFormat', 'translate' ) }
+				className={ classes }
+			>
 				<div className="people-profile__gravatar">
 					<Gravatar user={ user } size={ 72 } />
 				</div>
@@ -179,4 +225,6 @@ module.exports = React.createClass( {
 			</div>
 		);
 	}
-} );
+}
+
+export default localize( PeopleProfile );

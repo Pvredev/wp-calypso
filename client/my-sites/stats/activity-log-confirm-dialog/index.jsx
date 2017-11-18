@@ -1,106 +1,79 @@
+/** @format */
 /**
  * External dependencies
  */
-import React, { Component, PropTypes } from 'react';
+import React from 'react';
 import { localize } from 'i18n-calypso';
 
 /**
  * Internal dependencies
  */
-import Dialog from 'components/dialog';
+import ActivityIcon from '../activity-log-item/activity-icon';
 import Button from 'components/button';
+import Card from 'components/card';
 import Gridicon from 'gridicons';
+import HappychatButton from 'components/happychat/button';
 
-class ActivityLogConfirmDialog extends Component {
-	static propTypes = {
-		applySiteOffset: PropTypes.func.isRequired,
-		isVisible: PropTypes.bool.isRequired,
-		onClose: PropTypes.func.isRequired,
-		onConfirm: PropTypes.func.isRequired,
-		siteTitle: PropTypes.string,
-		timestamp: PropTypes.number,
+/* eslint-disable wpcalypso/jsx-classname-namespace */
+const ActivityLogConfirmDialog = ( {
+	children,
+	confirmTitle,
+	icon = 'history',
+	notice,
+	onClose,
+	onConfirm,
+	supportLink,
+	title,
+	translate,
+} ) => (
+	<div className="activity-log-item activity-log-item__restore-confirm">
+		<div className="activity-log-item__type">
+			<ActivityIcon activityIcon={ icon } />
+		</div>
+		<Card className="activity-log-item__card">
+			<h5 className="activity-log-confirm-dialog__title">{ title }</h5>
 
-		// Localize
-		translate: PropTypes.func.isRequired,
-		moment: PropTypes.func.isRequired,
-	};
+			<div className="activity-log-confirm-dialog__highlight">{ children }</div>
 
-	static defaultProps = {
-		isVisible: false,
-	};
-
-	renderButtons() {
-		const {
-			onClose,
-			onConfirm,
-			translate,
-		} = this.props;
-		return (
-			<div>
-				<Button onClick={ onClose }>
-					{ translate( 'Cancel' ) }
-				</Button>
-				<Button primary scary onClick={ onConfirm }>
-					{ translate( 'Restore' ) }
-				</Button>
-			</div>
-		);
-	}
-
-	render() {
-		const {
-			applySiteOffset,
-			isVisible,
-			moment,
-			siteTitle,
-			timestamp,
-			translate,
-		} = this.props;
-
-		return (
-			<Dialog
-				additionalClassNames="activity-log-confirm-dialog"
-				isVisible={ isVisible }
-			>
-				<h1>{ translate( 'Restore Site' ) }</h1>
-				<p className="activity-log-confirm-dialog__highlight">
-					{
-						translate(
-							'To proceed please confirm this restore on your site %(siteTitle)s',
-							{ args: { siteTitle } }
-						)
-					}
-				</p>
-
-				<div className="activity-log-confirm-dialog__line">
-					<Gridicon icon={ 'history' } />
-					{
-						translate( 'Restoring to {{b}}%(time)s{{/b}}', {
-							args: {
-								time: applySiteOffset( moment.utc( timestamp ) ).format( 'LLL' ),
-							},
-							components: { b: <b /> },
-						} )
-					}
-				</div>
-				<div className="activity-log-confirm-dialog__line">
+			{ notice && (
+				<div className="activity-log-confirm-dialog__notice">
 					<Gridicon icon={ 'notice' } />
-					{ translate( 'This will remove all content and options created or changed since then.' ) }
+					{ notice }
 				</div>
+			) }
 
-				<div className="activity-log-confirm-dialog__button-wrap">
-					{ this.renderButtons() }
+			<div className="activity-log-confirm-dialog__button-wrap">
+				<div className="activity-log-confirm-dialog__primary-actions">
+					<Button onClick={ onClose }>{ translate( 'Cancel' ) }</Button>
+					<Button primary onClick={ onConfirm }>
+						{ confirmTitle }
+					</Button>
 				</div>
-
-				<a
-					className="activity-log-confirm-dialog__more-info-link"
-					href="https://help.vaultpress.com/one-click-restore/"
-				>
-					{ translate( 'Read more about site restores' ) }
-				</a>
-			</Dialog>
-		);
-	}
-}
+				<div className="activity-log-confirm-dialog__secondary-actions">
+					<Button
+						borderless={ true }
+						className="activity-log-confirm-dialog__more-info-link"
+						href="https://help.vaultpress.com/one-click-restore/"
+					>
+						<Gridicon icon="notice" />
+						<span className="activity-log-confirm-dialog__more-info-link-text">
+							{ translate( 'More info' ) }
+						</span>
+					</Button>
+					<HappychatButton
+						className="activity-log-confirm-dialog__more-info-link"
+						href={ supportLink }
+					>
+						<Gridicon icon="chat" />
+						<span className="activity-log-confirm-dialog__more-info-link-text">
+							{ translate( 'Any Questions?' ) }
+						</span>
+					</HappychatButton>
+				</div>
+			</div>
+		</Card>
+	</div>
+);
+/* eslint-enable wpcalypso/jsx-classname-namespace */
 
 export default localize( ActivityLogConfirmDialog );

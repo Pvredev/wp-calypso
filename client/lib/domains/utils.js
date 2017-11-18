@@ -1,18 +1,24 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import { isEmpty, find, values } from 'lodash';
+import { drop, isEmpty, join, find, split, values } from 'lodash';
 
 /**
  * Internal dependencies
  */
-import { type as domainTypes } from './constants';
+import { type as domainTypes, transferStatus } from './constants';
 import { cartItems } from 'lib/cart-values';
 import { isDomainRegistration } from 'lib/products-values';
 
 function getDomainType( domainFromApi ) {
 	if ( domainFromApi.type === 'redirect' ) {
 		return domainTypes.SITE_REDIRECT;
+	}
+
+	if ( domainFromApi.type === 'transfer' ) {
+		return domainTypes.TRANSFER;
 	}
 
 	if ( domainFromApi.wpcom_domain ) {
@@ -24,6 +30,26 @@ function getDomainType( domainFromApi ) {
 	}
 
 	return domainTypes.MAPPED;
+}
+
+function getTransferStatus( domainFromApi ) {
+	if ( domainFromApi.transfer_status === 'pending_owner' ) {
+		return transferStatus.PENDING_OWNER;
+	}
+
+	if ( domainFromApi.transfer_status === 'pending_registry' ) {
+		return transferStatus.PENDING_REGISTRY;
+	}
+
+	if ( domainFromApi.transfer_status === 'cancelled' ) {
+		return transferStatus.CANCELLED;
+	}
+
+	if ( domainFromApi.transfer_status === 'completed' ) {
+		return transferStatus.COMPLETED;
+	}
+
+	return null;
 }
 
 /**
@@ -53,7 +79,24 @@ function getDomainNameFromReceiptOrCart( receipt, cart ) {
 	return null;
 }
 
+function parseDomainAgainstTldList( domainFragment, tldList ) {
+	if ( ! domainFragment ) {
+		return '';
+	}
+
+	if ( tldList[ domainFragment ] !== undefined ) {
+		return domainFragment;
+	}
+
+	const parts = split( domainFragment, '.' );
+	const suffix = join( drop( parts ), '.' );
+
+	return parseDomainAgainstTldList( suffix, tldList );
+}
+
 export {
 	getDomainNameFromReceiptOrCart,
 	getDomainType,
+	getTransferStatus,
+	parseDomainAgainstTldList,
 };

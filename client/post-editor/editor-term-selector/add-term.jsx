@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes, Component } from 'react';
+
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { get, noop } from 'lodash';
@@ -13,6 +17,8 @@ import Gridicon from 'gridicons';
 import Button from 'components/button';
 import TermFormDialog from 'blocks/term-form-dialog';
 import { getSelectedSiteId } from 'state/ui/selectors';
+import { getEditorPostId } from 'state/ui/editor/selectors';
+import { getEditedPostValue } from 'state/posts/selectors';
 import { getPostTypeTaxonomy } from 'state/post-types/taxonomies/selectors';
 import { getTerms } from 'state/terms/selectors';
 
@@ -20,19 +26,19 @@ class TermSelectorAddTerm extends Component {
 	static propTypes = {
 		labels: PropTypes.object,
 		onSuccess: PropTypes.func,
-		postType: PropTypes.string,
 		taxonomy: PropTypes.string,
-		terms: PropTypes.array
+		terms: PropTypes.array,
+		type: PropTypes.string,
 	};
 
 	static defaultProps = {
-		onSuccess: noop
+		onSuccess: noop,
 	};
 
 	constructor( props ) {
 		super( props );
 		this.state = {
-			showDialog: false
+			showDialog: false,
 		};
 	}
 
@@ -46,9 +52,11 @@ class TermSelectorAddTerm extends Component {
 	};
 
 	render() {
-		const { labels, onSuccess, postType, terms, taxonomy } = this.props;
+		const { labels, onSuccess, type, terms, taxonomy } = this.props;
 		const totalTerms = terms ? terms.length : 0;
-		const classes = classNames( 'editor-term-selector__add-term', { 'is-compact': totalTerms < 8 } );
+		const classes = classNames( 'editor-term-selector__add-term', {
+			'is-compact': totalTerms < 8,
+		} );
 
 		return (
 			<div className={ classes }>
@@ -58,7 +66,7 @@ class TermSelectorAddTerm extends Component {
 				<TermFormDialog
 					showDialog={ this.state.showDialog }
 					onClose={ this.closeDialog }
-					postType={ postType }
+					postType={ type }
 					taxonomy={ taxonomy }
 					onSuccess={ onSuccess }
 				/>
@@ -67,16 +75,16 @@ class TermSelectorAddTerm extends Component {
 	}
 }
 
-export default connect(
-	( state, ownProps ) => {
-		const { taxonomy, postType } = ownProps;
-		const siteId = getSelectedSiteId( state );
-		const taxonomyDetails = getPostTypeTaxonomy( state, siteId, postType, taxonomy );
-		const labels = get( taxonomyDetails, 'labels', {} );
+export default connect( ( state, { taxonomy } ) => {
+	const siteId = getSelectedSiteId( state );
+	const postId = getEditorPostId( state );
+	const type = getEditedPostValue( state, siteId, postId, 'type' );
+	const taxonomyDetails = getPostTypeTaxonomy( state, siteId, type, taxonomy );
+	const labels = get( taxonomyDetails, 'labels', {} );
 
-		return {
-			terms: getTerms( state, siteId, taxonomy ),
-			labels
-		};
-	}
-)( TermSelectorAddTerm );
+	return {
+		terms: getTerms( state, siteId, taxonomy ),
+		labels,
+		type,
+	};
+} )( TermSelectorAddTerm );

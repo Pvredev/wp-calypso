@@ -1,7 +1,12 @@
+/** @format */
+
 /**
- * External Dependencies
+ * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React from 'react';
+import createReactClass from 'create-react-class';
 import debugModule from 'debug';
 
 /**
@@ -17,24 +22,20 @@ import { getNotices } from 'state/notices/selectors';
 
 const debug = debugModule( 'calypso:notices' );
 
-const NoticesList = React.createClass( {
-
+const NoticesList = createReactClass( {
 	displayName: 'NoticesList',
 
 	mixins: [ observe( 'notices' ) ],
 
 	propTypes: {
-		id: React.PropTypes.string,
-		notices: React.PropTypes.oneOfType( [
-			React.PropTypes.object,
-			React.PropTypes.array
-		] )
+		id: PropTypes.string,
+		notices: PropTypes.oneOfType( [ PropTypes.object, PropTypes.array ] ),
 	},
 
 	getDefaultProps() {
 		return {
 			id: 'overlay-notices',
-			notices: Object.freeze( [] )
+			notices: Object.freeze( [] ),
 		};
 	},
 
@@ -61,13 +62,11 @@ const NoticesList = React.createClass( {
 					onDismissClick={ this.removeNotice.bind( this, notice ) }
 					showDismiss={ notice.showDismiss }
 				>
-					{ notice.button &&
-						<NoticeAction
-							href={ notice.href }
-							onClick={ notice.onClick }
-						>
+					{ notice.button && (
+						<NoticeAction href={ notice.href } onClick={ notice.onClick }>
 							{ notice.button }
-						</NoticeAction> }
+						</NoticeAction>
+					) }
 				</Notice>
 			);
 		}, this );
@@ -75,26 +74,26 @@ const NoticesList = React.createClass( {
 		//This is an interim solution for displaying both notices from redux store
 		//and from the old component. When all notices are moved to redux store, this component
 		//needs to be updated.
-		noticesList = noticesList.concat( this.props.storeNotices.map( function( notice ) {
-			return (
-				<Notice
-					key={ 'notice-' + notice.noticeId }
-					status={ notice.status }
-					duration = { notice.duration || null }
-					showDismiss={ notice.showDismiss }
-					onDismissClick={ this.props.removeNotice.bind( this, notice.noticeId ) }
-					text={ notice.text }
-				>
-					{ notice.button &&
-						<NoticeAction
-							href={ notice.href }
-							onClick={ notice.onClick }
-						>
-						{ notice.button }
-					</NoticeAction> }
-				</Notice>
-			);
-		}, this ) );
+		noticesList = noticesList.concat(
+			this.props.storeNotices.map( function( notice ) {
+				return (
+					<Notice
+						key={ 'notice-' + notice.noticeId }
+						status={ notice.status }
+						duration={ notice.duration || null }
+						showDismiss={ notice.showDismiss }
+						onDismissClick={ this.props.removeNotice.bind( this, notice.noticeId ) }
+						text={ notice.text }
+					>
+						{ notice.button && (
+							<NoticeAction href={ notice.href } onClick={ notice.onClick }>
+								{ notice.button }
+							</NoticeAction>
+						) }
+					</Notice>
+				);
+			}, this )
+		);
 
 		if ( ! noticesList.length ) {
 			return null;
@@ -105,13 +104,13 @@ const NoticesList = React.createClass( {
 				{ noticesList }
 			</div>
 		);
-	}
+	},
 } );
 
 export default connect(
 	state => {
 		return {
-			storeNotices: getNotices( state )
+			storeNotices: getNotices( state ),
 		};
 	},
 	{ removeNotice }

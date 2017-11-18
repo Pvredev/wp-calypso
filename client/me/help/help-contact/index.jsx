@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 import page from 'page';
 import { connect } from 'react-redux';
@@ -26,20 +29,31 @@ import notices from 'notices';
 import analytics from 'lib/analytics';
 import { isOlarkTimedOut } from 'state/ui/olark/selectors';
 import { isCurrentUserEmailVerified } from 'state/current-user/selectors';
-import { isHappychatAvailable } from 'state/happychat/selectors';
-import { isTicketSupportEligible, isTicketSupportConfigurationReady, getTicketSupportRequestError } from 'state/help/ticket/selectors';
+import getHappychatUserInfo from 'state/happychat/selectors/get-happychat-userinfo';
+import isHappychatAvailable from 'state/happychat/selectors/is-happychat-available';
+import {
+	isTicketSupportEligible,
+	isTicketSupportConfigurationReady,
+	getTicketSupportRequestError,
+} from 'state/help/ticket/selectors';
 import HappychatConnection from 'components/happychat/connection';
 import QueryOlark from 'components/data/query-olark';
 import QueryTicketSupportConfiguration from 'components/data/query-ticket-support-configuration';
 import HelpUnverifiedWarning from '../help-unverified-warning';
-import { sendChatMessage as sendHappychatMessage, sendUserInfo } from 'state/happychat/actions';
-import { openChat as openHappychat } from 'state/ui/happychat/actions';
+import {
+	sendMessage as sendHappychatMessage,
+	sendUserInfo,
+} from 'state/happychat/connection/actions';
+import { openChat as openHappychat } from 'state/happychat/ui/actions';
 import {
 	getCurrentUser,
 	getCurrentUserLocale,
 	getCurrentUserSiteCount,
 } from 'state/current-user/selectors';
-import { askQuestion as askDirectlyQuestion, initialize as initializeDirectly } from 'state/help/directly/actions';
+import {
+	askQuestion as askDirectlyQuestion,
+	initialize as initializeDirectly,
+} from 'state/help/directly/actions';
 import { getSitePlan, isCurrentPlanPaid, isRequestingSites } from 'state/sites/selectors';
 import {
 	hasUserAskedADirectlyQuestion,
@@ -49,6 +63,7 @@ import {
 } from 'state/selectors';
 import QueryUserPurchases from 'components/data/query-user-purchases';
 import { getHelpSelectedSiteId } from 'state/help/selectors';
+import { PLAN_BUSINESS, PLAN_PERSONAL, PLAN_PREMIUM } from 'lib/plans/constants';
 
 /**
  * Module variables
@@ -65,9 +80,15 @@ const SUPPORT_FORUM = 'SUPPORT_FORUM';
 const startShowingGM17ClosureNoticeAt = i18n.moment( 'Mon, 4 Sep 2017 07:00:00 +0000' );
 const stopShowingGM17ClosureNoticeAt = i18n.moment( 'Tue, 19 Sep 2017 07:00:00 +0000' );
 
-const HelpContact = React.createClass( {
+class HelpContact extends React.Component {
+	state = {
+		olark: olarkStore.get(),
+		isSubmitting: false,
+		confirmation: null,
+		isChatEnded: false,
+	};
 
-	componentDidMount: function() {
+	componentDidMount() {
 		this.prepareDirectlyWidget();
 
 		olarkStore.on( 'change', this.updateOlarkState );
@@ -84,16 +105,16 @@ const HelpContact = React.createClass( {
 		olarkActions.expandBox();
 		olarkActions.shrinkBox();
 		olarkActions.hideBox();
-	},
+	}
 
-	componentDidUpdate: function() {
+	componentDidUpdate() {
 		// Directly initialization is a noop if it's already happened. This catches
 		// instances where a state/prop change moves a user to Directly support from
 		// some other variation.
 		this.prepareDirectlyWidget();
-	},
+	}
 
-	componentWillUnmount: function() {
+	componentWillUnmount() {
 		const { details, isOperatorAvailable } = this.state.olark;
 
 		olarkStore.removeListener( 'change', this.updateOlarkState );
@@ -106,67 +127,58 @@ const HelpContact = React.createClass( {
 		if ( details.isConversing && ! isOperatorAvailable ) {
 			olarkActions.shrinkBox();
 		}
-	},
+	}
 
-	getInitialState: function() {
-		return {
-			olark: olarkStore.get(),
-			isSubmitting: false,
-			confirmation: null,
-			isChatEnded: false,
-		};
-	},
-
-	updateOlarkState: function() {
+	updateOlarkState = () => {
 		this.setState( { olark: olarkStore.get() } );
-	},
+	};
 
-	backToHelp: function() {
+	backToHelp = () => {
 		page( '/help' );
-	},
+	};
 
-	clearSavedContactForm: function() {
+	clearSavedContactForm = () => {
 		savedContactForm = null;
-	},
+	};
 
-	startHappychat: function( contactForm ) {
+	startHappychat = contactForm => {
 		this.props.openHappychat();
-		const { message, site } = contactForm;
+		const { howCanWeHelp, howYouFeel, message, site } = contactForm;
 
-		this.props.sendUserInfo( site.URL );
-		this.props.sendHappychatMessage( message );
+		this.props.sendUserInfo( this.props.getUserInfo( { howCanWeHelp, howYouFeel, site } ) );
+		this.props.sendHappychatMessage( message, { includeInSummary: true } );
 
 		analytics.tracks.recordEvent( 'calypso_help_live_chat_begin', {
-			site_plan_product_id: ( site ? site.plan.product_id : null ),
-			is_automated_transfer: ( site ? site.options.is_automated_transfer : null )
+			site_plan_product_id: site ? site.plan.product_id : null,
+			is_automated_transfer: site ? site.options.is_automated_transfer : null,
 		} );
 
 		page( '/help' );
-	},
+	};
 
-	startChat: function( contactForm ) {
+	startChat = contactForm => {
 		const { message, howCanWeHelp, howYouFeel, site } = contactForm;
 
 		// Intentionally not translated since only HE's will see this in the olark console as a notification.
 		const notifications = [
 			'How can you help: ' + howCanWeHelp,
 			'How I feel: ' + howYouFeel,
-			'Site I need help with: ' + ( site ? site.URL : 'N/A' )
+			'Site I need help with: ' + ( site ? site.URL : 'N/A' ),
 		];
 
 		notifications.forEach( olarkActions.sendNotificationToOperator );
 
 		analytics.tracks.recordEvent( 'calypso_help_live_chat_begin', {
-			site_plan_product_id: ( site ? site.plan.product_id : null ),
-			is_automated_transfer: ( site ? site.options.is_automated_transfer : null )
+			site_plan_product_id: site ? site.plan.product_id : null,
+			is_automated_transfer: site ? site.options.is_automated_transfer : null,
 		} );
 
 		this.sendMessageToOperator( message );
 
 		this.clearSavedContactForm();
-	},
+	};
 
-	prepareDirectlyWidget: function() {
+	prepareDirectlyWidget = () => {
 		if (
 			this.hasDataToDetermineVariation() &&
 			this.getSupportVariation() === SUPPORT_DIRECTLY &&
@@ -174,108 +186,115 @@ const HelpContact = React.createClass( {
 		) {
 			this.props.initializeDirectly();
 		}
-	},
+	};
 
-	submitDirectlyQuestion: function( contactForm ) {
+	submitDirectlyQuestion = contactForm => {
 		const { display_name, email } = this.props.currentUser;
 
-		this.props.askDirectlyQuestion(
-			contactForm.message,
-			display_name,
-			email
-		);
+		this.props.askDirectlyQuestion( contactForm.message, display_name, email );
 
 		this.clearSavedContactForm();
 
 		page( '/help' );
-	},
+	};
 
-	submitKayakoTicket: function( contactForm ) {
+	submitKayakoTicket = contactForm => {
 		const { subject, message, howCanWeHelp, howYouFeel, site } = contactForm;
 		const { currentUserLocale } = this.props;
 
 		const ticketMeta = [
 			'How can you help: ' + howCanWeHelp,
 			'How I feel: ' + howYouFeel,
-			'Site I need help with: ' + ( site ? site.URL : 'N/A' )
+			'Site I need help with: ' + ( site ? site.URL : 'N/A' ),
 		];
 
 		const kayakoMessage = [ ...ticketMeta, '\n', message ].join( '\n' );
 
 		this.setState( { isSubmitting: true } );
 
-		wpcom.submitKayakoTicket( subject, kayakoMessage, currentUserLocale, this.props.clientSlug, ( error ) => {
-			if ( error ) {
-				// TODO: bump a stat here
-				notices.error( error.message );
+		wpcom.submitKayakoTicket(
+			subject,
+			kayakoMessage,
+			currentUserLocale,
+			this.props.clientSlug,
+			error => {
+				if ( error ) {
+					// TODO: bump a stat here
+					notices.error( error.message );
 
-				this.setState( { isSubmitting: false } );
-				return;
-			}
-
-			this.setState( {
-				isSubmitting: false,
-				confirmation: {
-					title: this.props.translate( 'We\'re on it!' ),
-					message: this.props.translate(
-						'We\'ve received your message, and you\'ll hear back from ' +
-						'one of our Happiness Engineers shortly.'
-					)
+					this.setState( { isSubmitting: false } );
+					return;
 				}
-			} );
 
-			analytics.tracks.recordEvent( 'calypso_help_contact_submit', {
-				ticket_type: 'kayako',
-				site_plan_product_id: ( site ? site.plan.product_id : null ),
-				is_automated_transfer: ( site ? site.options.is_automated_transfer : null )
-			} );
-		} );
+				this.setState( {
+					isSubmitting: false,
+					confirmation: {
+						title: this.props.translate( "We're on it!" ),
+						message: this.props.translate(
+							"We've received your message, and you'll hear back from " +
+								'one of our Happiness Engineers shortly.'
+						),
+					},
+				} );
+
+				analytics.tracks.recordEvent( 'calypso_help_contact_submit', {
+					ticket_type: 'kayako',
+					site_plan_product_id: site ? site.plan.product_id : null,
+					is_automated_transfer: site ? site.options.is_automated_transfer : null,
+				} );
+			}
+		);
 
 		this.clearSavedContactForm();
-	},
+	};
 
-	submitSupportForumsTopic: function( contactForm ) {
+	submitSupportForumsTopic = contactForm => {
 		const { subject, message } = contactForm;
 		const { currentUserLocale } = this.props;
 
 		this.setState( { isSubmitting: true } );
 
-		wpcom.submitSupportForumsTopic( subject, message, currentUserLocale, this.props.clientSlug, ( error, data ) => {
-			if ( error ) {
-				// TODO: bump a stat here
-				notices.error( error.message );
+		wpcom.submitSupportForumsTopic(
+			subject,
+			message,
+			currentUserLocale,
+			this.props.clientSlug,
+			( error, data ) => {
+				if ( error ) {
+					// TODO: bump a stat here
+					notices.error( error.message );
 
-				this.setState( { isSubmitting: false } );
-				return;
-			}
-
-			this.setState( {
-				isSubmitting: false,
-				confirmation: {
-					title: this.props.translate( 'Got it!' ),
-					message: this.props.translate(
-						'Your message has been submitted to our ' +
-						'{{a}}community forums{{/a}}',
-						{
-							components: {
-								a: <a href={ data.topic_URL } />
-							}
-						}
-					)
+					this.setState( { isSubmitting: false } );
+					return;
 				}
-			} );
 
-			analytics.tracks.recordEvent( 'calypso_help_contact_submit', { ticket_type: 'forum' } );
-		} );
+				this.setState( {
+					isSubmitting: false,
+					confirmation: {
+						title: this.props.translate( 'Got it!' ),
+						message: this.props.translate(
+							'Your message has been submitted to our ' + '{{a}}community forums{{/a}}',
+							{
+								components: {
+									a: <a href={ data.topic_URL } />,
+								},
+							}
+						),
+					},
+				} );
+
+				analytics.tracks.recordEvent( 'calypso_help_contact_submit', { ticket_type: 'forum' } );
+			}
+		);
 
 		this.clearSavedContactForm();
-	},
+	};
 
 	/**
 	 * Send a message to an olark operator.
 	 * @param  {string} message The message to be sent to an operator
 	 */
-	sendMessageToOperator: function( message ) {
+	sendMessageToOperator = message => {
 		// Get the DOM element of the olark textarea
 		const widgetInput = window.document.getElementById( 'habla_wcsend_input' );
 		const KEY_ENTER = 13;
@@ -302,17 +321,17 @@ const HelpContact = React.createClass( {
 
 		// Trigger the onkeydown callback added by olark so that we can send the message to the operator.
 		widgetInput.onkeydown( { keyCode: KEY_ENTER } );
-	},
+	};
 
-	onMessageToVisitor: function() {
+	onMessageToVisitor = () => {
 		this.trackChatDisplayError( 'onMessageToVisitor' );
-	},
+	};
 
-	onMessageToOperator: function() {
+	onMessageToOperator = () => {
 		this.trackChatDisplayError( 'onMessageToOperator' );
-	},
+	};
 
-	trackChatDisplayError: function( olarkEvent ) {
+	trackChatDisplayError = olarkEvent => {
 		const { olark, isChatEnded } = this.state;
 
 		// If the user sent/received a message to/from an operator but the chatbox is not inlined
@@ -328,7 +347,7 @@ const HelpContact = React.createClass( {
 			olark_is_ready: olark.isOlarkReady,
 			olark_is_expanded: olark.isOlarkExpanded,
 			olark_is_user_eligible: olark.isUserEligible,
-			olark_is_operator_available: olark.isOperatorAvailable
+			olark_is_operator_available: olark.isOperatorAvailable,
 		};
 
 		// Do a check here to make sure that details are present because an error in the
@@ -340,31 +359,31 @@ const HelpContact = React.createClass( {
 		}
 
 		analytics.tracks.recordEvent( 'calypso_help_contact_chatbox_mistaken_display', tracksData );
-	},
+	};
 
-	trackContactFormAndFillSubject() {
+	trackContactFormAndFillSubject = () => {
 		const { details } = this.state.olark;
 		if ( ! details.isConversing ) {
 			analytics.tracks.recordEvent( 'calypso_help_offline_form_display', {
-				form_type: 'kayako'
+				form_type: 'kayako',
 			} );
 		}
 		this.autofillSubject();
-	},
+	};
 
-	onOperatorsAway: function() {
+	onOperatorsAway = () => {
 		const IS_UNAVAILABLE = false;
 		this.trackContactFormAndFillSubject();
 		this.showAvailabilityNotice( IS_UNAVAILABLE );
-	},
+	};
 
-	onOperatorsAvailable: function() {
+	onOperatorsAvailable = () => {
 		const IS_AVAILABLE = true;
 
 		this.showAvailabilityNotice( IS_AVAILABLE );
-	},
+	};
 
-	showAvailabilityNotice( isAvailable ) {
+	showAvailabilityNotice = isAvailable => {
 		const { isUserEligible, isOlarkReady } = this.state.olark;
 
 		if ( ! isOlarkReady || ! isUserEligible ) {
@@ -372,34 +391,40 @@ const HelpContact = React.createClass( {
 		}
 
 		if ( isAvailable ) {
-			notices.success( this.props.translate( 'Our Happiness Engineers have returned, chat with us.' ) );
+			notices.success(
+				this.props.translate( 'Our Happiness Engineers have returned, chat with us.' )
+			);
 		} else {
-			notices.warning( this.props.translate( 'Sorry! We just missed you as our Happiness Engineers stepped away.' ) );
+			notices.warning(
+				this.props.translate( 'Sorry! We just missed you as our Happiness Engineers stepped away.' )
+			);
 		}
-	},
+	};
 
 	/**
 	 * Auto fill the subject with the first five words contained in the message field of the contact form.
 	 */
-	autofillSubject: function() {
+	autofillSubject = () => {
 		if ( ! savedContactForm || ! savedContactForm.message || savedContactForm.subject ) {
 			return;
 		}
 
 		const words = savedContactForm.message.split( /\s+/ );
 
-		savedContactForm = Object.assign( savedContactForm, { subject: words.slice( 0, 5 ).join( ' ' ) + '…' } );
+		savedContactForm = Object.assign( savedContactForm, {
+			subject: words.slice( 0, 5 ).join( ' ' ) + '…',
+		} );
 
 		this.forceUpdate();
-	},
+	};
 
-	onCommandFromOperator: function( event ) {
+	onCommandFromOperator = event => {
 		if ( event.command.name === 'end' ) {
 			this.setState( { isChatEnded: true } );
 		}
-	},
+	};
 
-	shouldUseHappychat: function() {
+	shouldUseHappychat = () => {
 		const { olark } = this.state;
 
 		// if happychat is disabled in the config, do not use it
@@ -408,24 +433,24 @@ const HelpContact = React.createClass( {
 		}
 
 		// if the happychat connection is able to accept chats, use it
-		return ( this.props.isHappychatAvailable && olark.isUserEligible &&
-			this.props.isSelectedHelpSiteOnPaidPlan );
-	},
-
-	shouldUseDirectly: function() {
-		const isEn = this.props.currentUserLocale === 'en';
 		return (
-			isEn &&
-			! this.props.isDirectlyFailed
+			this.props.isHappychatAvailable &&
+			olark.isUserEligible &&
+			this.props.isSelectedHelpSiteOnPaidPlan
 		);
-	},
+	};
 
-	canShowChatbox: function() {
+	shouldUseDirectly = () => {
+		const isEn = this.props.currentUserLocale === 'en';
+		return isEn && ! this.props.isDirectlyFailed;
+	};
+
+	canShowChatbox = () => {
 		const { olark, isChatEnded } = this.state;
 		return isChatEnded || ( olark.details.isConversing && olark.isOperatorAvailable );
-	},
+	};
 
-	getSupportVariation: function() {
+	getSupportVariation = () => {
 		const { olark } = this.state;
 		const { ticketSupportEligible } = this.props;
 
@@ -446,15 +471,15 @@ const HelpContact = React.createClass( {
 		}
 
 		return SUPPORT_FORUM;
-	},
+	};
 
-	getContactFormPropsVariation: function( variationSlug ) {
+	getContactFormPropsVariation = variationSlug => {
 		const { isSubmitting } = this.state;
 		const { translate, hasMoreThanOneSite } = this.props;
 
 		switch ( variationSlug ) {
 			case SUPPORT_HAPPYCHAT:
-				const isDev = ( ( config( 'env' ) === 'development' ) || ( config( 'env_id' ) === 'stage' ) );
+				const isDev = config( 'env' ) === 'development' || config( 'env_id' ) === 'stage';
 				return {
 					onSubmit: this.startHappychat,
 					buttonLabel: isDev ? 'Happychat' : translate( 'Chat with us' ),
@@ -490,18 +515,19 @@ const HelpContact = React.createClass( {
 					buttonLabel: translate( 'Ask an Expert' ),
 					formDescription: translate(
 						'Get help from an {{strong}}Expert User{{/strong}} of WordPress.com. ' +
-						'These are other users, like yourself, who have been selected because ' +
-						'of their knowledge to help answer your questions.' +
-						'{{br/}}{{br/}}' +
-						'{{strong}}Please do not{{/strong}} provide financial or contact ' +
-						'information when submitting this form.',
+							'These are other users, like yourself, who have been selected because ' +
+							'of their knowledge to help answer your questions.' +
+							'{{br/}}{{br/}}' +
+							'{{strong}}Please do not{{/strong}} provide financial or contact ' +
+							'information when submitting this form.',
 						{
 							components: {
 								// Need to use linebreaks since the entire text is wrapped in a <p>...</p>
 								br: <br />,
-								strong: <strong />
-							}
-						} ),
+								strong: <strong />,
+							},
+						}
+					),
 					showSubjectField: false,
 					showHowCanWeHelpField: false,
 					showHowYouFeelField: false,
@@ -511,27 +537,30 @@ const HelpContact = React.createClass( {
 			default:
 				return {
 					onSubmit: this.submitSupportForumsTopic,
-					buttonLabel: isSubmitting ? translate( 'Asking in the forums' ) : translate( 'Ask in the forums' ),
+					buttonLabel: isSubmitting
+						? translate( 'Asking in the forums' )
+						: translate( 'Ask in the forums' ),
 					formDescription: translate(
 						'Post a new question in our {{strong}}public forums{{/strong}}, ' +
-						'where it may be answered by helpful community members, ' +
-						'by submitting the form below. ' +
-						'{{strong}}Please do not{{/strong}} provide financial or ' +
-						'contact information when submitting this form.',
+							'where it may be answered by helpful community members, ' +
+							'by submitting the form below. ' +
+							'{{strong}}Please do not{{/strong}} provide financial or ' +
+							'contact information when submitting this form.',
 						{
 							components: {
-								strong: <strong />
-							}
-						} ),
+								strong: <strong />,
+							},
+						}
+					),
 					showSubjectField: true,
 					showHowCanWeHelpField: false,
 					showHowYouFeelField: false,
 					showSiteField: false,
 				};
 		}
-	},
+	};
 
-	getContactFormCommonProps: function( variationSlug ) {
+	getContactFormCommonProps = variationSlug => {
 		const { isSubmitting } = this.state;
 		const { currentUserLocale } = this.props;
 
@@ -542,21 +571,28 @@ const HelpContact = React.createClass( {
 		//    requests are sent to the language specific forums (for popular languages)
 		//    we don't tell the user that support is only offered in English.
 		const showHelpLanguagePrompt =
-			( config( 'support_locales' ).indexOf( currentUserLocale ) === -1 ) &&
+			config( 'support_locales' ).indexOf( currentUserLocale ) === -1 &&
 			SUPPORT_FORUM !== variationSlug;
 
 		return {
 			disabled: isSubmitting,
 			showHelpLanguagePrompt: showHelpLanguagePrompt,
-			valueLink: { value: savedContactForm, requestChange: ( contactForm ) => savedContactForm = contactForm }
+			valueLink: {
+				value: savedContactForm,
+				requestChange: contactForm => ( savedContactForm = contactForm ),
+			},
 		};
-	},
+	};
 
-	shouldShowTicketRequestErrorNotice: function( variationSlug ) {
+	shouldShowTicketRequestErrorNotice = variationSlug => {
 		const { ticketSupportRequestError } = this.props;
 
-		return SUPPORT_HAPPYCHAT !== variationSlug && SUPPORT_LIVECHAT !== variationSlug && null != ticketSupportRequestError;
-	},
+		return (
+			SUPPORT_HAPPYCHAT !== variationSlug &&
+			SUPPORT_LIVECHAT !== variationSlug &&
+			null != ticketSupportRequestError
+		);
+	};
 
 	/**
 	 * Before determining which variation to assign, certain async data needs to be in place.
@@ -564,7 +600,7 @@ const HelpContact = React.createClass( {
 	 *
 	 * @returns {Boolean} Whether all the data is present to determine the variation to show
 	 */
-	hasDataToDetermineVariation: function() {
+	hasDataToDetermineVariation = () => {
 		const { olark } = this.state;
 		const { ticketSupportConfigurationReady, ticketSupportRequestError } = this.props;
 
@@ -572,20 +608,23 @@ const HelpContact = React.createClass( {
 		const ticketReadyOrError = ticketSupportConfigurationReady || null != ticketSupportRequestError;
 
 		return olarkReadyOrTimedOut && ticketReadyOrError;
-	},
+	};
 
-	shouldShowPreloadForm: function() {
-		const waitingOnDirectly = this.getSupportVariation() === SUPPORT_DIRECTLY && ! this.props.isDirectlyReady;
+	shouldShowPreloadForm = () => {
+		const waitingOnDirectly =
+			this.getSupportVariation() === SUPPORT_DIRECTLY && ! this.props.isDirectlyReady;
 
-		return this.props.isRequestingSites || ! this.hasDataToDetermineVariation() || waitingOnDirectly;
-	},
+		return (
+			this.props.isRequestingSites || ! this.hasDataToDetermineVariation() || waitingOnDirectly
+		);
+	};
 
 	/**
 	 * Get the view for the contact page. This could either be the olark chat widget if a chat is in progress or a contact form.
 	 * @return {object} A JSX object that should be rendered
 	 */
-	getView: function() {
-		const { confirmation } = this.state;
+	getView = () => {
+		const { confirmation, olark } = this.state;
 		const { translate, selectedSitePlanSlug } = this.props;
 
 		if ( confirmation ) {
@@ -625,74 +664,91 @@ const HelpContact = React.createClass( {
 				title: translate( "We're on it!" ),
 				message: translate(
 					'We sent your question to our {{strong}}Expert Users{{/strong}}. ' +
-					'You will hear back via email as soon as an Expert has responded ' +
-					'(usually within an hour). For now you can close this window or ' +
-					'continue using WordPress.com.',
+						'You will hear back via email as soon as an Expert has responded ' +
+						'(usually within an hour). For now you can close this window or ' +
+						'continue using WordPress.com.',
 					{
 						components: {
-							strong: <strong />
-						}
-					} )
+							strong: <strong />,
+						},
+					}
+				),
 			};
 			return <HelpContactConfirmation { ...directlyConfirmation } />;
 		}
 
 		const contactFormProps = Object.assign(
 			this.getContactFormCommonProps( supportVariation ),
-			this.getContactFormPropsVariation( supportVariation ),
+			this.getContactFormPropsVariation( supportVariation )
 		);
 
 		const currentDate = Date.now();
 
 		// Customers sent to Directly and Forum are not affected by the GM closures
-		const isUserAffectedByGM17Closure = ( supportVariation !== SUPPORT_DIRECTLY && supportVariation !== SUPPORT_FORUM );
+		const isUserAffectedByGM17Closure =
+			supportVariation !== SUPPORT_DIRECTLY && supportVariation !== SUPPORT_FORUM;
+		// Paid users will still have ticket support through the GM
+		const doesUserHavePaidPlan =
+			[ PLAN_PERSONAL, PLAN_PREMIUM, PLAN_BUSINESS ].indexOf( selectedSitePlanSlug ) >= 0;
 
-		const shouldShowClosureNotice = (
+		const shouldShowClosureNotice =
 			isUserAffectedByGM17Closure &&
 			currentDate > startShowingGM17ClosureNoticeAt &&
-			currentDate < stopShowingGM17ClosureNoticeAt
-		);
+			currentDate < stopShowingGM17ClosureNoticeAt;
+
+		// When support is closed for the GM, the contact form should hide for non-paid plans that are affected by the closure.
+		// This leaves the form open for paid plans and users who are sent to Directly/Forums for support.
+		// Note: this hides the form for Jetpack plans as well, which has been noted as acceptable for the GM.
+		const shouldHideContactForm =
+			olark.isSupportClosed && isUserAffectedByGM17Closure && ! doesUserHavePaidPlan;
 
 		return (
 			<div>
 				{ shouldShowClosureNotice && <HelpContactClosed sitePlanSlug={ selectedSitePlanSlug } /> }
-				{ this.shouldShowTicketRequestErrorNotice( supportVariation ) &&
+				{ this.shouldShowTicketRequestErrorNotice( supportVariation ) && (
 					<Notice
 						status="is-warning"
-						text={ translate( 'We had trouble loading the support information for your account. ' +
-							'Please check your internet connection and reload the page, or try again later.' ) }
+						text={ translate(
+							'We had trouble loading the support information for your account. ' +
+								'Please check your internet connection and reload the page, or try again later.'
+						) }
 						showDismiss={ false }
 					/>
-				}
-				<HelpContactForm { ...contactFormProps } />
+				) }
+				{ ! shouldHideContactForm && <HelpContactForm { ...contactFormProps } /> }
 			</div>
 		);
-	},
+	};
 
-	render: function() {
+	render() {
 		return (
 			<Main className="help-contact">
-				<HeaderCake onClick={ this.backToHelp } isCompact={ true }>{ this.props.translate( 'Contact Us' ) }</HeaderCake>
+				<HeaderCake onClick={ this.backToHelp } isCompact={ true }>
+					{ this.props.translate( 'Contact Us' ) }
+				</HeaderCake>
 				{ ! this.props.isEmailVerified && <HelpUnverifiedWarning /> }
-				<Card className={ this.canShowChatbox() ? 'help-contact__chat-form' : 'help-contact__form' }>
+				<Card
+					className={ this.canShowChatbox() ? 'help-contact__chat-form' : 'help-contact__form' }
+				>
 					{ this.getView() }
 				</Card>
-				<HappychatConnection />
+				{ this.props.shouldStartHappychatConnection && <HappychatConnection /> }
 				<QueryOlark />
 				<QueryTicketSupportConfiguration />
 				<QueryUserPurchases userId={ this.props.currentUser.ID } />
 			</Main>
 		);
 	}
-} );
+}
 
 export default connect(
-	( state ) => {
+	state => {
 		const helpSelectedSiteId = getHelpSelectedSiteId( state );
 		const selectedSitePlan = getSitePlan( state, helpSelectedSiteId );
 		return {
 			currentUserLocale: getCurrentUserLocale( state ),
 			currentUser: getCurrentUser( state ),
+			getUserInfo: getHappychatUserInfo( state ),
 			hasAskedADirectlyQuestion: hasUserAskedADirectlyQuestion( state ),
 			isDirectlyFailed: isDirectlyFailed( state ),
 			isDirectlyReady: isDirectlyReady( state ),
@@ -704,6 +760,7 @@ export default connect(
 			ticketSupportEligible: isTicketSupportEligible( state ),
 			ticketSupportRequestError: getTicketSupportRequestError( state ),
 			hasMoreThanOneSite: getCurrentUserSiteCount( state ) > 1,
+			shouldStartHappychatConnection: ! isRequestingSites( state ) && helpSelectedSiteId,
 			isRequestingSites: isRequestingSites( state ),
 			isSelectedHelpSiteOnPaidPlan: isCurrentPlanPaid( state, helpSelectedSiteId ),
 			selectedSitePlanSlug: selectedSitePlan && selectedSitePlan.product_slug,

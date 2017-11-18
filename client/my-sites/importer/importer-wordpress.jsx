@@ -1,8 +1,12 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
-import PureRenderMixin from 'react-pure-render/mixin';
+
+import PropTypes from 'prop-types';
+import { localize } from 'i18n-calypso';
+import React from 'react';
 
 /**
  * Internal dependencies
@@ -14,48 +18,48 @@ import FileImporter from './file-importer';
  */
 const importerData = {
 	title: 'WordPress',
-	icon: 'wordpress'
+	icon: 'wordpress',
 };
 
-export default React.createClass( {
-	displayName: 'ImporterWordPress',
+class ImporterWordPress extends React.PureComponent {
+	static displayName = 'ImporterWordPress';
 
-	mixins: [ PureRenderMixin ],
-
-	propTypes: {
+	static propTypes = {
 		importerStatus: PropTypes.shape( {
 			filename: PropTypes.string,
 			importerState: PropTypes.string.isRequired,
 			errorData: PropTypes.shape( {
 				type: PropTypes.string.isRequired,
-				description: PropTypes.string.isRequired
+				description: PropTypes.string.isRequired,
 			} ),
 			percentComplete: PropTypes.number,
 			siteTitle: PropTypes.string.isRequired,
-			statusMessage: PropTypes.string
-		} )
-	},
+			statusMessage: PropTypes.string,
+		} ),
+	};
 
-	render: function() {
-		importerData.description = this.translate(
-			'Import posts, pages, and media ' +
-			'from a WordPress export\u00A0file.'
+	render() {
+		importerData.description = this.props.translate(
+			'Import posts, pages, and media ' + 'from a WordPress export\u00A0file.'
 		);
 
-		importerData.uploadDescription = this.translate(
+		importerData.uploadDescription = this.props.translate(
 			'Upload a {{b}}WordPress export file{{/b}} to start ' +
-			'importing into {{b2}}%(title)s{{/b2}}. Check out our ' +
-			'{{a}}WordPress export guide{{/a}} if you need ' +
-			'help exporting the file.', {
+				'importing into {{b2}}%(title)s{{/b2}}. Check out our ' +
+				'{{a}}WordPress export guide{{/a}} if you need ' +
+				'help exporting the file.',
+			{
 				args: { title: this.props.site.title },
 				components: {
 					b: <strong />,
 					b2: <strong />,
-					a: <a href="https://en.support.wordpress.com/export/" />
-				}
+					a: <a href="https://en.support.wordpress.com/export/" />,
+				},
 			}
 		);
 
-		return <FileImporter importerData={ importerData } {...this.props} />;
+		return <FileImporter importerData={ importerData } { ...this.props } />;
 	}
-} );
+}
+
+export default localize( ImporterWordPress );

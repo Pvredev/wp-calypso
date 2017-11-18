@@ -1,6 +1,9 @@
+/** @format */
+
 /**
- * External Dependencies
+ * External dependencies
  */
+
 import page from 'page';
 
 /**
@@ -41,5 +44,5 @@ export default {
 	setScroll( context, next ) {
 		window.scroll( 0, 0 );
 		next();
-	}
+	},
 };

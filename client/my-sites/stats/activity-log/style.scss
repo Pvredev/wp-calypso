@@ -4,28 +4,45 @@
 	position: relative;
 
 	&:before {
-		content: "";
+		content: '';
 		position: absolute;
-		top: 0;
-		bottom: 0;
-		left: 33px;
+			top: 0;
+			left: 33px;
+		height: 100%;
 		width: 2px;
-		background-color: lighten( $gray, 20% );
-		
-		@include breakpoint( "<660px" ) {
-			left: 48px;
-		}
+		background: lighten( $gray, 20% );
 
 		@include breakpoint( "<480px" ) {
-			left: 41px;
+			left: 29px;
 		}
-	}
-
-	@include breakpoint( "<660px" ) {
-		padding: 0 16px;
 	}
 }
 
 .activity-log__rewind-toggle {
 	margin-bottom: 18px;
+}
+
+.activity-log__first-sync {
+	.empty-content__illustration {
+		margin: 32px 0;
+		max-width: 200px;
+	}
+}
+
+.activity-log__empty-day {
+	background: $gray-light;
+	width: 100%;
+	padding: 0 16px 4px;
+	position: relative;
+	z-index: 2;
+	margin-bottom: 16px;
+}
+
+.activity-log__empty-day-title {
+	font-weight: 600;
+}
+
+.activity-log__empty-day-events {
+	font-size: 12px;
+	color: $gray-text-min;
 }

@@ -1,3 +1,7 @@
+/*
+ * @format
+ */
+
 /**
  * Internal dependencies
  */
@@ -8,11 +12,7 @@ export function shouldShowComments( post ) {
 		return true;
 	}
 
-	if (
-		! post.is_jetpack &&
-		post.discussion &&
-		( post.discussion.comments_open || post.discussion.comment_count > 0 )
-	) {
+	if ( post.discussion && ( post.discussion.comments_open || post.discussion.comment_count > 0 ) ) {
 		return true;
 	}
 

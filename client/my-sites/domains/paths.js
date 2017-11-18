@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { filter, startsWith } from 'lodash';
 
 function domainManagementRoot() {
@@ -83,7 +86,15 @@ function domainManagementPrimaryDomain( siteName, domainName ) {
 }
 
 function domainManagementTransfer( siteName, domainName, transferType = '' ) {
-	return domainManagementEdit( siteName, domainName, filter( [ 'transfer', transferType ] ).join( '/' ) );
+	return domainManagementEdit(
+		siteName,
+		domainName,
+		filter( [ 'transfer', transferType ] ).join( '/' )
+	);
+}
+
+function domainManagementTransferIn( siteName, domainName ) {
+	return domainManagementTransfer( siteName, domainName, 'in' );
 }
 
 function domainManagementTransferOut( siteName, domainName ) {
@@ -120,8 +131,9 @@ export default {
 	domainManagementRedirectSettings,
 	domainManagementRoot,
 	domainManagementTransfer,
+	domainManagementTransferIn,
 	domainManagementTransferOut,
 	domainManagementTransferToAnotherUser,
 	domainManagementTransferToOtherSite,
-	getSectionName
+	getSectionName,
 };

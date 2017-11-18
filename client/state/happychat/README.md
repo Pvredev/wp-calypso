@@ -1,53 +1,42 @@
 Happychat State
-==========
+===============
 
-A module for managing user state.
+Happychat state shape:
+
+- connection
+  - error: one of the HAPPYCHAT_CONNECTION_ERROR_* [constants](./constants.js)
+  - isAvailable: whether the Happychat service is accepting new chats.
+  - status: one of the HAPPYCHAT_CONNECTION_STATUS_* [constants](./constants.js)
+- chat
+  - status: one of the HAPPYCHAT_CHAT_STATUS_* [constants](./constants.js)
+  - timeline: array of timeline messages, as received from the Happychat service.
+  - lastActivityTimestamp: milliseconds since the ongoing chat received or set a message.
+- ui
+  - currentMessage: current message as typed by the customer in the happychat client.
+  - isMinimizing: whether the happychat client is minimizing.
+  - isOpen: whether the happychat client is opened.
+  - lostFocusAt: milliseconds since the happychat client lost focus.
+- user
+  - geoLocation
+    - city
+    - country_long
+    - country_short
+    - region
 
 ## Actions
 
 Used in combination with the Redux store instance `dispatch` function, actions can be used in manipulating the current global state.
 
-
-### `connectChat()`
+  ### `initConnection()`
 
 Opens Happychat Socket.IO client connection. _Note: Most use cases should use the Query Component
 [`<HappychatConnection />`](../../components/happychat/connection.jsx) instead of dispatching
 this action directly._
 
-### `setChatMessage( message: String )`
+### `setCurrentMessage( message: String )`
 
 Updates the pending message that the user is composing in the Happychat client.
 
-### `sendChatMessage( message: String )`
+### `sendMessage( message: String )`
 
 Sends the message as a chat message to the Happychat service.
-
-
-## Reducers
-
-The included reducers add the following keys to the global state tree, under `happychat`:
-
-### `timeline`
-
-An array of timeline events as received from the Happychat service.
-
-### `message`
-
-The current message as typed by the customer in the happychat client.
-
-### `status`
-
-The current connection status of the Happychat client
-
-## Selectors
-
-Selectors are intended to assist in extracting data from the global state tree for consumption by other modules.
-
-### `getHappychatConnectionStatus( state: Object )`
-
-Returns the current Happychat client connection status.
-
-### `getHappychatTimeline( state: Object )`
-
-Returns the timeline events for the Happychat chat session.
-`

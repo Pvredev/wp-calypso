@@ -1,42 +1,34 @@
+/** @format */
 /**
  * Internal dependencies
  */
 import { restoreProgressSchema } from './schema';
 import {
 	REWIND_RESTORE,
+	REWIND_RESTORE_DISMISS,
 	REWIND_RESTORE_DISMISS_PROGRESS,
+	REWIND_RESTORE_REQUEST,
 	REWIND_RESTORE_UPDATE_PROGRESS,
 } from 'state/action-types';
-import {
-	createReducer,
-	keyedReducer,
-} from 'state/utils';
+import { createReducer, keyedReducer } from 'state/utils';
 
 const stubNull = () => null;
 
 const startProgress = ( state, { timestamp } ) => ( {
 	errorCode: '',
 	failureReason: '',
-	freshness: -Infinity,
 	message: '',
 	percent: 0,
 	status: 'queued',
 	timestamp,
 } );
 
-const updateProgress = ( state, {
+const updateProgress = (
+	state,
+	{ errorCode, failureReason, message, percent, restoreId, status, timestamp }
+) => ( {
 	errorCode,
 	failureReason,
-	freshness,
-	message,
-	percent,
-	restoreId,
-	status,
-	timestamp,
-} ) => ( {
-	errorCode,
-	failureReason,
-	freshness,
 	message,
 	percent,
 	restoreId,
@@ -44,9 +36,24 @@ const updateProgress = ( state, {
 	timestamp,
 } );
 
-export const restoreProgress = keyedReducer( 'siteId', createReducer( {}, {
-	[ REWIND_RESTORE ]: startProgress,
-	[ REWIND_RESTORE_DISMISS_PROGRESS ]: stubNull,
-	[ REWIND_RESTORE_UPDATE_PROGRESS ]: updateProgress,
-} ) );
+export const restoreProgress = keyedReducer(
+	'siteId',
+	createReducer(
+		{},
+		{
+			[ REWIND_RESTORE ]: startProgress,
+			[ REWIND_RESTORE_DISMISS_PROGRESS ]: stubNull,
+			[ REWIND_RESTORE_UPDATE_PROGRESS ]: updateProgress,
+		}
+	)
+);
 restoreProgress.schema = restoreProgressSchema;
+
+export const restoreRequest = keyedReducer(
+	'siteId',
+	createReducer( undefined, {
+		[ REWIND_RESTORE ]: () => undefined,
+		[ REWIND_RESTORE_DISMISS ]: () => undefined,
+		[ REWIND_RESTORE_REQUEST ]: ( state, { activityId } ) => activityId,
+	} )
+);

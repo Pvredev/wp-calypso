@@ -1,3 +1,5 @@
+/** @format */
+
 /**
  * External dependencies
  */
@@ -8,7 +10,7 @@ import { spy } from 'sinon';
  * Internal dependencies
  */
 import middleware from '../middleware';
-import { HAPPYCHAT_RECEIVE_EVENT } from 'state/action-types';
+import { HAPPYCHAT_IO_RECEIVE_MESSAGE } from 'state/action-types';
 
 describe( 'Audio Middleware', () => {
 	let next;
@@ -37,7 +39,7 @@ describe( 'Audio Middleware', () => {
 		global.window = _window;
 	} );
 
-	it( 'should pass along actions without corresponding handlers', () => {
+	test( 'should pass along actions without corresponding handlers', () => {
 		const action = { type: 'UNSUPPORTED_ACTION' };
 
 		middleware( store )( next )( action );
@@ -46,10 +48,10 @@ describe( 'Audio Middleware', () => {
 		expect( next ).to.have.been.calledWith( action );
 	} );
 
-	it( 'should not play any sound when no audio support', () => {
+	test( 'should not play any sound when no audio support', () => {
 		const action = {
-			type: HAPPYCHAT_RECEIVE_EVENT,
-			event: {
+			type: HAPPYCHAT_IO_RECEIVE_MESSAGE,
+			message: {
 				source: 'operator',
 			},
 		};
@@ -63,10 +65,10 @@ describe( 'Audio Middleware', () => {
 		expect( play ).to.not.have.beenCalled;
 	} );
 
-	it( 'should play sound when receiving a new message from the operator', () => {
+	test( 'should play sound when receiving a new message from the operator', () => {
 		const action = {
-			type: HAPPYCHAT_RECEIVE_EVENT,
-			event: {
+			type: HAPPYCHAT_IO_RECEIVE_MESSAGE,
+			message: {
 				source: 'operator',
 			},
 		};

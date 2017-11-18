@@ -1,12 +1,15 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { get } from 'lodash';
 
 /**
  * Internal dependencies
  */
-import { getRawSite } from 'state/sites/selectors';
+import { getRawSite } from 'state/sites/selectors';
 
 /**
  * Returns true if site is a Domain-only site, false if the site is a regular site,

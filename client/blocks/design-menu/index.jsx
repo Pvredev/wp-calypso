@@ -1,6 +1,10 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
 import page from 'page';
@@ -29,30 +33,27 @@ import { getSiteFragment } from 'lib/route/path';
 
 const WrappedSiteTitleControl = designTool( SiteTitleControl );
 
-const DesignMenu = React.createClass( {
-
-	propTypes: {
-		isVisible: React.PropTypes.bool,
+class DesignMenu extends React.Component {
+	static propTypes = {
+		isVisible: PropTypes.bool,
 		// These are provided by the connect method
-		isUnsaved: React.PropTypes.bool,
-		customizations: React.PropTypes.object,
-		selectedSite: React.PropTypes.object,
-		currentLayoutFocus: React.PropTypes.string,
-		activeDesignToolId: React.PropTypes.string,
-		clearCustomizations: React.PropTypes.func.isRequired,
-		fetchPreviewMarkup: React.PropTypes.func.isRequired,
-		saveCustomizations: React.PropTypes.func.isRequired,
-		setActiveDesignTool: React.PropTypes.func.isRequired,
-		translate: React.PropTypes.func.isRequired,
-	},
+		isUnsaved: PropTypes.bool,
+		customizations: PropTypes.object,
+		selectedSite: PropTypes.object,
+		currentLayoutFocus: PropTypes.string,
+		activeDesignToolId: PropTypes.string,
+		clearCustomizations: PropTypes.func.isRequired,
+		fetchPreviewMarkup: PropTypes.func.isRequired,
+		saveCustomizations: PropTypes.func.isRequired,
+		setActiveDesignTool: PropTypes.func.isRequired,
+		translate: PropTypes.func.isRequired,
+	};
 
-	getDefaultProps() {
-		return {
-			isVisible: false,
-			isUnsaved: false,
-			customizations: {},
-		};
-	},
+	static defaultProps = {
+		isVisible: false,
+		isUnsaved: false,
+		customizations: {},
+	};
 
 	componentWillMount() {
 		if ( ! this.props.selectedSite ) {
@@ -61,30 +62,31 @@ const DesignMenu = React.createClass( {
 		this.props.clearCustomizations( this.props.selectedSite.ID );
 		// Fetch the preview
 		this.props.fetchPreviewMarkup( this.props.selectedSite.ID, '' );
-	},
+	}
 
-	activateDefaultDesignTool() {
+	activateDefaultDesignTool = () => {
 		this.props.setActiveDesignTool( null );
-	},
+	};
 
-	onSave() {
+	onSave = () => {
 		this.props.saveCustomizations();
-	},
+	};
 
-	onBack() {
+	onBack = () => {
 		if ( this.props.activeDesignToolId ) {
 			return this.activateDefaultDesignTool();
 		}
 		this.maybeCloseDesignMenu();
-	},
+	};
 
-	maybeCloseDesignMenu() {
+	maybeCloseDesignMenu = () => {
 		if ( ! this.props.selectedSite ) {
 			return;
 		}
 		if ( this.props.isUnsaved ) {
-			const unsavedMessage =
-				this.props.translate( 'You have unsaved changes. Are you sure you want to close the preview?' );
+			const unsavedMessage = this.props.translate(
+				'You have unsaved changes. Are you sure you want to close the preview?'
+			);
 			return accept( unsavedMessage, accepted => {
 				if ( accepted ) {
 					this.cleanAndClosePreview();
@@ -92,19 +94,20 @@ const DesignMenu = React.createClass( {
 			} );
 		}
 		this.cleanAndClosePreview();
-	},
+	};
 
-	cleanAndClosePreview() {
+	cleanAndClosePreview = () => {
 		this.props.closePreview();
 		const siteFragment = getSiteFragment( page.current );
-		const isEmptyRoute = includes( page.current, '/customize' ) || includes( page.current, '/paladin' );
+		const isEmptyRoute =
+			includes( page.current, '/customize' ) || includes( page.current, '/paladin' );
 		// If this route has nothing but the preview, redirect to somewhere else
 		if ( isEmptyRoute ) {
-			page.redirect( `/stats/${siteFragment}` );
+			page.redirect( `/stats/${ siteFragment }` );
 		}
-	},
+	};
 
-	renderActiveDesignTool() {
+	renderActiveDesignTool = () => {
 		switch ( this.props.activeDesignToolId ) {
 			case 'siteTitle':
 				return (
@@ -115,9 +118,9 @@ const DesignMenu = React.createClass( {
 			default:
 				return <DesignToolList onChange={ this.props.setActiveDesignTool } />;
 		}
-	},
+	};
 
-	getSiteCardSite() {
+	getSiteCardSite = () => {
 		if ( ! this.props.selectedSite ) {
 			return;
 		}
@@ -129,15 +132,19 @@ const DesignMenu = React.createClass( {
 			title: newSiteTitle || this.props.selectedSite.name,
 			domain: this.props.selectedSite.URL.replace( /^https?:\/\//, '' ),
 		} );
-	},
+	};
 
 	render() {
 		const classNames = classnames( 'design-menu', {
 			'is-visible': this.props.isVisible,
-			'is-layout-preview-sidebar': this.props.currentLayoutFocus === 'preview-sidebar'
+			'is-layout-preview-sidebar': this.props.currentLayoutFocus === 'preview-sidebar',
 		} );
 		if ( ! this.props.selectedSite ) {
-			return <RootChild><div className={ classNames }/></RootChild>;
+			return (
+				<RootChild>
+					<div className={ classNames } />
+				</RootChild>
+			);
 		}
 		const onShowPreview = () => this.props.setLayoutFocus( 'preview' );
 		return (
@@ -155,7 +162,7 @@ const DesignMenu = React.createClass( {
 			</RootChild>
 		);
 	}
-} );
+}
 
 function mapStateToProps( state ) {
 	const siteId = getSelectedSiteId( state );
@@ -168,7 +175,11 @@ function mapStateToProps( state ) {
 	};
 }
 
-export default connect(
-	mapStateToProps,
-	{ clearCustomizations, fetchPreviewMarkup, saveCustomizations, setActiveDesignTool, setLayoutFocus, closePreview }
-)( localize( DesignMenu ) );
+export default connect( mapStateToProps, {
+	clearCustomizations,
+	fetchPreviewMarkup,
+	saveCustomizations,
+	setActiveDesignTool,
+	setLayoutFocus,
+	closePreview,
+} )( localize( DesignMenu ) );

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import config from 'config';
 import page from 'page';
 import React from 'react';
@@ -10,14 +13,13 @@ import { translate } from 'i18n-calypso';
  * Internal dependencies
  */
 import App from './app';
-
-import controller from 'my-sites/controller';
 import Dashboard from './app/dashboard';
 import EmptyContent from 'components/empty-content';
-import { navigation, siteSelection } from 'my-sites/controller';
+import { navigation, siteSelection, sites } from 'my-sites/controller';
 import { renderWithReduxStore } from 'lib/react-helpers';
 import installActionHandlers from './state/data-layer';
 import Order from './app/order';
+import OrderCreate from './app/order/order-create';
 import Orders from './app/orders';
 import Products from './app/products';
 import ProductCreate from './app/products/product-create';
@@ -27,6 +29,7 @@ import PromotionCreate from './app/promotions/promotion-create';
 import PromotionUpdate from './app/promotions/promotion-update';
 import Reviews from './app/reviews';
 import SettingsPayments from './app/settings/payments';
+import SettingsEmail from './app/settings/email';
 import SettingsTaxes from './app/settings/taxes';
 import Shipping from './app/settings/shipping';
 import ShippingZone from './app/settings/shipping/shipping-zone';
@@ -38,7 +41,7 @@ function initExtension() {
 }
 
 const getStorePages = () => {
-	return [
+	const pages = [
 		{
 			container: Dashboard,
 			configKey: 'woocommerce/extension-dashboard',
@@ -81,6 +84,12 @@ const getStorePages = () => {
 			path: '/store/order/:site/:order',
 		},
 		{
+			container: OrderCreate,
+			configKey: 'woocommerce/extension-orders-create',
+			documentTitle: translate( 'New Order' ),
+			path: '/store/order/:site/',
+		},
+		{
 			container: Promotions,
 			configKey: 'woocommerce/extension-promotions',
 			documentTitle: translate( 'Promotions' ),
@@ -103,6 +112,18 @@ const getStorePages = () => {
 			configKey: 'woocommerce/extension-reviews',
 			documentTitle: translate( 'Reviews' ),
 			path: '/store/reviews/:site',
+		},
+		{
+			container: Reviews,
+			configKey: 'woocommerce/extension-reviews',
+			documentTitle: translate( 'Reviews' ),
+			path: '/store/reviews/:filter/:site',
+		},
+		{
+			container: Reviews,
+			configKey: 'woocommerce/extension-reviews',
+			documentTitle: translate( 'Reviews' ),
+			path: '/store/reviews/:productId/:filter/:site',
 		},
 		{
 			container: SettingsPayments,
@@ -135,12 +156,24 @@ const getStorePages = () => {
 			path: '/store/settings/taxes/:site',
 		},
 	];
+
+	if ( config.isEnabled( 'woocommerce/extension-settings-email' ) ) {
+		pages.push( {
+			container: SettingsEmail,
+			configKey: 'woocommerce/extension-settings-email',
+			documentTitle: translate( 'Email' ),
+			path: '/store/settings/email/:site/:setup?',
+		} );
+	}
+
+	return pages;
 };
 
 function addStorePage( storePage, storeNavigation ) {
 	page( storePage.path, siteSelection, storeNavigation, function( context ) {
 		const component = React.createElement( storePage.container, { params: context.params } );
-		const appProps = storePage.documentTitle && { documentTitle: storePage.documentTitle } || {};
+		const appProps =
+			( storePage.documentTitle && { documentTitle: storePage.documentTitle } ) || {};
 		renderWithReduxStore(
 			React.createElement( App, appProps, component ),
 			document.getElementById( 'primary' ),
@@ -168,7 +201,7 @@ function notFoundError( context, next ) {
 			className: 'content-404',
 			illustration: '/calypso/images/illustrations/illustration-404.svg',
 			title: translate( 'Uh oh. Page not found.' ),
-			line: translate( 'Sorry, the page you were looking for doesn\'t exist or has been moved.' ),
+			line: translate( "Sorry, the page you were looking for doesn't exist or has been moved." ),
 		} ),
 		document.getElementById( 'content' ),
 		context.store
@@ -180,18 +213,17 @@ export default function() {
 	// Add pages that use the store navigation
 	getStorePages().forEach( function( storePage ) {
 		if ( config.isEnabled( storePage.configKey ) ) {
-			addStorePage( storePage, ( context, next ) => createStoreNavigation( context, next, storePage ) );
+			addStorePage( storePage, ( context, next ) =>
+				createStoreNavigation( context, next, storePage )
+			);
 		}
 	} );
 
 	// Add pages that use my-sites navigation instead
-	page( '/store/stats/:type/:unit', controller.siteSelection, controller.sites );
+	page( '/store/stats/:type/:unit', siteSelection, sites );
 	page( '/store/stats/:type/:unit/:site', siteSelection, navigation, StatsController );
 
-	page(
-		'/store/*',
-		notFoundError
-	);
+	page( '/store/*', notFoundError );
 }
 
 // TODO: This could probably be done in a better way through the same mechanisms

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
- * External Dependencies
+ * External dependencies
  */
+
 import { forEach } from 'lodash';
 
 /**
@@ -20,7 +23,7 @@ const thingsToRemove = [
 	'input',
 	'select',
 	'button',
-	'textarea'
+	'textarea',
 ].join( ', ' ); // make them all into one big selector
 
 function removeElement( element ) {

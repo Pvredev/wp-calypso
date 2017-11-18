@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { createReducer } from 'state/utils';
 import {
 	WOOCOMMERCE_LOCATIONS_REQUEST,

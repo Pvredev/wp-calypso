@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { get } from 'lodash';
 
 /**
@@ -11,9 +14,5 @@ import { get } from 'lodash';
  * @return {?Object} Error object, null if no data
  */
 export default function getRestoreError( state, siteId ) {
-	return get( state, [
-		'activityLog',
-		'restoreError',
-		siteId,
-	], null );
+	return get( state, [ 'activityLog', 'restoreError', siteId ], null );
 }

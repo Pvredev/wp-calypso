@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 import { localize } from 'i18n-calypso';
 
@@ -15,9 +18,7 @@ export default localize( ( { translate } ) => {
 			<PurchaseDetail
 				icon="comment"
 				title={ translate( 'Spam Filtering' ) }
-				description={ translate(
-					'Spam is being automatically filtered.'
-				) }
+				description={ translate( 'Spam is being automatically filtered.' ) }
 			/>
 		</div>
 	);

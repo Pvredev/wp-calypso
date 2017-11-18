@@ -2,6 +2,7 @@
 /**
  * External Dependencies
  */
+import PropTypes from 'prop-types';
 import React from 'react';
 import { get, has, map, take, values } from 'lodash';
 import Gridicon from 'gridicons';
@@ -10,7 +11,7 @@ import Gridicon from 'gridicons';
  * Internal Dependencies
  */
 import ReaderAvatar from 'blocks/reader-avatar';
-import PostTime from 'reader/post-time';
+import TimeSince from 'components/time-since';
 import { getSiteName } from 'reader/get-helpers';
 import {
 	recordAction,
@@ -54,12 +55,12 @@ class TagLink extends React.Component {
 
 class PostByline extends React.Component {
 	static propTypes = {
-		post: React.PropTypes.object.isRequired,
-		site: React.PropTypes.object,
-		feed: React.PropTypes.object,
-		isDiscoverPost: React.PropTypes.bool,
-		showSiteName: React.PropTypes.bool,
-		showAvatar: React.PropTypes.bool,
+		post: PropTypes.object.isRequired,
+		site: PropTypes.object,
+		feed: PropTypes.object,
+		isDiscoverPost: PropTypes.bool,
+		showSiteName: PropTypes.bool,
+		showAvatar: PropTypes.bool,
 	};
 
 	static defaultProps = {
@@ -95,7 +96,7 @@ class PostByline extends React.Component {
 		/* eslint-disable wpcalypso/jsx-gridicon-size */
 		return (
 			<div className="reader-post-card__byline ignore-click">
-				{ showAvatar &&
+				{ showAvatar && (
 					<ReaderAvatar
 						siteIcon={ siteIcon }
 						feedIcon={ feedIcon }
@@ -103,11 +104,12 @@ class PostByline extends React.Component {
 						preferGravatar={ true }
 						siteUrl={ streamUrl }
 						isCompact={ true }
-					/> }
+					/>
+				) }
 				<div className="reader-post-card__byline-details">
-					{ ( shouldDisplayAuthor || showSiteName ) &&
+					{ ( shouldDisplayAuthor || showSiteName ) && (
 						<div className="reader-post-card__byline-author-site">
-							{ shouldDisplayAuthor &&
+							{ shouldDisplayAuthor && (
 								<ReaderAuthorLink
 									className="reader-post-card__link"
 									author={ post.author }
@@ -115,9 +117,10 @@ class PostByline extends React.Component {
 									post={ post }
 								>
 									{ post.author.name }
-								</ReaderAuthorLink> }
+								</ReaderAuthorLink>
+							) }
 							{ shouldDisplayAuthor && showSiteName ? ', ' : '' }
-							{ showSiteName &&
+							{ showSiteName && (
 								<ReaderSiteStreamLink
 									className="reader-post-card__site reader-post-card__link"
 									feedId={ feedId }
@@ -125,27 +128,31 @@ class PostByline extends React.Component {
 									post={ post }
 								>
 									{ siteName }
-								</ReaderSiteStreamLink> }
-						</div> }
+								</ReaderSiteStreamLink>
+							) }
+						</div>
+					) }
 					<div className="reader-post-card__timestamp-and-tag">
 						{ post.date &&
-							post.URL &&
-							<span className="reader-post-card__timestamp">
-								<a
-									className="reader-post-card__timestamp-link"
-									onClick={ this.recordDateClick }
-									href={ post.URL }
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									<PostTime date={ post.date } />
-								</a>
-							</span> }
-						{ tags.length > 0 &&
+							post.URL && (
+								<span className="reader-post-card__timestamp">
+									<a
+										className="reader-post-card__timestamp-link"
+										onClick={ this.recordDateClick }
+										href={ post.URL }
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										<TimeSince date={ post.date } />
+									</a>
+								</span>
+							) }
+						{ tags.length > 0 && (
 							<span className="reader-post-card__tags">
 								<Gridicon icon="tag" />
 								{ tags }
-							</span> }
+							</span>
+						) }
 					</div>
 				</div>
 			</div>

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * Internal dependencies
  */
+
 import { login } from './login';
 
 function editorPathFromSite( site ) {
@@ -8,7 +11,7 @@ function editorPathFromSite( site ) {
 		siteSlug;
 
 	if ( site ) {
-		siteSlug = ( typeof site === 'object' ) ? site.slug : site;
+		siteSlug = typeof site === 'object' ? site.slug : site;
 		path = '/' + siteSlug;
 	} else if ( site && typeof site === 'object' ) {
 		path = '/' + site.ID + '/new';

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import PropTypes from 'prop-types';
 import React from 'react';
 import classNames from 'classnames';
@@ -17,13 +20,14 @@ class DomainSuggestion extends React.Component {
 		buttonClasses: PropTypes.string,
 		extraClasses: PropTypes.string,
 		onButtonClick: PropTypes.func.isRequired,
-		priceRule: PropTypes.string.isRequired,
+		priceRule: PropTypes.string,
 		price: PropTypes.string,
-		domain: PropTypes.string
+		domain: PropTypes.string,
+		hidePrice: PropTypes.bool,
 	};
 
 	render() {
-		const { price, isAdded, extraClasses, children, priceRule } = this.props;
+		const { hidePrice, price, isAdded, extraClasses, children, priceRule } = this.props;
 		const classes = classNames(
 			'domain-suggestion',
 			'card',
@@ -40,17 +44,13 @@ class DomainSuggestion extends React.Component {
 				className={ classes }
 				onClick={ this.props.onButtonClick }
 				role="button"
-				data-e2e-domain={ this.props.domain }>
+				data-e2e-domain={ this.props.domain }
+			>
 				<div className="domain-suggestion__content">
 					{ children }
-					<DomainProductPrice
-						rule={ priceRule }
-						price={ price }
-					/>
+					{ ! hidePrice && <DomainProductPrice rule={ priceRule } price={ price } /> }
 				</div>
-				<div className="domain-suggestion__action">
-					{ this.props.buttonContent }
-				</div>
+				<div className="domain-suggestion__action">{ this.props.buttonContent }</div>
 				<Gridicon className="domain-suggestion__chevron" icon="chevron-right" />
 			</div>
 		);

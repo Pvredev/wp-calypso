@@ -1,33 +1,31 @@
+/** @format */
+
 /**
-* External dependencies
-*/
-var React = require( 'react' ),
-	PureRenderMixin = require( 'react-pure-render/mixin' );
+ * External dependencies
+ */
+
+import React from 'react';
 
 /**
  * Internal dependencies
  */
-var ButtonGroup = require( 'components/button-group' ),
-	Button = require( 'components/button' ),
-	Card = require( 'components/card' ),
-	Gridicon = require( 'gridicons' );
+import ButtonGroup from 'components/button-group';
+import Button from 'components/button';
+import Card from 'components/card';
+import Gridicon from 'gridicons';
 
-var Buttons = React.createClass( {
-	displayName: 'ButtonGroup',
+class Buttons extends React.PureComponent {
+	static displayName = 'ButtonGroup';
 
-	mixins: [ PureRenderMixin ],
+	state = {
+		compact: false,
+	};
 
-	getInitialState: function() {
-		return {
-			compact: false
-		};
-	},
-
-	toggleButtons: function() {
+	toggleButtons = () => {
 		this.setState( { compact: ! this.state.compact } );
-	},
+	};
 
-	render: function() {
+	render() {
 		return (
 			<div>
 				<a className="docs__design-toggle button" onClick={ this.toggleButtons }>
@@ -44,39 +42,59 @@ var Buttons = React.createClass( {
 						<ButtonGroup>
 							<Button compact={ this.state.compact }>Button one</Button>
 							<Button compact={ this.state.compact }>Button two</Button>
-							<Button compact={ this.state.compact } scary>Button Three</Button>
+							<Button compact={ this.state.compact } scary>
+								Button Three
+							</Button>
 						</ButtonGroup>
 					</div>
 					<div className="docs__design-button-group-row">
 						<ButtonGroup>
-							<Button compact={ this.state.compact }><Gridicon icon="add-image" /></Button>
-							<Button compact={ this.state.compact }><Gridicon icon="heart" /></Button>
-							<Button compact={ this.state.compact }><Gridicon icon="briefcase" /></Button>
-							<Button compact={ this.state.compact }><Gridicon icon="history" /></Button>
+							<Button compact={ this.state.compact }>
+								<Gridicon icon="add-image" />
+							</Button>
+							<Button compact={ this.state.compact }>
+								<Gridicon icon="heart" />
+							</Button>
+							<Button compact={ this.state.compact }>
+								<Gridicon icon="briefcase" />
+							</Button>
+							<Button compact={ this.state.compact }>
+								<Gridicon icon="history" />
+							</Button>
 						</ButtonGroup>
 					</div>
 					<div className="docs__design-button-group-row">
 						<ButtonGroup>
-							<Button primary compact={ this.state.compact }>Publish</Button>
-							<Button primary compact={ this.state.compact }><Gridicon icon="calendar" /></Button>
+							<Button primary compact={ this.state.compact }>
+								Publish
+							</Button>
+							<Button primary compact={ this.state.compact }>
+								<Gridicon icon="calendar" />
+							</Button>
 						</ButtonGroup>
 					</div>
 
 					<div className="docs__design-button-group-row">
 						<ButtonGroup busy>
 							<Button compact={ this.state.compact }>Busy</Button>
-							<Button compact={ this.state.compact }><Gridicon icon="calendar" /></Button>
+							<Button compact={ this.state.compact }>
+								<Gridicon icon="calendar" />
+							</Button>
 						</ButtonGroup>
 
 						<ButtonGroup busy primary>
-							<Button primary compact={ this.state.compact }>Primary Busy</Button>
-							<Button primary compact={ this.state.compact }><Gridicon icon="calendar" /></Button>
+							<Button primary compact={ this.state.compact }>
+								Primary Busy
+							</Button>
+							<Button primary compact={ this.state.compact }>
+								<Gridicon icon="calendar" />
+							</Button>
 						</ButtonGroup>
 					</div>
 				</Card>
 			</div>
 		);
-	},
-} );
+	}
+}
 
-module.exports = Buttons;
+export default Buttons;

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { get } from 'lodash';
 
 /**
@@ -20,6 +23,8 @@ export function isCurrentUserUploadingGravatar( state ) {
  * @returns {String|Boolean} - The temp Gravatar string, or false
  */
 export function getUserTempGravatar( state, userId ) {
-	return state.currentUser.id === userId &&
-		get( state, 'currentUser.gravatarStatus.tempImage.src', false );
+	return (
+		state.currentUser.id === userId &&
+		get( state, 'currentUser.gravatarStatus.tempImage.src', false )
+	);
 }

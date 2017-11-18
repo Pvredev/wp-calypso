@@ -1,68 +1,87 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { connect } from 'react-redux';
-import { flatten, find, isEmpty, isEqual, reduce, startsWith } from 'lodash';
+import {
+	difference,
+	flatten,
+	filter,
+	find,
+	get,
+	isEmpty,
+	isEqual,
+	reduce,
+	startsWith,
+} from 'lodash';
 import i18n, { localize } from 'i18n-calypso';
 import page from 'page';
+import PropTypes from 'prop-types';
 import React from 'react';
+
+import createReactClass from 'create-react-class';
 
 /**
  * Internal dependencies
  */
-const analytics = require( 'lib/analytics' ),
-	cartItems = require( 'lib/cart-values' ).cartItems,
-	clearSitePlans = require( 'state/sites/plans/actions' ).clearSitePlans,
-	clearPurchases = require( 'state/purchases/actions' ).clearPurchases,
-	DomainDetailsForm = require( './domain-details-form' ).default,
-	domainMapping = require( 'lib/cart-values/cart-items' ).domainMapping,
-	fetchReceiptCompleted = require( 'state/receipts/actions' ).fetchReceiptCompleted,
-	getExitCheckoutUrl = require( 'lib/checkout' ).getExitCheckoutUrl,
-	hasDomainDetails = require( 'lib/store-transactions' ).hasDomainDetails,
-	notices = require( 'notices' ),
-	observe = require( 'lib/mixins/data-observe' ),
-	purchasePaths = require( 'me/purchases/paths' ),
-	QueryStoredCards = require( 'components/data/query-stored-cards' ),
-	QueryGeo = require( 'components/data/query-geo' ),
-	SecurePaymentForm = require( './secure-payment-form' ),
-	SecurePaymentFormPlaceholder = require( './secure-payment-form-placeholder' ),
-	supportPaths = require( 'lib/url/support' ),
-	themeItem = require( 'lib/cart-values/cart-items' ).themeItem,
-	transactionStepTypes = require( 'lib/store-transactions/step-types' ),
-	upgradesActions = require( 'lib/upgrades/actions' );
-import { getStoredCards } from 'state/stored-cards/selectors';
+import { abtest } from 'lib/abtest';
+import analytics from 'lib/analytics';
+import { cartItems } from 'lib/cart-values';
+import { clearSitePlans } from 'state/sites/plans/actions';
+import { clearPurchases } from 'state/purchases/actions';
+import DomainDetailsForm from './domain-details-form';
+import { domainMapping } from 'lib/cart-values/cart-items';
+import { fetchReceiptCompleted } from 'state/receipts/actions';
+import { getExitCheckoutUrl } from 'lib/checkout';
+import { hasDomainDetails } from 'lib/store-transactions';
+import notices from 'notices';
+/* eslint-disable no-restricted-imports */
+import observe from 'lib/mixins/data-observe';
+/* eslint-enable no-restricted-imports */
+import purchasePaths from 'me/purchases/paths';
+import QueryContactDetailsCache from 'components/data/query-contact-details-cache';
+import QueryStoredCards from 'components/data/query-stored-cards';
+import QueryGeo from 'components/data/query-geo';
+import SecurePaymentForm from './secure-payment-form';
+import SecurePaymentFormPlaceholder from './secure-payment-form-placeholder';
+import supportPaths from 'lib/url/support';
+import { themeItem } from 'lib/cart-values/cart-items';
 import {
-	isValidFeatureKey,
-	getUpgradePlanSlugFromPath
-} from 'lib/plans';
+	RECEIVED_WPCOM_RESPONSE,
+	SUBMITTING_WPCOM_REQUEST,
+} from 'lib/store-transactions/step-types';
+import upgradesActions from 'lib/upgrades/actions';
+import { getContactDetailsCache } from 'state/selectors';
+import { getStoredCards } from 'state/stored-cards/selectors';
+import { isValidFeatureKey, getUpgradePlanSlugFromPath } from 'lib/plans';
 import { planItem as getCartItemForPlan } from 'lib/cart-values/cart-items';
 import { recordViewCheckout } from 'lib/analytics/ad-tracking';
 import { recordApplePayStatus } from 'lib/apple-pay';
 import { requestSite } from 'state/sites/actions';
-import {
-	isDomainOnlySite,
-	getCurrentUserPaymentMethods
-} from 'state/selectors';
-import {
-	getSelectedSite,
-	getSelectedSiteId,
-	getSelectedSiteSlug,
-} from 'state/ui/selectors';
+import { isDomainOnlySite, getCurrentUserPaymentMethods } from 'state/selectors';
+import { getSelectedSite, getSelectedSiteId, getSelectedSiteSlug } from 'state/ui/selectors';
+import { getCurrentUserCountryCode } from 'state/current-user/selectors';
+import { canAddGoogleApps } from 'lib/domains';
 import { getDomainNameFromReceiptOrCart } from 'lib/domains/utils';
 import { fetchSitesAndUser } from 'lib/signup/step-actions';
 import { loadTrackingTool } from 'state/analytics/actions';
 
-const Checkout = React.createClass( {
+const Checkout = createReactClass( {
+	displayName: 'Checkout',
 	mixins: [ observe( 'sites', 'productsList' ) ],
 
 	propTypes: {
-		cards: React.PropTypes.array.isRequired,
-		couponCode: React.PropTypes.string,
-		selectedFeature: React.PropTypes.string
+		cards: PropTypes.array.isRequired,
+		couponCode: PropTypes.string,
+		selectedFeature: PropTypes.string,
 	},
 
 	getInitialState: function() {
-		return { previousCart: null };
+		return {
+			previousCart: null,
+		};
 	},
 
 	componentWillMount: function() {
@@ -88,7 +107,11 @@ const Checkout = React.createClass( {
 	},
 
 	componentWillReceiveProps: function( nextProps ) {
-		if ( ! this.props.cart.hasLoadedFromServer && nextProps.cart.hasLoadedFromServer && this.props.product ) {
+		if (
+			! this.props.cart.hasLoadedFromServer &&
+			nextProps.cart.hasLoadedFromServer &&
+			this.props.product
+		) {
 			this.addProductToCart();
 		}
 	},
@@ -105,6 +128,24 @@ const Checkout = React.createClass( {
 			this.redirectIfEmptyCart();
 			this.setState( { previousCart: nextCart } );
 		}
+
+		if (
+			abtest( 'gsuiteUpsell' ) === 'show' &&
+			this.props.contactDetails &&
+			cartItems.hasGoogleApps( this.props.cart ) &&
+			this.needsDomainDetails()
+		) {
+			this.setDomainDetailsForGsuiteCart();
+		}
+	},
+
+	setDomainDetailsForGsuiteCart() {
+		const { contactDetails, cart } = this.props;
+		const domainReceiptId = get( cartItems.getGoogleApps( cart ), '0.extra.receipt_for_domain', 0 );
+
+		if ( domainReceiptId ) {
+			upgradesActions.setDomainDetails( contactDetails );
+		}
 	},
 
 	trackPageView: function( props ) {
@@ -112,7 +153,7 @@ const Checkout = React.createClass( {
 
 		analytics.tracks.recordEvent( 'calypso_checkout_page_view', {
 			saved_cards: props.cards.length,
-			is_renewal: cartItems.hasRenewalItem( props.cart )
+			is_renewal: cartItems.hasRenewalItem( props.cart ),
 		} );
 
 		recordViewCheckout( props.cart );
@@ -145,13 +186,16 @@ const Checkout = React.createClass( {
 			return;
 		}
 
-		const cartItem = cartItems.getRenewalItemFromCartItem( {
-			meta,
-			product_slug: productSlug
-		}, {
-			id: purchaseId,
-			domain: selectedSiteSlug
-		} );
+		const cartItem = cartItems.getRenewalItemFromCartItem(
+			{
+				meta,
+				product_slug: productSlug,
+			},
+			{
+				id: purchaseId,
+				domain: selectedSiteSlug,
+			}
+		);
 
 		upgradesActions.addItem( cartItem );
 	},
@@ -159,8 +203,7 @@ const Checkout = React.createClass( {
 	addNewItemToCart() {
 		const planSlug = getUpgradePlanSlugFromPath( this.props.product, this.props.selectedSite );
 
-		let cartItem,
-			cartMeta;
+		let cartItem, cartMeta;
 
 		if ( planSlug ) {
 			cartItem = getCartItemForPlan( planSlug );
@@ -190,15 +233,18 @@ const Checkout = React.createClass( {
 			return false;
 		}
 
-		if ( ! this.props.cart.hasLoadedFromServer || ! isEmpty( cartItems.getAll( this.props.cart ) ) ) {
+		if (
+			! this.props.cart.hasLoadedFromServer ||
+			! isEmpty( cartItems.getAll( this.props.cart ) )
+		) {
 			return false;
 		}
 
-		if ( transactionStepTypes.SUBMITTING_WPCOM_REQUEST === transaction.step.name ) {
+		if ( SUBMITTING_WPCOM_REQUEST === transaction.step.name ) {
 			return false;
 		}
 
-		if ( transactionStepTypes.RECEIVED_WPCOM_RESPONSE === transaction.step.name && isEmpty( transaction.errors ) ) {
+		if ( RECEIVED_WPCOM_RESPONSE === transaction.step.name && isEmpty( transaction.errors ) ) {
 			// If the cart is emptied by the server after the transaction is
 			// complete without errors, do not redirect as we're waiting for
 			// some post-transaction requests to complete.
@@ -227,15 +273,7 @@ const Checkout = React.createClass( {
 
 	getCheckoutCompleteRedirectPath: function() {
 		let renewalItem;
-		const {
-			cart,
-			selectedSiteSlug,
-			transaction: {
-				step: {
-					data: receipt
-				}
-			}
-		} = this.props;
+		const { cart, selectedSiteSlug, transaction: { step: { data: receipt } } } = this.props;
 
 		// The `:receiptId` string is filled in by our callback page after the PayPal checkout
 		const receiptId = receipt ? receipt.receipt_id : ':receiptId';
@@ -243,12 +281,19 @@ const Checkout = React.createClass( {
 		if ( cartItems.hasRenewalItem( cart ) ) {
 			renewalItem = cartItems.getRenewalItems( cart )[ 0 ];
 
-			return purchasePaths.managePurchase( renewalItem.extra.purchaseDomain, renewalItem.extra.purchaseId );
-		} else if ( cartItems.hasFreeTrial( cart ) ) {
+			return purchasePaths.managePurchase(
+				renewalItem.extra.purchaseDomain,
+				renewalItem.extra.purchaseId
+			);
+		}
+
+		if ( cartItems.hasFreeTrial( cart ) ) {
 			return selectedSiteSlug
 				? `/plans/${ selectedSiteSlug }/thank-you`
 				: '/checkout/thank-you/plans';
-		} else if ( cart.create_new_blog ) {
+		}
+
+		if ( cart.create_new_blog ) {
 			return `/checkout/thank-you/no-site/${ receiptId }`;
 		}
 
@@ -256,27 +301,44 @@ const Checkout = React.createClass( {
 			return '/checkout/thank-you/features';
 		}
 
+		if ( abtest( 'gsuiteUpsell' ) === 'show' ) {
+			const domainReceiptId = get(
+				cartItems.getGoogleApps( cart ),
+				'0.extra.receipt_for_domain',
+				0
+			);
+			if ( domainReceiptId ) {
+				return `/checkout/thank-you/${ selectedSiteSlug }/${ domainReceiptId }/with-gsuite/${ receiptId }`;
+			}
+
+			if ( ! cartItems.hasGoogleApps( cart ) && cartItems.hasDomainRegistration( cart ) ) {
+				const domainsForGsuite = filter( cartItems.getDomainRegistrations( cart ), ( { meta } ) =>
+					canAddGoogleApps( meta )
+				);
+
+				if ( domainsForGsuite.length ) {
+					return `/checkout/${ selectedSiteSlug }/with-gsuite/${ domainsForGsuite[ 0 ]
+						.meta }/${ receiptId }`;
+				}
+			}
+		}
+
 		return this.props.selectedFeature && isValidFeatureKey( this.props.selectedFeature )
-			? `/checkout/thank-you/features/${ this.props.selectedFeature }/${ selectedSiteSlug }/${ receiptId }`
+			? `/checkout/thank-you/features/${ this.props
+					.selectedFeature }/${ selectedSiteSlug }/${ receiptId }`
 			: `/checkout/thank-you/${ selectedSiteSlug }/${ receiptId }`;
 	},
 
 	handleCheckoutCompleteRedirect: function() {
-		let product,
-			purchasedProducts,
-			renewalItem;
+		let product, purchasedProducts, renewalItem;
 
 		const {
 			cart,
 			isDomainOnly,
 			reduxStore,
 			selectedSiteId,
-			transaction: {
-				step: {
-					data: receipt
-				}
-			},
-			translate
+			transaction: { step: { data: receipt } },
+			translate,
 		} = this.props;
 		const redirectPath = this.getCheckoutCompleteRedirectPath();
 
@@ -287,9 +349,13 @@ const Checkout = React.createClass( {
 
 			renewalItem = cartItems.getRenewalItems( cart )[ 0 ];
 			// group all purchases into an array
-			purchasedProducts = reduce( receipt && receipt.purchases || {}, function( result, value ) {
-				return result.concat( value );
-			}, [] );
+			purchasedProducts = reduce(
+				( receipt && receipt.purchases ) || {},
+				function( result, value ) {
+					return result.concat( value );
+				},
+				[]
+			);
 			// and take the first product which matches the product id of the renewalItem
 			product = find( purchasedProducts, function( item ) {
 				return item.product_id === renewalItem.product_id;
@@ -297,28 +363,34 @@ const Checkout = React.createClass( {
 
 			if ( product && product.will_auto_renew ) {
 				notices.success(
-					translate( '%(productName)s has been renewed and will now auto renew in the future. ' +
-						'{{a}}Learn more{{/a}}', {
+					translate(
+						'%(productName)s has been renewed and will now auto renew in the future. ' +
+							'{{a}}Learn more{{/a}}',
+						{
 							args: {
-								productName: renewalItem.product_name
+								productName: renewalItem.product_name,
 							},
 							components: {
-								a: <a href={ supportPaths.AUTO_RENEWAL } target="_blank" rel="noopener noreferrer" />
-							}
+								a: (
+									<a href={ supportPaths.AUTO_RENEWAL } target="_blank" rel="noopener noreferrer" />
+								),
+							},
 						}
 					),
 					{ persistent: true }
 				);
 			} else if ( product ) {
 				notices.success(
-					translate( 'Success! You renewed %(productName)s for %(duration)s, until %(date)s. ' +
-						'We sent your receipt to %(email)s.', {
+					translate(
+						'Success! You renewed %(productName)s for %(duration)s, until %(date)s. ' +
+							'We sent your receipt to %(email)s.',
+						{
 							args: {
 								productName: renewalItem.product_name,
 								duration: i18n.moment.duration( { days: renewalItem.bill_period } ).humanize(),
 								date: i18n.moment( product.expiry ).format( 'LL' ),
-								email: product.user_email
-							}
+								email: product.user_email,
+							},
 						}
 					),
 					{ persistent: true }
@@ -334,7 +406,7 @@ const Checkout = React.createClass( {
 			this.props.fetchReceiptCompleted( receiptId, {
 				...receipt,
 				purchases: this.flattenPurchases( this.props.transaction.step.data.purchases ),
-				failedPurchases: this.flattenPurchases( this.props.transaction.step.data.failed_purchases )
+				failedPurchases: this.flattenPurchases( this.props.transaction.step.data.failed_purchases ),
 			} );
 		}
 
@@ -346,9 +418,7 @@ const Checkout = React.createClass( {
 			( cart.create_new_blog && receipt && isEmpty( receipt.failed_purchases ) ) ||
 			( isDomainOnly && cartItems.hasPlan( cart ) && ! selectedSiteId )
 		) {
-			notices.info(
-				translate( 'Almost done…' )
-			);
+			notices.info( translate( 'Almost done…' ) );
 
 			const domainName = getDomainNameFromReceiptOrCart( receipt, cart );
 
@@ -373,16 +443,12 @@ const Checkout = React.createClass( {
 
 		if ( ! this.isLoading() && this.needsDomainDetails() ) {
 			return (
-				<DomainDetailsForm
-					cart={ this.props.cart }
-					productsList={ this.props.productsList } />
+				<DomainDetailsForm cart={ this.props.cart } productsList={ this.props.productsList } />
 			);
 		} else if ( this.isLoading() || this.props.cart.hasPendingServerUpdates ) {
 			// hasPendingServerUpdates is an important check here as the content we display is dependent on the content of the cart
 
-			return (
-				<SecurePaymentFormPlaceholder />
-			);
+			return <SecurePaymentFormPlaceholder />;
 		}
 
 		return (
@@ -390,13 +456,31 @@ const Checkout = React.createClass( {
 				cart={ this.props.cart }
 				transaction={ this.props.transaction }
 				cards={ this.props.cards }
-				paymentMethods={ this.props.paymentMethods }
+				paymentMethods={ this.paymentMethodsAbTestFilter() }
 				products={ this.props.productsList.get() }
 				selectedSite={ selectedSite }
 				redirectTo={ this.getCheckoutCompleteRedirectPath }
 				handleCheckoutCompleteRedirect={ this.handleCheckoutCompleteRedirect }
 			/>
 		);
+	},
+
+	paymentMethodsAbTestFilter: function() {
+		// Apply AB test to payment methods, for Giropay And Bancontact
+		// Only run this if the user is eligible for one of these payment methods
+		if (
+			-1 === this.props.paymentMethods.indexOf( 'bancontact' ) &&
+			-1 === this.props.paymentMethods.indexOf( 'giropay' )
+		) {
+			return this.props.paymentMethods;
+		}
+
+		// If not in the 'show' variation, remove bancontact and giropay from the current methods
+		if ( abtest( 'showNewPaymentMethods', this.props.userCountryCode ) !== 'show' ) {
+			return difference( this.props.paymentMethods, [ 'bancontact', 'giropay' ] );
+		}
+
+		return this.props.paymentMethods;
 	},
 
 	isLoading: function() {
@@ -414,15 +498,20 @@ const Checkout = React.createClass( {
 			return false;
 		}
 
-		return cart &&
+		return (
+			cart &&
 			! hasDomainDetails( transaction ) &&
-			( cartItems.hasDomainRegistration( cart ) || cartItems.hasGoogleApps( cart ) );
+			( cartItems.hasDomainRegistration( cart ) ||
+				cartItems.hasGoogleApps( cart ) ||
+				cartItems.hasTransferProduct( cart ) )
+		);
 	},
 
 	render: function() {
 		return (
 			<div className="main main-column" role="main">
 				<div className="checkout">
+					<QueryContactDetailsCache />
 					<QueryStoredCards />
 					<QueryGeo />
 
@@ -430,10 +519,10 @@ const Checkout = React.createClass( {
 				</div>
 			</div>
 		);
-	}
+	},
 } );
 
-module.exports = connect(
+export default connect(
 	state => {
 		const selectedSiteId = getSelectedSiteId( state );
 
@@ -444,6 +533,8 @@ module.exports = connect(
 			selectedSite: getSelectedSite( state ),
 			selectedSiteId,
 			selectedSiteSlug: getSelectedSiteSlug( state ),
+			contactDetails: getContactDetailsCache( state ),
+			userCountryCode: getCurrentUserCountryCode( state ),
 		};
 	},
 	{
@@ -452,6 +543,6 @@ module.exports = connect(
 		fetchReceiptCompleted,
 		recordApplePayStatus,
 		requestSite,
-		loadTrackingTool
+		loadTrackingTool,
 	}
 )( localize( Checkout ) );

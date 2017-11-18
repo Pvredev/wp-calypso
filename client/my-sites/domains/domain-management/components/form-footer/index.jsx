@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import React from 'react';
 
 /**
@@ -8,7 +11,7 @@ import React from 'react';
  */
 import FormButtonsBar from 'components/forms/form-buttons-bar';
 
-const DomainManagementFormFooter = React.createClass( {
+class DomainManagementFormFooter extends React.Component {
 	render() {
 		return (
 			<FormButtonsBar className="domain-management-form-footer">
@@ -16,6 +19,6 @@ const DomainManagementFormFooter = React.createClass( {
 			</FormButtonsBar>
 		);
 	}
-} );
+}
 
 export default DomainManagementFormFooter;

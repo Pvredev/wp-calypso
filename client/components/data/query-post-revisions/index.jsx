@@ -1,13 +1,18 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import { Component, PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import { Component } from 'react';
 import { connect } from 'react-redux';
 
 /**
  * Internal dependencies
  */
 import { requestPostRevisions } from 'state/posts/revisions/actions';
+import { getEditedPostValue } from 'state/posts/selectors';
 
 class QueryPostRevisions extends Component {
 	componentWillMount() {
@@ -15,10 +20,7 @@ class QueryPostRevisions extends Component {
 	}
 
 	componentDidUpdate( prevProps ) {
-		if (
-			this.props.siteId === prevProps.siteId &&
-			this.props.postId === prevProps.postId
-		) {
+		if ( this.props.siteId === prevProps.siteId && this.props.postId === prevProps.postId ) {
 			return;
 		}
 
@@ -36,12 +38,18 @@ class QueryPostRevisions extends Component {
 
 QueryPostRevisions.propTypes = {
 	postId: PropTypes.number,
-	postType: PropTypes.string,
 	siteId: PropTypes.number,
+
+	// connected to state
+	postType: PropTypes.string,
+
+	// connected to dispatch
 	requestPostRevisions: PropTypes.func,
 };
 
 export default connect(
-	() => ( {} ),
+	( state, { postId, siteId } ) => ( {
+		postType: getEditedPostValue( state, siteId, postId, 'type' ),
+	} ),
 	{ requestPostRevisions }
 )( QueryPostRevisions );

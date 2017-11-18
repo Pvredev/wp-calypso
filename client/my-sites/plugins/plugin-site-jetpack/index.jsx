@@ -1,6 +1,10 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React from 'react';
 import { localize } from 'i18n-calypso';
 
@@ -17,53 +21,58 @@ import PluginRemoveButton from 'my-sites/plugins/plugin-remove-button';
 import PluginSiteDisabledManage from 'my-sites/plugins/plugin-site-disabled-manage';
 import Site from 'blocks/site';
 
-const PluginSiteJetpack = React.createClass( {
-	propTypes: {
-		site: React.PropTypes.object,
-		plugin: React.PropTypes.object,
-		notices: React.PropTypes.object,
-		allowedActions: React.PropTypes.shape( {
-			activation: React.PropTypes.bool,
-			autoupdate: React.PropTypes.bool,
-			remove: React.PropTypes.bool,
+class PluginSiteJetpack extends React.Component {
+	static propTypes = {
+		site: PropTypes.object,
+		plugin: PropTypes.object,
+		notices: PropTypes.object,
+		allowedActions: PropTypes.shape( {
+			activation: PropTypes.bool,
+			autoupdate: PropTypes.bool,
+			remove: PropTypes.bool,
 		} ),
-		isAutoManaged: React.PropTypes.bool,
-	},
+		isAutoManaged: PropTypes.bool,
+	};
 
-	getDefaultProps: function() {
-		return {
-			allowedActions: {
-				activation: true,
-				autoupdate: true,
-				remove: true,
-			},
-			isAutoManaged: false,
-		};
-	},
+	static defaultProps = {
+		allowedActions: {
+			activation: true,
+			autoupdate: true,
+			remove: true,
+		},
+		isAutoManaged: false,
+	};
 
-	renderInstallButton: function() {
-		var installInProgress = PluginsLog.isInProgressAction( this.props.site.ID, this.props.plugin.slug, 'INSTALL_PLUGIN' );
+	renderInstallButton = () => {
+		var installInProgress = PluginsLog.isInProgressAction(
+			this.props.site.ID,
+			this.props.plugin.slug,
+			'INSTALL_PLUGIN'
+		);
 
-		return <PluginInstallButton
-			isEmbed={ true }
-			notices={ this.props.notices }
-			selectedSite={ this.props.site }
-			plugin={ this.props.plugin }
-			isInstalling={ installInProgress } />;
-	},
+		return (
+			<PluginInstallButton
+				isEmbed={ true }
+				notices={ this.props.notices }
+				selectedSite={ this.props.site }
+				plugin={ this.props.plugin }
+				isInstalling={ installInProgress }
+			/>
+		);
+	};
 
-	renderInstallPlugin: function() {
+	renderInstallPlugin = () => {
 		return (
 			<FoldableCard
 				compact
 				className="plugin-site-jetpack"
 				header={ <Site site={ this.props.site } indicator={ false } /> }
-				actionButton={ this.renderInstallButton() } >
-			</FoldableCard>
+				actionButton={ this.renderInstallButton() }
+			/>
 		);
-	},
+	};
 
-	renderPluginSite: function() {
+	renderPluginSite = () => {
 		const {
 			activation: canToggleActivation,
 			autoupdate: canToggleAutoupdate,
@@ -73,57 +82,84 @@ const PluginSiteJetpack = React.createClass( {
 		const showAutoManagedMessage = this.props.isAutoManaged;
 
 		return (
-			<FoldableCard compact
+			<FoldableCard
+				compact
 				clickableHeader
 				className="plugin-site-jetpack"
 				header={ <Site site={ this.props.site } indicator={ false } /> }
-				summary={ <PluginUpdateIndicator site={ this.props.site } plugin={ this.props.plugin } notices={ this.props.notices } expanded={ false } /> }
-				expandedSummary={ <PluginUpdateIndicator site={ this.props.site } plugin={ this.props.plugin } notices={ this.props.notices } expanded={ true } /> }
-				>
-				<div>
-					{ canToggleActivation && <PluginActivateToggle
+				summary={
+					<PluginUpdateIndicator
 						site={ this.props.site }
-						plugin={ this.props.site.plugin }
-						notices={ this.props.notices } /> }
-					{ canToggleAutoupdate && <PluginAutoupdateToggle
-						site={ this.props.site }
-						plugin={ this.props.site.plugin }
+						plugin={ this.props.plugin }
 						notices={ this.props.notices }
-						wporg={ true } /> }
-					{ canToggleRemove && <PluginRemoveButton
-						plugin={ this.props.site.plugin }
+						expanded={ false }
+					/>
+				}
+				expandedSummary={
+					<PluginUpdateIndicator
 						site={ this.props.site }
-						notices={ this.props.notices } /> }
-
-					{ showAutoManagedMessage &&
+						plugin={ this.props.plugin }
+						notices={ this.props.notices }
+						expanded={ true }
+					/>
+				}
+			>
+				<div>
+					{ canToggleActivation && (
+						<PluginActivateToggle
+							site={ this.props.site }
+							plugin={ this.props.site.plugin }
+							notices={ this.props.notices }
+						/>
+					) }
+					{ canToggleAutoupdate && (
+						<PluginAutoupdateToggle
+							site={ this.props.site }
+							plugin={ this.props.site.plugin }
+							notices={ this.props.notices }
+							wporg={ true }
+						/>
+					) }
+					{ canToggleRemove && (
+						<PluginRemoveButton
+							plugin={ this.props.site.plugin }
+							site={ this.props.site }
+							notices={ this.props.notices }
+						/>
+					) }
+					{ showAutoManagedMessage && (
 						<div className="plugin-site-jetpack__automanage-notice">
-						{ this.props.translate( '%(pluginName)s is automatically managed on this site',
-							{ args: { pluginName: this.props.plugin.name } } )
-						}
+							{ this.props.translate( 'Auto-managed on this site' ) }
 						</div>
-					}
-
+					) }
 				</div>
 			</FoldableCard>
 		);
-	},
+	};
 
-	renderManageWarning: function() {
+	renderManageWarning = () => {
 		return (
 			<FoldableCard
 				compact
 				className="plugin-site-jetpack has-manage-error"
 				header={ <Site site={ this.props.site } indicator={ false } /> }
-				actionButton={ <PluginSiteDisabledManage site={ this.props.site } plugin={ this.props.plugin } /> } />
+				actionButton={
+					<PluginSiteDisabledManage site={ this.props.site } plugin={ this.props.plugin } />
+				}
+			/>
 		);
-	},
+	};
 
-	render: function() {
+	render() {
 		if ( ! this.props.site || ! this.props.plugin ) {
 			return null;
 		}
 
-		if ( ! this.props.site.canManage() ) {
+		if (
+			! ( typeof this.props.site.canManage === 'function'
+				? this.props.site.canManage()
+				: this.props.site.canManage )
+		) {
 			return this.renderManageWarning();
 		}
 
@@ -133,6 +169,6 @@ const PluginSiteJetpack = React.createClass( {
 
 		return this.renderPluginSite();
 	}
-} );
+}
 
 export default localize( PluginSiteJetpack );

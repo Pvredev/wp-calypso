@@ -1,15 +1,20 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React from 'react';
 import classNames from 'classnames';
 
-export default React.createClass( {
-	displayName: 'StatsModuleContentText',
+export default class extends React.Component {
+	static displayName = 'StatsModuleContentText';
 
-	propTypes: {
-		className: PropTypes.string
-	},
+	static propTypes = {
+		className: PropTypes.string,
+	};
+
 	render() {
 		return (
 			<div className={ classNames( 'module-content-text', this.props.className ) }>
@@ -17,4 +22,4 @@ export default React.createClass( {
 			</div>
 		);
 	}
-} );
+}

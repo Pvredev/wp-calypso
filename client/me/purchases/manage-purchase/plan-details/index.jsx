@@ -1,6 +1,9 @@
+/** @format */
+
 /**
- * External Dependencies
+ * External dependencies
  */
+
 import { connect } from 'react-redux';
 import React, { Component } from 'react';
 import { localize } from 'i18n-calypso';

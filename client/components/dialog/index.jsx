@@ -1,7 +1,9 @@
+/** @format */
 /**
  * External dependencies
  */
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 import { defer, noop } from 'lodash';
 
 /**
@@ -17,19 +19,20 @@ class Dialog extends Component {
 		leaveTimeout: PropTypes.number,
 		onClose: PropTypes.func,
 		onClosed: PropTypes.func,
-	}
+		shouldCloseOnEsc: PropTypes.bool,
+	};
 
 	static defaultProps = {
 		isVisible: false,
 		leaveTimeout: 200,
 		onClosed: noop,
-	}
+	};
 
-	checkOnClosed = ( ref ) => {
+	checkOnClosed = ref => {
 		if ( null === ref ) {
 			defer( this.props.onClosed );
 		}
-	}
+	};
 
 	render() {
 		return (
@@ -38,16 +41,17 @@ class Dialog extends Component {
 					{ ...this.props }
 					ref={ this.checkOnClosed }
 					key="dialog"
-					onDialogClose={ this.onDialogClose } />
+					onDialogClose={ this.onDialogClose }
+				/>
 			</RootChild>
 		);
 	}
 
-	onDialogClose = ( action ) => {
+	onDialogClose = action => {
 		if ( this.props.onClose ) {
 			this.props.onClose( action );
 		}
-	}
+	};
 }
 
 export default Dialog;

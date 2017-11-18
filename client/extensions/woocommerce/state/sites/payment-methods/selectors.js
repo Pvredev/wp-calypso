@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { find, get, isArray } from 'lodash';
 
 /**

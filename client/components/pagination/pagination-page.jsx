@@ -1,9 +1,13 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import classNames from 'classnames';
 import Gridicon from 'gridicons';
 import { localize } from 'i18n-calypso';
+import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 
 /**
@@ -13,20 +17,15 @@ import Button from 'components/button';
 
 class PaginationPage extends Component {
 	static propTypes = {
-		pageNumber: React.PropTypes.node.isRequired,
-		currentPage: React.PropTypes.number.isRequired,
-		totalPages: React.PropTypes.number.isRequired,
-		pageClick: React.PropTypes.func.isRequired,
-	}
+		pageNumber: PropTypes.node.isRequired,
+		currentPage: PropTypes.number.isRequired,
+		totalPages: PropTypes.number.isRequired,
+		pageClick: PropTypes.func.isRequired,
+	};
 
-	clickHandler = ( event ) => {
+	clickHandler = event => {
 		event.stopPropagation();
-		const {
-			currentPage,
-			pageClick,
-			pageNumber,
-			totalPages
-		} = this.props;
+		const { currentPage, pageClick, pageNumber, totalPages } = this.props;
 
 		switch ( pageNumber ) {
 			case 'previous':
@@ -48,15 +47,10 @@ class PaginationPage extends Component {
 				pageClick( pageNumber );
 				break;
 		}
-	}
+	};
 
 	render() {
-		const {
-			currentPage,
-			numberFormat,
-			pageNumber,
-			totalPages,
-		} = this.props;
+		const { translate, currentPage, numberFormat, pageNumber, totalPages } = this.props;
 
 		switch ( pageNumber ) {
 			case 'more':
@@ -72,7 +66,8 @@ class PaginationPage extends Component {
 				return (
 					<li className={ listClass }>
 						<Button borderless onClick={ this.clickHandler } disabled={ currentPage <= 1 }>
-							<Gridicon icon="arrow-left" />
+							<Gridicon icon="arrow-left" size={ 18 } />
+							{ translate( 'Previous' ) }
 						</Button>
 					</li>
 				);
@@ -84,7 +79,8 @@ class PaginationPage extends Component {
 				return (
 					<li className={ listClass }>
 						<Button borderless onClick={ this.clickHandler } disabled={ currentPage >= totalPages }>
-							<Gridicon icon="arrow-right" />
+							{ translate( 'Next' ) }
+							<Gridicon icon="arrow-right" size={ 18 } />
 						</Button>
 					</li>
 				);

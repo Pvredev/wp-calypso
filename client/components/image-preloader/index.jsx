@@ -1,6 +1,10 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React from 'react';
 import { noop, omit } from 'lodash';
 
@@ -11,46 +15,41 @@ const LoadStatus = {
 	PENDING: 'PENDING',
 	LOADING: 'LOADING',
 	LOADED: 'LOADED',
-	FAILED: 'FAILED'
+	FAILED: 'FAILED',
 };
 
-export default React.createClass( {
-	displayName: 'ImagePreloader',
+export default class ImagePreloader extends React.Component {
+	static propTypes = {
+		src: PropTypes.string,
+		placeholder: PropTypes.element.isRequired,
+		onLoad: PropTypes.func,
+		onError: PropTypes.func,
+	};
 
-	propTypes: {
-		src: React.PropTypes.string,
-		placeholder: React.PropTypes.element.isRequired,
-		children: React.PropTypes.node,
-		onLoad: React.PropTypes.func,
-		onError: React.PropTypes.func
-	},
-
-	getInitialState() {
-		return {
-			status: LoadStatus.PENDING
-		};
-	},
+	state = {
+		status: LoadStatus.PENDING,
+	};
 
 	componentWillMount() {
 		this.createLoader();
-	},
+	}
 
 	componentWillReceiveProps( nextProps ) {
 		if ( nextProps.src !== this.props.src ) {
 			this.createLoader( nextProps );
 		}
-	},
+	}
 
 	componentWillUnmount() {
 		this.destroyLoader();
-	},
+	}
 
-	createLoader( nextProps ) {
+	createLoader = nextProps => {
 		const src = ( nextProps || this.props ).src;
 
 		this.destroyLoader();
 		this.setState( {
-			status: LoadStatus.LOADING
+			status: LoadStatus.LOADING,
 		} );
 
 		if ( ! src ) {
@@ -61,9 +60,9 @@ export default React.createClass( {
 		this.image.src = src;
 		this.image.onload = this.onLoadComplete;
 		this.image.onerror = this.onLoadComplete;
-	},
+	};
 
-	destroyLoader() {
+	destroyLoader = () => {
 		if ( ! this.image ) {
 			return;
 		}
@@ -71,9 +70,9 @@ export default React.createClass( {
 		this.image.onload = noop;
 		this.image.onerror = noop;
 		delete this.image;
-	},
+	};
 
-	onLoadComplete( event ) {
+	onLoadComplete = event => {
 		this.destroyLoader();
 
 		if ( event.type !== 'load' ) {
@@ -89,7 +88,7 @@ export default React.createClass( {
 				this.props.onLoad( event );
 			}
 		} );
-	},
+	};
 
 	render() {
 		let children, imageProps;
@@ -108,13 +107,10 @@ export default React.createClass( {
 				children = this.props.children;
 				break;
 
-			default: break;
+			default:
+				break;
 		}
 
-		return (
-			<div className="image-preloader">
-				{ children }
-			</div>
-		);
+		return <div className="image-preloader">{ children }</div>;
 	}
-} );
+}

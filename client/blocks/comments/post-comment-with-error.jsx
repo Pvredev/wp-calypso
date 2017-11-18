@@ -1,6 +1,9 @@
-/***
+/** @format */
+/**
  * External dependencies
  */
+import { get } from 'lodash';
+import PropTypes from 'prop-types';
 import React from 'react';
 
 /***
@@ -10,19 +13,15 @@ import PostCommentForm from './form';
 
 export default class PostCommentWithError extends React.Component {
 	renderCommentForm() {
-		const post = this.props.post;
-		const commentText = this.props.commentsTree.getIn( [
-			this.props.commentId,
-			'data',
-			'content',
-		] );
-		const commentParentId = this.props.commentsTree.getIn( [ this.props.commentId, 'parentId' ] );
-		const placeholderError = this.props.commentsTree.getIn( [
-			this.props.commentId,
-			'data',
-			'placeholderError',
-		] );
-		const onUpdateCommentText = this.props.onUpdateCommentText;
+		const { post, commentsTree, commentId, onUpdateCommentText, activeReplyCommentId } = this.props;
+		const commentText = get( commentsTree, [ commentId, 'data', 'content' ] );
+		const commentParentId = get( commentsTree, [ commentId, 'data', 'parent', 'ID' ], null );
+		const placeholderError = get( commentsTree, [ commentId, 'data', 'placeholderError' ] );
+		const placeholderErrorType = get( commentsTree, [ commentId, 'data', 'placeholderErrorType' ] );
+
+		if ( activeReplyCommentId !== commentParentId ) {
+			return null;
+		}
 
 		return (
 			<PostCommentForm
@@ -31,8 +30,9 @@ export default class PostCommentWithError extends React.Component {
 				parentCommentId={ commentParentId }
 				commentText={ commentText }
 				onUpdateCommentText={ onUpdateCommentText }
-				placeholderId={ this.props.commentId }
+				placeholderId={ commentId }
 				error={ placeholderError }
+				errorType={ placeholderErrorType }
 			/>
 		);
 	}
@@ -48,10 +48,9 @@ export default class PostCommentWithError extends React.Component {
 }
 
 PostCommentWithError.propTypes = {
-	post: React.PropTypes.object.isRequired,
-	repliesList: React.PropTypes.object.isRequired,
-	commentsTree: React.PropTypes.object.isRequired,
-	onUpdateCommentText: React.PropTypes.func.isRequired,
-	commentId: React.PropTypes.oneOfType( [ React.PropTypes.string, React.PropTypes.number ] )
-		.isRequired,
+	post: PropTypes.object.isRequired,
+	repliesList: PropTypes.object,
+	commentsTree: PropTypes.object.isRequired,
+	onUpdateCommentText: PropTypes.func.isRequired,
+	commentId: PropTypes.oneOfType( [ PropTypes.string, PropTypes.number ] ).isRequired,
 };

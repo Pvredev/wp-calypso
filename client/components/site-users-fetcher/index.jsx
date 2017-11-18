@@ -1,41 +1,39 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { includes, isEqual, omit, partition } from 'lodash';
-var React = require( 'react' ),
-	debug = require( 'debug' )( 'calypso:site-users-fetcher' );
+import PropTypes from 'prop-types';
+import React from 'react';
+import debugFactory from 'debug';
+const debug = debugFactory( 'calypso:site-users-fetcher' );
 
 /**
  * Internal dependencies
  */
-var UsersStore = require( 'lib/users/store' ),
-	UsersActions = require( 'lib/users/actions' ),
-	pollers = require( 'lib/data-poller' );
+import UsersStore from 'lib/users/store';
+import UsersActions from 'lib/users/actions';
+import pollers from 'lib/data-poller';
 
 /**
  * Module variables
  */
 var defaultOptions = {
 	number: 100,
-	offset: 0
+	offset: 0,
 };
 
-module.exports = React.createClass( {
-	displayName: 'SiteUsersFetcher',
+export default class extends React.Component {
+	static displayName = 'SiteUsersFetcher';
 
-	propTypes: {
-		fetchOptions: React.PropTypes.object.isRequired,
-		exclude: React.PropTypes.oneOfType( [
-			React.PropTypes.arrayOf( React.PropTypes.number ),
-			React.PropTypes.func
-		] )
-	},
+	static propTypes = {
+		fetchOptions: PropTypes.object.isRequired,
+		exclude: PropTypes.oneOfType( [ PropTypes.arrayOf( PropTypes.number ), PropTypes.func ] ),
+	};
 
-	getInitialState: function() {
-		return this._getState();
-	},
-
-	componentWillMount: function() {
+	componentWillMount() {
 		debug( 'Mounting SiteUsersFetcher' );
 		UsersStore.on( 'change', this._updateSiteUsers );
 		this._fetchIfEmpty();
@@ -44,14 +42,14 @@ module.exports = React.createClass( {
 			UsersActions.fetchUpdated.bind( UsersActions, this.props.fetchOptions, true ),
 			{ leading: false }
 		);
-	},
+	}
 
-	componentWillUnmount: function() {
+	componentWillUnmount() {
 		UsersStore.off( 'change', this._updateSiteUsers );
 		pollers.remove( this._poller );
-	},
+	}
 
-	componentWillReceiveProps: function( nextProps ) {
+	componentWillReceiveProps( nextProps ) {
 		if ( ! nextProps.fetchOptions ) {
 			return;
 		}
@@ -65,20 +63,20 @@ module.exports = React.createClass( {
 				{ leading: false }
 			);
 		}
-	},
+	}
 
-	render: function() {
+	render() {
 		var childrenProps = Object.assign( omit( this.props, 'children' ), this.state );
 		// Clone the child element along and pass along state (containing data from the store)
 		return React.cloneElement( this.props.children, childrenProps );
-	},
+	}
 
-	_updateSiteUsers: function( fetchOptions ) {
+	_updateSiteUsers = fetchOptions => {
 		fetchOptions = fetchOptions || this.props.fetchOptions;
 		this.setState( this._getState( fetchOptions ) );
-	},
+	};
 
-	_getState: function( fetchOptions ) {
+	_getState = fetchOptions => {
 		var paginationData, users;
 		fetchOptions = fetchOptions || this.props.fetchOptions;
 		fetchOptions = Object.assign( {}, defaultOptions, fetchOptions );
@@ -89,23 +87,26 @@ module.exports = React.createClass( {
 			// Partition will return an array of two arrays.
 			// users[0] will be a list of the users that were not excluded.
 			// users[1] will be a list of the excluded users.
-			users = partition( users, function( user ) {
-				if ( 'function' === typeof this.props.exclude ) {
-					return ! this.props.exclude( user );
-				}
+			users = partition(
+				users,
+				function( user ) {
+					if ( 'function' === typeof this.props.exclude ) {
+						return ! this.props.exclude( user );
+					}
 
-				return ! includes( this.props.exclude, user.ID );
-			}.bind( this ) );
+					return ! includes( this.props.exclude, user.ID );
+				}.bind( this )
+			);
 		}
 
 		return Object.assign( {}, paginationData, {
 			users: this.props.exclude ? users[ 0 ] : users,
 			fetchOptions: fetchOptions,
-			excludedUsers: this.props.exclude ? users[ 1 ] : []
+			excludedUsers: this.props.exclude ? users[ 1 ] : [],
 		} );
-	},
+	};
 
-	_fetchIfEmpty: function( fetchOptions ) {
+	_fetchIfEmpty = fetchOptions => {
 		fetchOptions = fetchOptions || this.props.fetchOptions;
 		if ( ! fetchOptions || ! fetchOptions.siteId ) {
 			return;
@@ -123,5 +124,7 @@ module.exports = React.createClass( {
 			}
 			UsersActions.fetchUsers( fetchOptions );
 		}, 0 );
-	}
-} );
+	};
+
+	state = this._getState();
+}

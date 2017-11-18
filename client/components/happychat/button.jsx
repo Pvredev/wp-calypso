@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { Component, PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 import page from 'page';
 import { identity, noop } from 'lodash';
 import { connect } from 'react-redux';
@@ -13,22 +17,24 @@ import classnames from 'classnames';
  * Internal dependencies
  */
 import viewport from 'lib/viewport';
-import {
-	hasUnreadMessages,
-	isHappychatAvailable,
-	hasActiveHappychatSession,
-} from 'state/happychat/selectors';
-import { connectChat } from 'state/happychat/actions';
-import { openChat } from 'state/ui/happychat/actions';
+import { getHappychatAuth } from 'state/happychat/utils';
+import { hasUnreadMessages } from 'state/happychat/selectors';
+import hasActiveHappychatSession from 'state/happychat/selectors/has-active-happychat-session';
+import isHappychatAvailable from 'state/happychat/selectors/is-happychat-available';
+import isHappychatConnectionUninitialized from 'state/happychat/selectors/is-happychat-connection-uninitialized';
+import { initConnection } from 'state/happychat/connection/actions';
+import { openChat } from 'state/happychat/ui/actions';
 import Button from 'components/button';
 
-class HappychatButton extends Component {
+export class HappychatButton extends Component {
 	static propTypes = {
 		allowMobileRedirect: PropTypes.bool,
 		borderless: PropTypes.bool,
-		connectChat: PropTypes.func,
+		getAuth: PropTypes.func,
+		initConnection: PropTypes.func,
 		isChatActive: PropTypes.bool,
 		isChatAvailable: PropTypes.bool,
+		isConnectionUninitialized: PropTypes.bool,
 		onClick: PropTypes.func,
 		openChat: PropTypes.func,
 		translate: PropTypes.func,
@@ -37,15 +43,17 @@ class HappychatButton extends Component {
 	static defaultProps = {
 		allowMobileRedirect: false,
 		borderless: true,
-		connectChat: noop,
+		getAuth: noop,
+		initConnection: noop,
 		isChatActive: false,
 		isChatAvailable: false,
+		isConnectionUninitialized: false,
 		onClick: noop,
 		openChat: noop,
 		translate: identity,
 	};
 
-	onClick = ( event ) => {
+	onClick = event => {
 		if ( this.props.allowMobileRedirect && viewport.isMobile() ) {
 			// For mobile clients, happychat will always use the
 			// page componet instead of the sidebar
@@ -55,17 +63,28 @@ class HappychatButton extends Component {
 		}
 
 		this.props.onClick( event );
-	}
+	};
 
 	componentDidMount() {
-		this.props.connectChat();
+		if ( this.props.isConnectionUninitialized ) {
+			this.props.initConnection( this.props.getAuth() );
+		}
 	}
 
 	render() {
-		const { translate, children, className, primary, borderless, hasUnread, isChatAvailable, isChatActive } = this.props;
+		const {
+			translate,
+			children,
+			className,
+			primary,
+			borderless,
+			hasUnread,
+			isChatAvailable,
+			isChatActive,
+		} = this.props;
 		const showButton = isChatAvailable || isChatActive;
 		const classes = classnames( 'happychat__button', className, {
-			'has-unread': hasUnread
+			'has-unread': hasUnread,
 		} );
 
 		if ( ! showButton ) {
@@ -78,7 +97,8 @@ class HappychatButton extends Component {
 				primary={ primary }
 				borderless={ borderless }
 				onClick={ this.onClick }
-				title={ translate( 'Support Chat' ) }>
+				title={ translate( 'Support Chat' ) }
+			>
 				{ children || <Gridicon icon="chat" /> }
 			</Button>
 		);
@@ -88,11 +108,13 @@ class HappychatButton extends Component {
 export default connect(
 	state => ( {
 		hasUnread: hasUnreadMessages( state ),
+		getAuth: getHappychatAuth( state ),
 		isChatAvailable: isHappychatAvailable( state ),
 		isChatActive: hasActiveHappychatSession( state ),
+		isConnectionUninitialized: isHappychatConnectionUninitialized( state ),
 	} ),
 	{
 		openChat,
-		connectChat,
+		initConnection,
 	}
 )( localize( HappychatButton ) );

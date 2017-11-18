@@ -1,7 +1,12 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import { localize } from 'i18n-calypso';
+import React from 'react';
 
 /**
  * Internal dependencies
@@ -10,14 +15,14 @@ import SectionNav from 'components/section-nav';
 import SectionNavTabs from 'components/section-nav/tabs';
 import SectionNavTabItem from 'components/section-nav/item';
 
-export default React.createClass( {
-	displayName: 'ContactFormDialogNavigation',
+class ContactFormDialogNavigation extends React.Component {
+	static displayName = 'ContactFormDialogNavigation';
 
-	propTypes: {
+	static propTypes = {
 		fieldCount: PropTypes.number.isRequired,
 		activeTab: PropTypes.oneOf( [ 'fields', 'settings' ] ).isRequired,
-		onChangeTabs: PropTypes.func.isRequired
-	},
+		onChangeTabs: PropTypes.func.isRequired,
+	};
 
 	render() {
 		const tabs = [ 'fields', 'settings' ];
@@ -30,12 +35,17 @@ export default React.createClass( {
 							key={ 'contact-form-' + tab }
 							selected={ this.props.activeTab === tab }
 							count={ tab === 'fields' ? this.props.fieldCount : null }
-							onClick={ () => this.props.onChangeTabs( tab ) } >
-							{ tab === 'fields' ? this.translate( 'Form Fields' ) : this.translate( 'Settings' ) }
+							onClick={ () => this.props.onChangeTabs( tab ) }
+						>
+							{ tab === 'fields'
+								? this.props.translate( 'Form Fields' )
+								: this.props.translate( 'Settings' ) }
 						</SectionNavTabItem>
 					) ) }
 				</SectionNavTabs>
 			</SectionNav>
 		);
 	}
-} );
+}
+
+export default localize( ContactFormDialogNavigation );

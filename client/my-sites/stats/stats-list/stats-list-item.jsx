@@ -1,74 +1,87 @@
+/** @format */
+
 /**
  * External dependencies
  */
-var React = require( 'react' ),
-	classNames = require( 'classnames' ),
-	debug = require( 'debug' )( 'calypso:stats:list-item' ),
-	page = require( 'page' );
+
+import React from 'react';
+import { localize } from 'i18n-calypso';
+import classNames from 'classnames';
+import debugFactory from 'debug';
+const debug = debugFactory( 'calypso:stats:list-item' );
+import page from 'page';
 
 /**
  * Internal dependencies
  */
-var Follow = require( './action-follow' ),
-	Page = require( './action-page' ),
-	OpenLink = require( './action-link' ),
-	Spam = require( './action-spam' ),
-	Emojify = require( 'components/emojify' ),
-	titlecase = require( 'to-title-case' ),
-	analytics = require( 'lib/analytics' ),
-	Gridicon = require( 'gridicons' );
+import Follow from './action-follow';
+import Page from './action-page';
+import OpenLink from './action-link';
+import Spam from './action-spam';
+import Emojify from 'components/emojify';
+import titlecase from 'to-title-case';
+import analytics from 'lib/analytics';
+import Gridicon from 'gridicons';
+import { get } from 'lodash';
+import { recordTrack } from 'reader/stats';
 
-module.exports = React.createClass( {
-	displayName: 'StatsListItem',
+class StatsListItem extends React.Component {
+	static displayName = 'StatsListItem';
 
-	getInitialState: function() {
-		return {
-			active: this.props.active,
-			actionMenuOpen: false,
-			disabled: false
-		};
-	},
+	state = {
+		active: this.props.active,
+		actionMenuOpen: false,
+		disabled: false,
+	};
 
-	addMenuListener: function() {
+	addMenuListener = () => {
 		document.addEventListener( 'click', this.closeMenu );
-	},
+	};
 
-	removeMenuListener: function() {
+	removeMenuListener = () => {
 		document.removeEventListener( 'click', this.closeMenu );
-	},
+	};
 
-	componentWillUnmount: function() {
+	componentWillUnmount() {
 		if ( this.props.data.actionMenu ) {
 			this.removeMenuListener();
 		}
-	},
+	}
 
-	closeMenu: function() {
+	isFollowersModule = () => {
+		return !! this.props.followList;
+	};
+
+	getSiteIdForFollow = () => {
+		return get( this.props, 'data.actions[0].data.blog_id' );
+	};
+
+	closeMenu = () => {
 		this.removeMenuListener();
 		this.setState( {
-			actionMenuOpen: false
+			actionMenuOpen: false,
 		} );
-	},
+	};
 
-	actionMenuClick: function( event ) {
+	actionMenuClick = event => {
 		event.stopPropagation();
 		event.preventDefault();
 
 		if ( ! this.state.actionMenuOpen ) {
 			this.addMenuListener();
 			this.setState( {
-				actionMenuOpen: true
+				actionMenuOpen: true,
 			} );
 		} else {
 			this.closeMenu();
 		}
-	},
+	};
 
-	preventDefaultOnClick: function( event ) {
+	preventDefaultOnClick = event => {
 		event.preventDefault();
-	},
+	};
 
-	onClick: function( event ) {
+	onClick = event => {
 		var gaEvent,
 			moduleName = titlecase( this.props.moduleName );
 
@@ -79,7 +92,7 @@ module.exports = React.createClass( {
 				gaEvent = moduleState + moduleName;
 
 				this.setState( {
-					active: ! this.state.active
+					active: ! this.state.active,
 				} );
 			}
 
@@ -89,7 +102,11 @@ module.exports = React.createClass( {
 			} else if ( this.props.data.page && ! this.props.children ) {
 				gaEvent = [ 'Clicked', moduleName, 'Summary Link' ].join( ' ' );
 				page( this.props.data.page );
-			} else if ( this.props.data.link && ! this.props.children ) {
+			} else if (
+				this.props.data.link &&
+				! this.props.children &&
+				! ( this.isFollowersModule() && this.getSiteIdForFollow() )
+			) {
 				gaEvent = [ 'Clicked', moduleName, 'External Link' ].join( ' ' );
 
 				window.open( this.props.data.link );
@@ -101,22 +118,21 @@ module.exports = React.createClass( {
 				analytics.ga.recordEvent( 'Stats', gaEvent + ' in List' );
 			}
 		}
-	},
+	};
 
-	spamHandler: function( isSpammed ) {
+	spamHandler = isSpammed => {
 		this.setState( {
-			disabled: isSpammed
+			disabled: isSpammed,
 		} );
-	},
+	};
 
-	buildActions: function() {
+	buildActions = () => {
 		var data = this.props.data,
 			moduleName = titlecase( this.props.moduleName ),
 			actionMenu = data.actionMenu,
-			actionClassSet = classNames(
-				'module-content-list-item-actions',
-				{ collapsed: actionMenu && ! this.state.disabled }
-			),
+			actionClassSet = classNames( 'module-content-list-item-actions', {
+				collapsed: actionMenu && ! this.state.disabled,
+			} ),
 			actionList;
 
 		// If we have more than a default action build out actions ul
@@ -130,17 +146,30 @@ module.exports = React.createClass( {
 					case 'follow':
 						if ( action.data && this.props.followList ) {
 							var followSite = this.props.followList.add( action.data );
-							actionItem = <Follow followSite={ followSite } key={ action.type } moduleName={ moduleName } />;
+							actionItem = (
+								<Follow followSite={ followSite } key={ action.type } moduleName={ moduleName } />
+							);
 						}
 						break;
 					case 'page':
-						actionItem = <Page page={ action.page } key={ action.type } moduleName={ moduleName } />;
+						actionItem = (
+							<Page page={ action.page } key={ action.type } moduleName={ moduleName } />
+						);
 						break;
 					case 'spam':
-						actionItem = <Spam data={ action.data } key={ action.type } afterChange={ this.spamHandler } moduleName={ moduleName } />;
+						actionItem = (
+							<Spam
+								data={ action.data }
+								key={ action.type }
+								afterChange={ this.spamHandler }
+								moduleName={ moduleName }
+							/>
+						);
 						break;
 					case 'link':
-						actionItem = <OpenLink href={ action.data } key={ action.type } moduleName={ moduleName } />;
+						actionItem = (
+							<OpenLink href={ action.data } key={ action.type } moduleName={ moduleName } />
+						);
 						break;
 				}
 
@@ -150,14 +179,14 @@ module.exports = React.createClass( {
 			}, this );
 
 			if ( actionItems.length > 0 ) {
-				actionList = ( <ul className={ actionClassSet }>{ actionItems }</ul> );
+				actionList = <ul className={ actionClassSet }>{ actionItems }</ul>;
 			}
 		}
 
 		return actionList;
-	},
+	};
 
-	buildLabel: function() {
+	buildLabel = () => {
 		var data = this.props.data,
 			labelData = data.label,
 			wrapperClassSet,
@@ -167,7 +196,9 @@ module.exports = React.createClass( {
 			labelData = [ data ];
 		}
 
-		wrapperClassSet = classNames( { 'module-content-list-item-label-section': labelData.length > 1 } );
+		wrapperClassSet = classNames( {
+			'module-content-list-item-label-section': labelData.length > 1,
+		} );
 
 		label = labelData.map( function( labelItem, i ) {
 			var iconClassSetOptions = { avatar: true },
@@ -176,7 +207,7 @@ module.exports = React.createClass( {
 				itemLabel;
 
 			if ( labelItem.labelIcon ) {
-				gridiconSpan = ( <Gridicon icon={ labelItem.labelIcon } /> );
+				gridiconSpan = <Gridicon icon={ labelItem.labelIcon } />;
 			}
 
 			if ( labelItem.icon ) {
@@ -185,7 +216,7 @@ module.exports = React.createClass( {
 				}
 
 				icon = (
-					<span className='icon'>
+					<span className="icon">
 						<img alt="" src={ labelItem.icon } className={ classNames( iconClassSetOptions ) } />
 					</span>
 				);
@@ -193,22 +224,57 @@ module.exports = React.createClass( {
 
 			if ( labelItem.backgroundImage ) {
 				const style = { backgroundImage: `url( ${ labelItem.backgroundImage } )` };
-				icon = ( <span className="stats-list__flag-icon" style={ style } /> );
+				icon = <span className="stats-list__flag-icon" style={ style } />;
 			}
 
 			if ( data.link ) {
-				itemLabel = ( <a onClick={ this.preventDefaultOnClick } href={ data.link } >{ labelItem.label }</a> );
+				const href = data.link;
+				let onClickHandler = this.preventDefaultOnClick;
+				const siteId = this.getSiteIdForFollow();
+				if ( this.isFollowersModule && siteId ) {
+					onClickHandler = event => {
+						const modifierPressed =
+							event.button > 0 ||
+							event.metaKey ||
+							event.controlKey ||
+							event.shiftKey ||
+							event.altKey;
+						recordTrack( 'calypso_reader_stats_module_site_stream_link_click', {
+							siteId,
+							module_name: this.props.moduleName,
+							modifier_pressed: modifierPressed,
+						} );
+
+						if ( modifierPressed ) {
+							return;
+						}
+
+						event.preventDefault();
+						page( `/read/blogs/${ siteId }` );
+					};
+				}
+				itemLabel = (
+					<a onClick={ onClickHandler } href={ href }>
+						{ labelItem.label }
+					</a>
+				);
 			} else {
-				itemLabel = ( <Emojify>{ labelItem.label }</Emojify> );
+				itemLabel = <Emojify>{ labelItem.label }</Emojify>;
 			}
 
-			return ( <span className={ wrapperClassSet } key={ i } >{ gridiconSpan }{ icon }{ itemLabel } </span> );
+			return (
+				<span className={ wrapperClassSet } key={ i }>
+					{ gridiconSpan }
+					{ icon }
+					{ itemLabel }{' '}
+				</span>
+			);
 		}, this );
 
 		return label;
-	},
+	};
 
-	buildValue: function() {
+	buildValue = () => {
 		var data = this.props.data,
 			valueData = data.value,
 			value;
@@ -216,34 +282,34 @@ module.exports = React.createClass( {
 		if ( 'object' !== typeof valueData || ! valueData.type ) {
 			valueData = {
 				type: 'number',
-				value: valueData
+				value: valueData,
 			};
 		}
 
 		switch ( valueData.type ) {
 			case 'relative-date':
-				value = this.moment( valueData.value ).fromNow( true );
+				value = this.props.moment( valueData.value ).fromNow( true );
 				break;
 			default:
 			case 'number':
-				value = this.numberFormat( valueData.value );
+				value = this.props.numberFormat( valueData.value );
 				break;
 		}
 
 		return value;
-	},
+	};
 
-	render: function() {
+	render() {
 		var data = this.props.data,
 			rightClassOptions = {
-				'module-content-list-item-right': true
+				'module-content-list-item-right': true,
 			},
 			toggleOptions = {
 				'module-content-list-item-actions-toggle': true,
-				show: data.actionMenu && ! this.state.disabled
+				show: data.actionMenu && ! this.state.disabled,
 			},
 			actions = this.buildActions(),
-			toggleGridicon = ( <Gridicon icon="chevron-down" /> ),
+			toggleGridicon = <Gridicon icon="chevron-down" />,
 			toggleIcon = this.props.children ? toggleGridicon : null,
 			mobileActionToggle,
 			groupClassOptions,
@@ -254,7 +320,7 @@ module.exports = React.createClass( {
 			disabled: this.state.disabled,
 			'module-content-list-item-link': this.props.children || data.link || data.page,
 			'module-content-list-item-toggle': this.props.children,
-			'is-expanded': this.state.active
+			'is-expanded': this.state.active,
 		};
 
 		if ( data.className ) {
@@ -266,15 +332,10 @@ module.exports = React.createClass( {
 				<a
 					href="#"
 					onClick={ this.actionMenuClick }
-					className={
-						classNames( toggleOptions )
-					}
-					title={
-						this.translate(
-							'Show Actions',
-							{ context: 'Label for hidden menu in a list on the Stats page.' }
-						)
-					}
+					className={ classNames( toggleOptions ) }
+					title={ this.props.translate( 'Show Actions', {
+						context: 'Label for hidden menu in a list on the Stats page.',
+					} ) }
 				>
 					<Gridicon icon="ellipsis" />
 				</a>
@@ -286,16 +347,23 @@ module.exports = React.createClass( {
 
 		return (
 			<li key={ this.key } data-group={ this.key } className={ groupClassName }>
-				<span className='module-content-list-item-wrapper' onClick={ this.onClick } tabIndex="0">
+				<span className="module-content-list-item-wrapper" onClick={ this.onClick } tabIndex="0">
 					<span className={ classNames( rightClassOptions ) }>
 						{ mobileActionToggle }
 						{ actions }
-						<span className="module-content-list-item-value">{ data.value ? this.buildValue() : null }</span>
+						<span className="module-content-list-item-value">
+							{ data.value ? this.buildValue() : null }
+						</span>
 					</span>
-					<span className="module-content-list-item-label">{ toggleIcon }{ this.buildLabel() }</span>
+					<span className="module-content-list-item-label">
+						{ toggleIcon }
+						{ this.buildLabel() }
+					</span>
 				</span>
 				{ this.props.children }
 			</li>
 		);
 	}
-} );
+}
+
+export default localize( StatsListItem );

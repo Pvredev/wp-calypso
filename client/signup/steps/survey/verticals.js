@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { shuffle } from 'lodash';
 import { translate } from 'i18n-calypso';
 
@@ -31,6 +34,6 @@ export default {
 		if ( shuffledVerticals ) {
 			return shuffledVerticals;
 		}
-		return shuffledVerticals = shuffle( verticals );
-	}
+		return ( shuffledVerticals = shuffle( verticals ) );
+	},
 };

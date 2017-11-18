@@ -1,6 +1,10 @@
+/** @format */
+
 /**
- * External Dependencies
+ * External dependencies
  */
+
+import { includes } from 'lodash';
 import page from 'page';
 import React from 'react';
 
@@ -8,11 +12,11 @@ import React from 'react';
  * Internal Dependencies
  */
 import analytics from 'lib/analytics';
-import DnsData from 'components/data/domain-management/dns' ;
+import DnsData from 'components/data/domain-management/dns';
 import DomainManagement from './domain-management';
 import DomainManagementData from 'components/data/domain-management';
-import EmailData from 'components/data/domain-management/email' ;
-import EmailForwardingData from 'components/data/domain-management/email-forwarding' ;
+import EmailData from 'components/data/domain-management/email';
+import EmailForwardingData from 'components/data/domain-management/email-forwarding';
 import NameserversData from 'components/data/domain-management/nameservers';
 import paths from 'my-sites/domains/paths';
 import ProductsList from 'lib/products-list';
@@ -27,10 +31,7 @@ const productsList = new ProductsList();
 
 export default {
 	domainManagementList( pageContext ) {
-		analytics.pageView.record(
-			paths.domainManagementList( ':site' ),
-			'Domain Management'
-		);
+		analytics.pageView.record( paths.domainManagementList( ':site' ), 'Domain Management' );
 
 		renderWithReduxStore(
 			<DomainManagementData
@@ -49,9 +50,12 @@ export default {
 			'Domain Management › Edit'
 		);
 
+		const isTransfer = includes( pageContext.path, '/transfer/in/' );
+		const component = isTransfer ? DomainManagement.TransferIn : DomainManagement.Edit;
+
 		renderWithReduxStore(
 			<DomainManagementData
-				component={ DomainManagement.Edit }
+				component={ component }
 				context={ pageContext }
 				productsList={ productsList }
 				selectedDomainName={ pageContext.params.domain }
@@ -68,9 +72,7 @@ export default {
 		);
 
 		renderWithReduxStore(
-			<DomainManagement.PrimaryDomain
-				selectedDomainName={ pageContext.params.domain }
-			/>,
+			<DomainManagement.PrimaryDomain selectedDomainName={ pageContext.params.domain } />,
 			document.getElementById( 'primary' ),
 			pageContext.store
 		);
@@ -86,7 +88,8 @@ export default {
 			<WhoisData
 				component={ DomainManagement.ContactsPrivacy }
 				context={ pageContext }
-				selectedDomainName={ pageContext.params.domain } />,
+				selectedDomainName={ pageContext.params.domain }
+			/>,
 			document.getElementById( 'primary' ),
 			pageContext.store
 		);
@@ -102,7 +105,8 @@ export default {
 			<WhoisData
 				component={ DomainManagement.EditContactInfo }
 				context={ pageContext }
-				selectedDomainName={ pageContext.params.domain } />,
+				selectedDomainName={ pageContext.params.domain }
+			/>,
 			document.getElementById( 'primary' ),
 			pageContext.store
 		);
@@ -183,7 +187,8 @@ export default {
 			<WhoisData
 				component={ DomainManagement.PrivacyProtection }
 				context={ pageContext }
-				selectedDomainName={ pageContext.params.domain } />,
+				selectedDomainName={ pageContext.params.domain }
+			/>,
 			document.getElementById( 'primary' ),
 			pageContext.store
 		);
@@ -191,7 +196,10 @@ export default {
 
 	domainManagementAddGoogleApps( pageContext ) {
 		analytics.pageView.record(
-			paths.domainManagementAddGoogleApps( ':site', pageContext.params.domain ? ':domain' : undefined ),
+			paths.domainManagementAddGoogleApps(
+				':site',
+				pageContext.params.domain ? ':domain' : undefined
+			),
 			'Domain Management › Add Google Apps'
 		);
 
@@ -216,7 +224,8 @@ export default {
 		renderWithReduxStore(
 			<SiteRedirectData
 				component={ DomainManagement.SiteRedirect }
-				selectedDomainName={ pageContext.params.domain } />,
+				selectedDomainName={ pageContext.params.domain }
+			/>,
 			document.getElementById( 'primary' ),
 			pageContext.store
 		);
@@ -233,7 +242,8 @@ export default {
 		renderWithReduxStore(
 			<TransferData
 				component={ DomainManagement.Transfer }
-				selectedDomainName={ pageContext.params.domain } />,
+				selectedDomainName={ pageContext.params.domain }
+			/>,
 			document.getElementById( 'primary' ),
 			pageContext.store
 		);
@@ -252,7 +262,8 @@ export default {
 		renderWithReduxStore(
 			<TransferData
 				component={ DomainManagement.TransferToOtherSite }
-				selectedDomainName={ pageContext.params.domain } />,
+				selectedDomainName={ pageContext.params.domain }
+			/>,
 			document.getElementById( 'primary' ),
 			pageContext.store
 		);
@@ -271,7 +282,8 @@ export default {
 		renderWithReduxStore(
 			<TransferData
 				component={ DomainManagement.TransferToOtherUser }
-				selectedDomainName={ pageContext.params.domain } />,
+				selectedDomainName={ pageContext.params.domain }
+			/>,
 			document.getElementById( 'primary' ),
 			pageContext.store
 		);
@@ -281,9 +293,10 @@ export default {
 		renderWithReduxStore(
 			<TransferData
 				component={ DomainManagement.TransferOut }
-				selectedDomainName={ pageContext.params.domain } />,
+				selectedDomainName={ pageContext.params.domain }
+			/>,
 			document.getElementById( 'primary' ),
 			pageContext.store
 		);
-	}
+	},
 };

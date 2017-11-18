@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { get } from 'lodash';
 
 /**
@@ -16,7 +19,7 @@ export function serialize( { id } ) {
 	return Shortcode.stringify( {
 		tag: 'simple-payment',
 		type: 'single',
-		attrs: { id }
+		attrs: { id },
 	} );
 }
 

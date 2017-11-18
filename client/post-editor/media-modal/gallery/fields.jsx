@@ -1,7 +1,11 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React from 'react';
 import { assign, fromPairs, includes, noop, times } from 'lodash';
 import { localize } from 'i18n-calypso';
 
@@ -15,29 +19,26 @@ import FormCheckbox from 'components/forms/form-checkbox';
 import { GalleryColumnedTypes, GallerySizeableTypes } from 'lib/media/constants';
 import { isModuleActive } from 'lib/site/utils';
 
-export const EditorMediaModalGalleryFields = React.createClass( {
-
-	propTypes: {
+export class EditorMediaModalGalleryFields extends React.Component {
+	static propTypes = {
 		site: PropTypes.object,
 		settings: PropTypes.object,
 		onUpdateSetting: PropTypes.func,
-		numberOfItems: PropTypes.number
-	},
+		numberOfItems: PropTypes.number,
+	};
 
-	getDefaultProps() {
-		return {
-			settings: Object.freeze( {} ),
-			onUpdateSetting: noop,
-			numberOfItems: 0
-		};
-	},
+	static defaultProps = {
+		settings: Object.freeze( {} ),
+		onUpdateSetting: noop,
+		numberOfItems: 0,
+	};
 
-	getTypeOptions() {
+	getTypeOptions = () => {
 		const { site } = this.props;
 
 		const options = {
 			individual: this.props.translate( 'Individual Images' ),
-			'default': this.props.translate( 'Thumbnail Grid' )
+			default: this.props.translate( 'Thumbnail Grid' ),
 		};
 
 		if ( site && ( ! site.jetpack || isModuleActive( site, 'tiled-gallery' ) ) ) {
@@ -45,20 +46,20 @@ export const EditorMediaModalGalleryFields = React.createClass( {
 				rectangular: this.props.translate( 'Tiled Mosaic' ),
 				square: this.props.translate( 'Square Tiles' ),
 				circle: this.props.translate( 'Circles' ),
-				columns: this.props.translate( 'Tiled Columns' )
+				columns: this.props.translate( 'Tiled Columns' ),
 			} );
 		}
 
 		if ( site && ( ! site.jetpack || isModuleActive( site, 'shortcodes' ) ) ) {
 			assign( options, {
-				slideshow: this.props.translate( 'Slideshow' )
+				slideshow: this.props.translate( 'Slideshow' ),
 			} );
 		}
 
 		return options;
-	},
+	};
 
-	getLinkOptions() {
+	getLinkOptions = () => {
 		if ( 'individual' === this.props.settings.type ) {
 			return {};
 		}
@@ -68,9 +69,9 @@ export const EditorMediaModalGalleryFields = React.createClass( {
 			file: this.props.translate( 'Media File' ),
 			none: this.props.translate( 'None' ),
 		};
-	},
+	};
 
-	getSizeOptions() {
+	getSizeOptions = () => {
 		if ( ! includes( GallerySizeableTypes, this.props.settings.type ) ) {
 			return {};
 		}
@@ -81,18 +82,18 @@ export const EditorMediaModalGalleryFields = React.createClass( {
 			large: this.props.translate( 'Large' ),
 			full: this.props.translate( 'Full Size' ),
 		};
-	},
+	};
 
-	getColumnOptions() {
+	getColumnOptions = () => {
 		const max = Math.min( this.props.numberOfItems, 9 );
-		return fromPairs( times( max, ( n ) => [ n + 1, ( n + 1 ).toString() ] ) );
-	},
+		return fromPairs( times( max, n => [ n + 1, ( n + 1 ).toString() ] ) );
+	};
 
-	updateRandomOrder( event ) {
+	updateRandomOrder = event => {
 		this.props.onUpdateSetting( 'orderBy', event.target.checked ? 'rand' : null );
-	},
+	};
 
-	renderDropdown( legend, options, settingName ) {
+	renderDropdown = ( legend, options, settingName ) => {
 		const { settings, onUpdateSetting } = this.props;
 
 		if ( ! Object.keys( options ).length ) {
@@ -102,14 +103,16 @@ export const EditorMediaModalGalleryFields = React.createClass( {
 		return (
 			<EditorMediaModalFieldset legend={ legend } className={ 'for-setting-' + settingName }>
 				<SelectDropdown selectedText={ options[ settings[ settingName ] ] }>
-					{ Object.keys( options ).map( ( value ) => {
+					{ Object.keys( options ).map( value => {
 						const label = options[ value ];
 
 						return (
 							<SelectDropdownItem
 								key={ 'value-' + value }
 								selected={ value === settings[ settingName ] }
-								onClick={ () => onUpdateSetting( settingName, isFinite( parseInt( value ) ) ? +value : value ) }>
+								onClick={ () =>
+									onUpdateSetting( settingName, isFinite( parseInt( value ) ) ? +value : value ) }
+							>
 								{ label }
 							</SelectDropdownItem>
 						);
@@ -117,17 +120,21 @@ export const EditorMediaModalGalleryFields = React.createClass( {
 				</SelectDropdown>
 			</EditorMediaModalFieldset>
 		);
-	},
+	};
 
-	renderColumnsOption() {
+	renderColumnsOption = () => {
 		if ( ! includes( GalleryColumnedTypes, this.props.settings.type ) ) {
 			return;
 		}
 
-		return this.renderDropdown( this.props.translate( 'Columns' ), this.getColumnOptions(), 'columns' );
-	},
+		return this.renderDropdown(
+			this.props.translate( 'Columns' ),
+			this.getColumnOptions(),
+			'columns'
+		);
+	};
 
-	renderRandomOption() {
+	renderRandomOption = () => {
 		const { settings } = this.props;
 
 		if ( 'individual' === settings.type ) {
@@ -139,7 +146,7 @@ export const EditorMediaModalGalleryFields = React.createClass( {
 				<FormCheckbox onChange={ this.updateRandomOrder } checked={ settings.orderBy === 'rand' } />
 			</EditorMediaModalFieldset>
 		);
-	},
+	};
 
 	render() {
 		const types = this.getTypeOptions();
@@ -156,6 +163,6 @@ export const EditorMediaModalGalleryFields = React.createClass( {
 			</div>
 		);
 	}
-} );
+}
 
 export default localize( EditorMediaModalGalleryFields );

@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { find, get, isArray } from 'lodash';
 
 /**
@@ -49,7 +52,7 @@ export const areSettingsGeneralLoadError = ( state, siteId = getSelectedSiteId( 
  */
 export function getPaymentCurrencySettings( state, siteId = getSelectedSiteId( state ) ) {
 	const generalSettings = getRawGeneralSettings( state, siteId );
-	const currency = find( generalSettings, ( item ) => item.id === 'woocommerce_currency' );
+	const currency = find( generalSettings, item => item.id === 'woocommerce_currency' );
 	return currency || {};
 }
 
@@ -86,7 +89,7 @@ export const getStoreLocation = ( state, siteId = getSelectedSiteId( state ) ) =
 
 	// WooCommerce uses country to hold both country and state (e.g. US:CT)
 	// let's fix that here
-	if ( address.country.indexOf( ':' ) ) {
+	if ( address.country && address.country.indexOf( ':' ) ) {
 		const parts = address.country.split( ':' );
 		address.country = parts[ 0 ];
 		address.state = parts[ 1 ];
@@ -106,5 +109,5 @@ export const areTaxCalculationsEnabled = ( state, siteId = getSelectedSiteId( st
 	if ( ! ( 'value' in taxesEnabled ) ) {
 		return null;
 	}
-	return ( 'yes' === taxesEnabled.value );
+	return 'yes' === taxesEnabled.value;
 };

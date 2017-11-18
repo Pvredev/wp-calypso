@@ -1,6 +1,10 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
+import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { omitBy, isNull } from 'lodash';
@@ -13,17 +17,17 @@ import LikeIcons from './icons';
 
 class LikeButton extends PureComponent {
 	static propTypes = {
-		liked: React.PropTypes.bool,
-		showZeroCount: React.PropTypes.bool,
-		likeCount: React.PropTypes.number,
-		showLabel: React.PropTypes.bool,
-		tagName: React.PropTypes.string,
-		onLikeToggle: React.PropTypes.func,
-		likedLabel: React.PropTypes.string,
-		iconSize: React.PropTypes.number,
-		animateLike: React.PropTypes.bool,
-		postId: React.PropTypes.number,
-		slug: React.PropTypes.string,
+		liked: PropTypes.bool,
+		showZeroCount: PropTypes.bool,
+		likeCount: PropTypes.number,
+		showLabel: PropTypes.bool,
+		tagName: PropTypes.string,
+		onLikeToggle: PropTypes.func,
+		likedLabel: PropTypes.string,
+		iconSize: PropTypes.number,
+		animateLike: PropTypes.bool,
+		postId: PropTypes.number,
+		slug: PropTypes.string,
 	};
 
 	static defaultProps = {
@@ -102,11 +106,12 @@ class LikeButton extends PureComponent {
 			</span>
 		);
 
+		const href = isLink ? `/stats/post/${ postId }/${ slug }` : null;
 		return React.createElement(
 			containerTag,
 			omitBy(
 				{
-					href: isLink && `/stats/post/${ postId }/${ slug }`,
+					href,
 					className: classNames( containerClasses ),
 					onClick: ! isLink && this.toggleLiked,
 				},

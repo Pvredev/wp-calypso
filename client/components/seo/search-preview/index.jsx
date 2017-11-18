@@ -1,15 +1,13 @@
+/** @format */
+
 /**
  * External dependencies
  */
-import React, { PropTypes } from 'react';
-import PureRenderMixin from 'react-pure-render/mixin';
 
-import {
-	firstValid,
-	hardTruncation,
-	shortEnough,
-	truncatedAtSpace
-} from '../helpers';
+import PropTypes from 'prop-types';
+import { localize } from 'i18n-calypso';
+import React from 'react';
+import { firstValid, hardTruncation, shortEnough, truncatedAtSpace } from '../helpers';
 
 const TITLE_LENGTH = 63;
 const SNIPPET_LENGTH = 160;
@@ -28,45 +26,33 @@ const googleSnippet = firstValid(
 
 const googleUrl = hardTruncation( 79 );
 
-export const SearchPreview = React.createClass( {
-	mixins: [ PureRenderMixin ],
-
+export class SearchPreview extends React.PureComponent {
 	render() {
-		const {
-			snippet,
-			title,
-			url
-		} = this.props;
+		const { snippet, title, url } = this.props;
 
 		return (
 			<div className="seo-search-preview">
-				<h2 className="seo-search-preview__header">{ this.translate( 'Search Preview' ) }</h2>
+				<h2 className="seo-search-preview__header">{ this.props.translate( 'Search Preview' ) }</h2>
 				<div className="seo-search-preview__display">
-					<div className="seo-search-preview__title">
-						{ googleTitle( title ) }
-					</div>
-					<div className="seo-search-preview__url">
-						{ googleUrl( url ) } ▾
-					</div>
-					<div className="seo-search-preview__snippet">
-						{ googleSnippet( snippet || '' ) }
-					</div>
+					<div className="seo-search-preview__title">{ googleTitle( title ) }</div>
+					<div className="seo-search-preview__url">{ googleUrl( url ) } ▾</div>
+					<div className="seo-search-preview__snippet">{ googleSnippet( snippet || '' ) }</div>
 				</div>
 			</div>
 		);
 	}
-} );
+}
 
 SearchPreview.propTypes = {
 	title: PropTypes.string,
 	url: PropTypes.string,
-	snippet: PropTypes.string
+	snippet: PropTypes.string,
 };
 
 SearchPreview.defaultProps = {
 	title: '',
 	url: '',
-	snippet: ''
+	snippet: '',
 };
 
-export default SearchPreview;
+export default localize( SearchPreview );

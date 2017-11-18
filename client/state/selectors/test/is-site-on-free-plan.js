@@ -1,45 +1,38 @@
+/** @format */
 /**
  * External dependencies
  */
-import deepFreeze from 'deep-freeze';
 import { expect } from 'chai';
-import { stub } from 'sinon';
+import deepFreeze from 'deep-freeze';
 
 /**
  * Internal dependencies
  */
-import {
-	PLAN_BUSINESS,
-	PLAN_FREE
-} from 'lib/plans/constants';
-import useMockery from 'test/helpers/use-mockery';
+import isSiteOnFreePlan from '../is-site-on-free-plan';
+import { PLAN_BUSINESS, PLAN_FREE, PLAN_JETPACK_FREE } from 'lib/plans/constants';
+import { getCurrentPlan } from 'state/sites/plans/selectors';
+jest.mock( 'state/sites/plans/selectors', () => ( { getCurrentPlan: require( 'sinon' ).stub() } ) );
 
 describe( 'isSiteOnFreePlan', () => {
 	const state = deepFreeze( {} );
-	let getCurrentPlan;
-	let isSiteOnFreePlan;
 
-	useMockery( mockery => {
-		getCurrentPlan = stub();
-		mockery.registerMock( 'state/sites/plans/selectors', { getCurrentPlan } );
-	} );
-
-	before( () => {
-		isSiteOnFreePlan = require( '../is-site-on-free-plan' );
-	} );
-
-	it( 'should return false when plan is not known', () => {
+	test( 'should return false when plan is not known', () => {
 		getCurrentPlan.returns( null );
 		expect( isSiteOnFreePlan( state, 'site1' ) ).to.be.false;
 	} );
 
-	it( 'should return false when not on free plan', () => {
+	test( 'should return false when not on free plan', () => {
 		getCurrentPlan.returns( { productSlug: PLAN_BUSINESS } );
 		expect( isSiteOnFreePlan( state, 'site1' ) ).to.be.false;
 	} );
 
-	it( 'should return true when on free plan', () => {
+	test( 'should return true when on free plan', () => {
 		getCurrentPlan.returns( { productSlug: PLAN_FREE } );
+		expect( isSiteOnFreePlan( state, 'site1' ) ).to.be.true;
+	} );
+
+	test( 'should return true when on free Jetpack plan', () => {
+		getCurrentPlan.returns( { productSlug: PLAN_JETPACK_FREE } );
 		expect( isSiteOnFreePlan( state, 'site1' ) ).to.be.true;
 	} );
 } );

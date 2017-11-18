@@ -1,6 +1,9 @@
+/** @format */
+
 /**
  * External dependencies
  */
+
 import { omit, omitBy } from 'lodash';
 
 /**

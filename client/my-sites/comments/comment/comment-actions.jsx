@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 import Gridicon from 'gridicons';
 import classNames from 'classnames';
-import { get, includes } from 'lodash';
+import { get, includes, noop } from 'lodash';
 
 /**
  * Internal dependencies
@@ -29,7 +29,6 @@ import {
 } from 'state/comments/actions';
 import { removeNotice, successNotice } from 'state/notices/actions';
 import { getSiteComment } from 'state/selectors';
-import { getSelectedSiteId } from 'state/ui/selectors';
 
 const commentActions = {
 	unapproved: [ 'like', 'approve', 'edit', 'reply', 'spam', 'trash' ],
@@ -40,15 +39,16 @@ const commentActions = {
 
 export class CommentActions extends Component {
 	static propTypes = {
+		siteId: PropTypes.number,
+		postId: PropTypes.number,
 		commentId: PropTypes.number,
 		toggleEditMode: PropTypes.func,
 		toggleReply: PropTypes.func,
 		updateLastUndo: PropTypes.func,
 	};
 
-	delete = () => {
-		const { deletePermanently, commentId, postId, siteId } = this.props;
-		deletePermanently( siteId, postId, commentId );
+	static defaultProps = {
+		updateLastUndo: noop,
 	};
 
 	hasAction = action => includes( commentActions[ this.props.commentStatus ], action );
@@ -56,28 +56,19 @@ export class CommentActions extends Component {
 	setSpam = () => this.setStatus( 'spam' );
 
 	setStatus = status => {
-		const {
-			changeStatus,
-			commentId,
-			commentIsLiked,
-			commentStatus,
-			postId,
-			siteId,
-			unlike,
-			updateLastUndo,
-		} = this.props;
+		const { changeStatus, commentIsLiked, commentStatus, unlike, updateLastUndo } = this.props;
 
 		const alsoUnlike = commentIsLiked && 'approved' !== status;
 
 		updateLastUndo( null );
 
-		changeStatus( siteId, postId, commentId, status, {
+		changeStatus( status, {
 			alsoUnlike,
 			previousStatus: commentStatus,
 		} );
 
 		if ( alsoUnlike ) {
-			unlike( siteId, postId, commentId );
+			unlike();
 		}
 
 		this.showNotice( status );
@@ -111,23 +102,23 @@ export class CommentActions extends Component {
 	};
 
 	undo = ( status, previousCommentData ) => () => {
-		const { changeStatus, commentId, like, postId, siteId, unlike, updateLastUndo } = this.props;
+		const { changeStatus, commentId, like, unlike, updateLastUndo } = this.props;
 		const { isLiked: wasLiked, status: previousStatus } = previousCommentData;
 		const alsoApprove = 'approved' !== status && 'approved' === previousStatus;
 		const alsoUnlike = ! wasLiked && 'approved' !== previousStatus;
 
 		updateLastUndo( commentId );
 
-		changeStatus( siteId, postId, commentId, previousStatus, {
+		changeStatus( previousStatus, {
 			alsoUnlike,
 			isUndo: true,
 			previousStatus: status,
 		} );
 
 		if ( wasLiked ) {
-			like( siteId, postId, commentId, { alsoApprove } );
+			like( { alsoApprove } );
 		} else if ( alsoUnlike ) {
-			unlike( siteId, postId, commentId );
+			unlike();
 		}
 
 		this.props.removeNotice( 'comment-notice' );
@@ -136,15 +127,15 @@ export class CommentActions extends Component {
 	toggleApproved = () => this.setStatus( this.props.commentIsApproved ? 'unapproved' : 'approved' );
 
 	toggleLike = () => {
-		const { commentId, commentIsLiked, commentStatus, like, postId, siteId, unlike } = this.props;
+		const { commentIsLiked, commentStatus, like, unlike } = this.props;
 
 		if ( commentIsLiked ) {
-			return unlike( siteId, postId, commentId );
+			return unlike();
 		}
 
 		const alsoApprove = 'unapproved' === commentStatus;
 
-		like( siteId, postId, commentId, { alsoApprove } );
+		like( { alsoApprove } );
 
 		if ( alsoApprove ) {
 			this.setStatus( 'approved' );
@@ -201,7 +192,7 @@ export class CommentActions extends Component {
 					<Button
 						borderless
 						className="comment__action comment__action-delete"
-						onClick={ this.delete }
+						onClick={ this.props.deletePermanently }
 					>
 						<Gridicon icon="trash" />
 						<span>{ translate( 'Delete Permanently' ) }</span>
@@ -247,8 +238,7 @@ export class CommentActions extends Component {
 	}
 }
 
-const mapStateToProps = ( state, { commentId } ) => {
-	const siteId = getSelectedSiteId( state );
+const mapStateToProps = ( state, { siteId, commentId } ) => {
 	const comment = getSiteComment( state, siteId, commentId );
 	const commentStatus = get( comment, 'status' );
 
@@ -257,19 +247,11 @@ const mapStateToProps = ( state, { commentId } ) => {
 		commentIsLiked: get( comment, 'i_like' ),
 		commentStatus,
 		minimumComment: getMinimumComment( comment ),
-		postId: get( comment, 'post.ID' ),
-		siteId,
 	};
 };
 
-const mapDispatchToProps = dispatch => ( {
-	changeStatus: (
-		siteId,
-		postId,
-		commentId,
-		status,
-		analytics = { alsoUnlike: false, isUndo: false }
-	) =>
+const mapDispatchToProps = ( dispatch, { siteId, postId, commentId } ) => ( {
+	changeStatus: ( status, analytics = { alsoUnlike: false, isUndo: false } ) =>
 		dispatch(
 			withAnalytics(
 				composeAnalytics(
@@ -284,7 +266,7 @@ const mapDispatchToProps = dispatch => ( {
 				changeCommentStatus( siteId, postId, commentId, status )
 			)
 		),
-	deletePermanently: ( siteId, postId, commentId ) =>
+	deletePermanently: () =>
 		dispatch(
 			withAnalytics(
 				composeAnalytics(
@@ -294,7 +276,7 @@ const mapDispatchToProps = dispatch => ( {
 				deleteComment( siteId, postId, commentId, { showSuccessNotice: true } )
 			)
 		),
-	like: ( siteId, postId, commentId, analytics = { alsoApprove: false } ) =>
+	like: ( analytics = { alsoApprove: false } ) =>
 		dispatch(
 			withAnalytics(
 				composeAnalytics(
@@ -308,7 +290,7 @@ const mapDispatchToProps = dispatch => ( {
 		),
 	removeNotice: noticeId => dispatch( removeNotice( noticeId ) ),
 	successNotice: ( text, options ) => dispatch( successNotice( text, options ) ),
-	unlike: ( siteId, postId, commentId ) =>
+	unlike: () =>
 		dispatch(
 			withAnalytics(
 				composeAnalytics(

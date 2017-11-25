@@ -32,12 +32,17 @@ import { getSiteComment } from 'state/selectors';
 import { NEWEST_FIRST, OLDEST_FIRST } from '../constants';
 
 const bulkActions = {
-	unapproved: [ 'approve', 'unapprove', 'spam', 'trash' ],
-	approved: [ 'approve', 'unapprove', 'spam', 'trash' ],
+	unapproved: [ 'approve', 'spam', 'trash' ],
+	approved: [ 'unapprove', 'spam', 'trash' ],
 	spam: [ 'approve', 'delete' ],
 	trash: [ 'approve', 'spam', 'delete' ],
 	all: [ 'approve', 'unapprove', 'spam', 'trash' ],
 };
+
+if ( ! isEnabled( 'comments/management/m3-design' ) ) {
+	bulkActions.approved.push( 'approve' );
+	bulkActions.unapproved.push( 'unapprove' );
+}
 
 export class CommentNavigation extends Component {
 	static defaultProps = {
@@ -184,9 +189,9 @@ export class CommentNavigation extends Component {
 						</ButtonGroup>
 					</CommentNavigationTab>
 					<CommentNavigationTab className="comment-navigation__close-bulk">
-						<a onClick={ toggleBulkEdit }>
+						<Button borderless onClick={ toggleBulkEdit } tabIndex="0">
 							<Gridicon icon="cross" />
-						</a>
+						</Button>
 					</CommentNavigationTab>
 				</SectionNav>
 			);

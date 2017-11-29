@@ -24,12 +24,7 @@ import { fetchPost } from 'lib/feed-post-store/actions';
 import ReaderFullPostHeader from './header';
 import AuthorCompactProfile from 'blocks/author-compact-profile';
 import LikeButton from 'reader/like-button';
-import {
-	isDiscoverPost,
-	isDiscoverSitePick,
-	getSourceFollowUrl,
-	getSiteUrl,
-} from 'reader/discover/helper';
+import { isDiscoverPost, isDiscoverSitePick } from 'reader/discover/helper';
 import DiscoverSiteAttribution from 'reader/discover/site-attribution';
 import DailyPostButton from 'blocks/daily-post-button';
 import { isDailyPostChallengeOrPrompt } from 'blocks/daily-post-button/helper';
@@ -71,6 +66,7 @@ import { showSelectedPost } from 'reader/utils';
 import Emojify from 'components/emojify';
 import config from 'config';
 import { COMMENTS_FILTER_ALL } from 'blocks/comments/comments-filters';
+import { READER_FULL_POST } from 'reader/follow-button/follow-sources';
 
 export class FullPostView extends React.Component {
 	static propTypes = {
@@ -398,13 +394,7 @@ export class FullPostView extends React.Component {
 								! isDiscoverPost( post ) && (
 									<PostExcerptLink siteName={ siteName } postUrl={ post.URL } />
 								) }
-							{ isDiscoverSitePick( post ) && (
-								<DiscoverSiteAttribution
-									attribution={ post.discover_metadata.attribution }
-									siteUrl={ getSiteUrl( post ) }
-									followUrl={ getSourceFollowUrl( post ) }
-								/>
-							) }
+							{ isDiscoverSitePick( post ) && <DiscoverSiteAttribution post={ post } /> }
 							{ isDailyPostChallengeOrPrompt( post ) && (
 								<DailyPostButton post={ post } site={ site } />
 							) }
@@ -454,6 +444,7 @@ export class FullPostView extends React.Component {
 										maxDepth={ 1 }
 										commentsFilterDisplay={ COMMENTS_FILTER_ALL }
 										showConversationFollowButton={ true }
+										followSource={ READER_FULL_POST }
 									/>
 								) }
 							</div>

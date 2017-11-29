@@ -22,6 +22,7 @@ import installActionHandlers from './state/data-layer';
 import Order from './app/order';
 import OrderCreate from './app/order/order-create';
 import Orders from './app/orders';
+import ProductCategories from './app/product-categories';
 import Products from './app/products';
 import ProductCreate from './app/products/product-create';
 import ProductUpdate from './app/products/product-update';
@@ -65,6 +66,12 @@ const getStorePages = () => {
 			configKey: 'woocommerce/extension-products',
 			documentTitle: translate( 'Edit Product' ),
 			path: '/store/product/:site/:product',
+		},
+		{
+			container: ProductCategories,
+			configKey: 'woocommerce/extension-product-categories',
+			documentTitle: translate( 'Product Categories' ),
+			path: '/store/products/categories/:site',
 		},
 		{
 			container: Orders,
@@ -156,16 +163,13 @@ const getStorePages = () => {
 			documentTitle: translate( 'Tax Settings' ),
 			path: '/store/settings/taxes/:site',
 		},
-	];
-
-	if ( config.isEnabled( 'woocommerce/extension-settings-email' ) ) {
-		pages.push( {
+		{
 			container: SettingsEmail,
 			configKey: 'woocommerce/extension-settings-email',
 			documentTitle: translate( 'Email' ),
 			path: '/store/settings/email/:site/:setup?',
-		} );
-	}
+		},
+	];
 
 	return pages;
 };

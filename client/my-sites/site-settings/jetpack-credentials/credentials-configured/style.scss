@@ -13,6 +13,7 @@
 	display: inline-block;
 	vertical-align: middle;
 	width: 85%;
+	color: $gray-dark;
 }
 
 .credentials-configured__header-gridicon {
@@ -28,4 +29,19 @@
 	width: 500px;
 	color: $gray;
 	font-size: 1.3rem;
+}
+
+.credentials-configured__revoke-actions {
+	text-align: right;
+}
+
+.credentials-configured__revoke-button.is-borderless {
+	margin-right: 2rem;
+	position: relative;
+	top: -5px;
+}
+
+.credentials-configured__revoke-icon {
+	color: $alert-red;
+	margin-right: .5rem;
 }

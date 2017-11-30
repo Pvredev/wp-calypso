@@ -34,11 +34,12 @@ import userUtilities from 'lib/user/utils';
 import { decodeEntities } from 'lib/formatting';
 import { externalRedirect } from 'lib/route/path';
 import { getCurrentUser } from 'state/current-user/selectors';
-import { getJetpackConnectRedirectAfterAuth } from 'state/selectors';
+import { getJetpackConnectRedirectAfterAuth, getJetpackConnectPartnerId } from 'state/selectors';
 import { isRequestingSite, isRequestingSites } from 'state/sites/selectors';
 import { login } from 'lib/paths';
 import { recordTracksEvent as recordTracksEventAction } from 'state/analytics/actions';
 import { urlToSlug } from 'lib/url';
+import { isCalypsoStartedConnection } from './persistence-utils';
 import {
 	authorize as authorizeAction,
 	goBackToWpAdmin as goBackToWpAdminAction,
@@ -53,9 +54,9 @@ import {
 	getUserAlreadyConnected,
 	hasExpiredSecretError as hasExpiredSecretErrorSelector,
 	hasXmlrpcError as hasXmlrpcErrorSelector,
-	isCalypsoStartedConnection,
 	isRemoteSiteOnSitesList,
 } from 'state/jetpack-connect/selectors';
+import config from 'config';
 
 /**
  * Constants
@@ -63,6 +64,7 @@ import {
 const MAX_AUTH_ATTEMPTS = 3;
 const PLANS_PAGE = '/jetpack/connect/plans/';
 const debug = debugModule( 'calypso:jetpack-connect:authorize-form' );
+const PRESSABLE_PARTNER_ID = 49640;
 
 class LoggedInForm extends Component {
 	static propTypes = {
@@ -137,7 +139,12 @@ class LoggedInForm extends Component {
 
 		// For SSO, WooCommerce Services, and JPO users, do not display plans page
 		// Instead, redirect back to admin as soon as we're connected
-		if ( nextProps.isSSO || nextProps.isWoo || this.isFromJpo( nextProps ) ) {
+		if (
+			nextProps.isSSO ||
+			nextProps.isWoo ||
+			this.isFromJpo( nextProps ) ||
+			this.shouldRedirectJetpackStart( nextProps )
+		) {
 			if ( ! isRedirectingToWpAdmin && authorizeSuccess ) {
 				return goBackToWpAdmin( redirectAfterAuth );
 			}
@@ -167,7 +174,12 @@ class LoggedInForm extends Component {
 		const { goBackToWpAdmin, redirectAfterAuth } = this.props;
 		const { queryObject } = this.props.authorizationData;
 
-		if ( this.props.isSSO || this.props.isWoo || this.isFromJpo( this.props ) ) {
+		if (
+			this.props.isSSO ||
+			this.props.isWoo ||
+			this.isFromJpo( this.props ) ||
+			this.shouldRedirectJetpackStart( this.props )
+		) {
 			debug(
 				'Going back to WP Admin.',
 				'Connection initiated via: ',
@@ -183,6 +195,17 @@ class LoggedInForm extends Component {
 
 	isFromJpo( props ) {
 		return startsWith( get( props, [ 'authorizationData', 'queryObject', 'from' ] ), 'jpo' );
+	}
+
+	shouldRedirectJetpackStart( { partnerId } ) {
+		const partnerRedirectFlag = config.isEnabled(
+			'jetpack/connect-redirect-pressable-credential-approval'
+		);
+
+		// If the redirect flag is set, then we conditionally redirect the Pressable client to
+		// a credential approval screen. Otherwise, we need to redirect all other partners back
+		// to wp-admin.
+		return partnerRedirectFlag ? partnerId && PRESSABLE_PARTNER_ID !== partnerId : partnerId;
 	}
 
 	handleClickDisclaimer = () => {
@@ -471,7 +494,17 @@ class LoggedInForm extends Component {
 	}
 
 	getRedirectionTarget() {
-		return PLANS_PAGE + this.props.siteSlug;
+		const { partnerId, siteId, siteSlug } = this.props;
+
+		// Redirect sites hosted on Pressable with a partner plan to some URL.
+		if (
+			config.isEnabled( 'jetpack/connect-redirect-pressable-credential-approval' ) &&
+			PRESSABLE_PARTNER_ID === partnerId
+		) {
+			return `/start/pressable-nux?blogid=${ siteId }`;
+		}
+
+		return PLANS_PAGE + siteSlug;
 	}
 
 	renderFooterLinks() {
@@ -577,7 +610,7 @@ export default connect(
 		return {
 			authAttempts: getAuthAttempts( state, siteSlug ),
 			authorizationData: getAuthorizationData( state ),
-			calypsoStartedConnection: isCalypsoStartedConnection( state, remoteSiteUrl ),
+			calypsoStartedConnection: isCalypsoStartedConnection( remoteSiteUrl ),
 			hasExpiredSecretError: hasExpiredSecretErrorSelector( state ),
 			hasXmlrpcError: hasXmlrpcErrorSelector( state ),
 			isAlreadyOnSitesList: isRemoteSiteOnSitesList( state ),
@@ -585,9 +618,11 @@ export default connect(
 			isFetchingSites: isRequestingSites( state ),
 			redirectAfterAuth: getJetpackConnectRedirectAfterAuth( state ),
 			remoteSiteUrl,
+			siteId,
 			siteSlug,
 			user: getCurrentUser( state ),
 			userAlreadyConnected: getUserAlreadyConnected( state ),
+			partnerId: getJetpackConnectPartnerId( state ),
 		};
 	},
 	{

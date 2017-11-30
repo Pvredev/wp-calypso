@@ -40,10 +40,12 @@
 		"jetpack/activity-log": true,
 		"jetpack/activity-log/rewind": true,
 		"jetpack/api-cache": true,
+		"jetpack/connect-redirect-pressable-credential-approval": true,
 		"jetpack/credentials": true,
 		"jetpack/happychat": true,
 		"jetpack/google-analytics-anonymize-ip": true,
 		"jetpack/google-analytics-for-stores": true,
+		"jetpack/google-analytics-for-stores-enhanced": true,
 		"jetpack_core_inline_update": true,
 		"jitms": true,
 		"login/magic-login": true,
@@ -154,7 +156,7 @@
 		"woocommerce/extension-settings-tax": true,
 		"woocommerce/extension-wcservices": true,
 		"woocommerce/store-on-non-atomic-sites": true,
-		"wpcom-user-bootstrap": false
+		"wpcom-user-bootstrap": true
 	},
 	"siftscience_key": "e00e878351",
 	"wpcom_signup_id": "39911",

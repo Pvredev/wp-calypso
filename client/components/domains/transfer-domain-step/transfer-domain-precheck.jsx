@@ -23,6 +23,7 @@ class TransferDomainPrecheck extends React.PureComponent {
 	static propTypes = {
 		domain: PropTypes.string,
 		setValid: PropTypes.func,
+		supportsPrivacy: PropTypes.bool,
 	};
 
 	state = {
@@ -44,7 +45,9 @@ class TransferDomainPrecheck extends React.PureComponent {
 	}
 
 	onClick = () => {
-		this.props.setValid( this.props.domain );
+		const { domain, supportsPrivacy } = this.props;
+
+		this.props.setValid( domain, supportsPrivacy );
 	};
 
 	refreshStatus = ( proceedToNextStep = true ) => {
@@ -138,6 +141,7 @@ class TransferDomainPrecheck extends React.PureComponent {
 								<a
 									href={ support.INCOMING_DOMAIN_TRANSFER_PREPARE_UNLOCK }
 									rel="noopener noreferrer"
+									target="_blank"
 								/>
 							),
 						},
@@ -188,6 +192,7 @@ class TransferDomainPrecheck extends React.PureComponent {
 						<a
 							href={ support.INCOMING_DOMAIN_TRANSFER_PREPARE_PRIVACY }
 							rel="noopener noreferrer"
+							target="_blank"
 						/>
 					),
 				},
@@ -226,6 +231,7 @@ class TransferDomainPrecheck extends React.PureComponent {
 						<a
 							href={ support.INCOMING_DOMAIN_TRANSFER_PREPARE_AUTH_CODE }
 							rel="noopener noreferrer"
+							target="_blank"
 						/>
 					),
 				},
@@ -276,7 +282,13 @@ class TransferDomainPrecheck extends React.PureComponent {
 									'Need help? {{a}}Get in touch with one of our Happiness Engineers{{/a}}.',
 								{
 									components: {
-										a: <a href={ support.CALYPSO_CONTACT } rel="noopener noreferrer" />,
+										a: (
+											<a
+												href={ support.CALYPSO_CONTACT }
+												rel="noopener noreferrer"
+												target="_blank"
+											/>
+										),
 									},
 								}
 							) }

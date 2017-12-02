@@ -60,6 +60,7 @@ class TransferDomainStep extends React.Component {
 		return {
 			searchQuery: this.props.initialQuery || '',
 			domain: null,
+			supportsPrivacy: false,
 		};
 	}
 
@@ -131,7 +132,13 @@ class TransferDomainStep extends React.Component {
 									'you can manage your domain and site in the same place. {{a}}Learn More{{/a}}',
 								{
 									components: {
-										a: <a href={ support.INCOMING_DOMAIN_TRANSFER } rel="noopener noreferrer" />,
+										a: (
+											<a
+												href={ support.INCOMING_DOMAIN_TRANSFER }
+												rel="noopener noreferrer"
+												target="_blank"
+											/>
+										),
 									},
 								}
 							) }
@@ -175,6 +182,7 @@ class TransferDomainStep extends React.Component {
 							className="transfer-domain-step__map-help"
 							href={ support.MAP_EXISTING_DOMAIN }
 							rel="noopener noreferrer"
+							target="_blank"
 						>
 							<Gridicon icon="help" size={ 18 } />
 						</a>
@@ -189,13 +197,14 @@ class TransferDomainStep extends React.Component {
 			<TransferDomainPrecheck
 				domain={ this.state.domain }
 				setValid={ this.props.onTransferDomain }
+				supportsPrivacy={ this.state.supportsPrivacy }
 			/>
 		);
 	}
 
 	goBack = () => {
 		if ( this.state.domain ) {
-			this.setState( { domain: null } );
+			this.setState( { domain: null, supportsPrivacy: false } );
 		} else {
 			this.props.goBack();
 		}
@@ -287,7 +296,10 @@ class TransferDomainStep extends React.Component {
 				case domainAvailability.MAPPED:
 				case domainAvailability.UNKNOWN:
 					if ( get( result, 'transferrable', error ) === true ) {
-						this.setState( { domain } );
+						this.setState( {
+							domain,
+							supportsPrivacy: get( result, 'supports_privacy', false ),
+						} );
 						return;
 					}
 

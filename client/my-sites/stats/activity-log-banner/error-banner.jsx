@@ -6,14 +6,17 @@ import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
-import { isEmpty } from 'lodash';
+import { isUndefined } from 'lodash';
 
 /**
  * Internal dependencies
  */
 import ActivityLogBanner from './index';
 import Button from 'components/button';
+import HappychatButton from 'components/happychat/button';
+import Gridicon from 'gridicons';
 import TrackComponentView from 'lib/analytics/track-component-view';
+import { recordTracksEvent } from 'state/analytics/actions';
 import { dismissRewindRestoreProgress as dismissRewindRestoreProgressAction } from 'state/activity-log/actions';
 
 class ErrorBanner extends PureComponent {
@@ -24,10 +27,9 @@ class ErrorBanner extends PureComponent {
 		siteId: PropTypes.number.isRequired,
 		timestamp: PropTypes.string,
 		downloadId: PropTypes.number,
-		requestedRestoreActivityId: PropTypes.number,
+		requestedRestoreActivityId: PropTypes.string,
 		createBackup: PropTypes.func,
 		rewindRestore: PropTypes.func,
-		rewindId: PropTypes.number,
 
 		// connect
 		dismissRewindRestoreProgress: PropTypes.func.isRequired,
@@ -51,34 +53,37 @@ class ErrorBanner extends PureComponent {
 			rewindRestore,
 			createBackup,
 		} = this.props;
+		if ( downloadId ) {
+			return createBackup( siteId, downloadId );
+		}
 		if ( requestedRestoreActivityId ) {
-			rewindRestore( siteId, requestedRestoreActivityId );
-		} else if ( downloadId ) {
-			createBackup( siteId, downloadId );
+			return rewindRestore( siteId, requestedRestoreActivityId );
 		}
 	};
 
 	handleDismiss = () =>
-		isEmpty( this.props.downloadId )
+		isUndefined( this.props.downloadId )
 			? this.props.closeDialog( 'restore' )
 			: this.props.closeDialog( 'backup' );
 
 	render() {
-		const { errorCode, failureReason, timestamp, translate, downloadId } = this.props;
-		const strings = isEmpty( downloadId )
+		const {
+			errorCode,
+			failureReason,
+			timestamp,
+			translate,
+			downloadId,
+			trackHappyChatBackup,
+			trackHappyChatRestore,
+		} = this.props;
+		const strings = isUndefined( downloadId )
 			? {
 					title: translate( 'Problem restoring your site' ),
 					details: translate( 'We came across a problem while trying to restore your site.' ),
 				}
 			: {
 					title: translate( 'Problem creating a backup' ),
-					details: (
-						<span>
-							{ translate( 'We came across a problem creating a backup for your site.' ) }
-							<br />
-							<code>{ errorCode }</code>
-						</span>
-					),
+					details: translate( 'We came across a problem creating a backup for your site.' ),
 				};
 
 		return (
@@ -91,7 +96,7 @@ class ErrorBanner extends PureComponent {
 				<TrackComponentView
 					eventName="calypso_activitylog_errorbanner_impression"
 					eventProperties={
-						isEmpty( downloadId )
+						isUndefined( downloadId )
 							? {
 									error_code: errorCode,
 									failure_reason: failureReason,
@@ -108,10 +113,15 @@ class ErrorBanner extends PureComponent {
 				<Button primary onClick={ this.handleClickRestart }>
 					{ translate( 'Try again' ) }
 				</Button>
-				{ '  ' }
-				<Button href="https://help.vaultpress.com/restore-tips-troubleshooting-steps/">
-					{ translate( 'Get help' ) }
-				</Button>
+				<HappychatButton
+					className="activity-log-banner__error-happychat activity-log-confirm-dialog__more-info-link"
+					onClick={ isUndefined( downloadId ) ? trackHappyChatRestore : trackHappyChatBackup }
+				>
+					<Gridicon icon="chat" />
+					<span className="activity-log-banner__error-happychat-text activity-log-confirm-dialog__more-info-link-text">
+						{ translate( 'Get help' ) }
+					</span>
+				</HappychatButton>
 			</ActivityLogBanner>
 		);
 	}
@@ -119,4 +129,6 @@ class ErrorBanner extends PureComponent {
 
 export default connect( null, {
 	dismissRewindRestoreProgress: dismissRewindRestoreProgressAction,
+	trackHappyChatBackup: () => recordTracksEvent( 'calypso_activitylog_error_banner_backup' ),
+	trackHappyChatRestore: () => recordTracksEvent( 'calypso_activitylog_error_banner_restore' ),
 } )( localize( ErrorBanner ) );

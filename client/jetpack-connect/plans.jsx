@@ -6,29 +6,19 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import page from 'page';
 import { connect } from 'react-redux';
-import { get, isEqual, pick } from 'lodash';
+import { get } from 'lodash';
 import { localize } from 'i18n-calypso';
 
 /**
  * Internal dependencies
  */
-import {
-	clearPlan,
-	isCalypsoStartedConnection,
-	retrieveFlowType,
-	retrievePlan,
-} from './persistence-utils';
+import { clearPlan, isCalypsoStartedConnection, retrievePlan } from './persistence-utils';
 import HelpButton from './help-button';
 import JetpackConnectHappychatButton from './happychat-button';
 import LoggedOutFormLinks from 'components/logged-out-form/links';
 import PlansGrid from './plans-grid';
 import PlansSkipButton from './plans-skip-button';
-import {
-	PLAN_JETPACK_FREE,
-	PLAN_JETPACK_PREMIUM,
-	PLAN_JETPACK_PERSONAL,
-	PLAN_JETPACK_BUSINESS,
-} from 'lib/plans/constants';
+import { PLAN_JETPACK_FREE } from 'lib/plans/constants';
 import { recordTracksEvent } from 'state/analytics/actions';
 import { getCurrentUser } from 'state/current-user/selectors';
 import { addItem } from 'lib/upgrades/actions';
@@ -51,16 +41,17 @@ const CALYPSO_PLANS_PAGE = '/plans/my-plan/';
 const JETPACK_ADMIN_PATH = '/wp-admin/admin.php?page=jetpack';
 
 class Plans extends Component {
-	static defaultProps = { siteSlug: '*' };
-
 	static propTypes = {
 		// Connected props
 		isAutomatedTransfer: PropTypes.bool, // null indicates unknown
 		hasPlan: PropTypes.bool, // null indicates unknown
 	};
 
+	redirecting = false;
+
 	componentDidMount() {
-		if ( ! this.maybeRedirect( this.props ) ) {
+		this.maybeRedirect( this.props );
+		if ( ! this.redirecting ) {
 			this.props.recordTracksEvent( 'calypso_jpc_plans_view', {
 				user: this.props.userId,
 			} );
@@ -68,17 +59,7 @@ class Plans extends Component {
 	}
 
 	componentWillReceiveProps = nextProps => {
-		const propsToCompare = [
-			'canPurchasePlans',
-			'hasPlan',
-			'isAutomatedTransfer',
-			'isCalypsoStartedConnection',
-			'notJetpack',
-			'selectedPlan',
-			'selectedPlanSlug',
-		];
-
-		if ( ! isEqual( pick( this.props, propsToCompare ), pick( nextProps, propsToCompare ) ) ) {
+		if ( ! this.redirecting ) {
 			this.maybeRedirect( nextProps );
 		}
 	};
@@ -86,15 +67,12 @@ class Plans extends Component {
 	maybeRedirect = props => {
 		if ( props.isAutomatedTransfer ) {
 			this.props.goBackToWpAdmin( props.selectedSite.URL + JETPACK_ADMIN_PATH );
-			return true;
 		}
 		if ( props.selectedPlanSlug ) {
 			this.autoselectPlan( props );
-			return true;
 		}
 		if ( props.hasPlan || props.notJetpack ) {
 			this.redirect( CALYPSO_PLANS_PAGE );
-			return true;
 		}
 		if ( ! props.canPurchasePlans ) {
 			if ( props.isCalypsoStartedConnection ) {
@@ -102,9 +80,7 @@ class Plans extends Component {
 			} else {
 				this.redirectToWpAdmin( props );
 			}
-			return true;
 		}
-		return false;
 	};
 
 	handleSkipButtonClick = () => {
@@ -121,14 +97,18 @@ class Plans extends Component {
 		const { redirectAfterAuth } = props;
 		if ( redirectAfterAuth ) {
 			props.goBackToWpAdmin( redirectAfterAuth );
+			this.redirecting = true;
+			this.props.completeFlow();
 		} else if ( props.selectedSite ) {
 			this.props.goBackToWpAdmin( props.selectedSite.URL + JETPACK_ADMIN_PATH );
+			this.redirecting = true;
+			this.props.completeFlow();
 		}
-		this.props.completeFlow();
 	}
 
 	redirect( path ) {
 		page.redirect( path + this.props.selectedSiteSlug );
+		this.redirecting = true;
 		this.props.completeFlow();
 	}
 
@@ -160,7 +140,6 @@ class Plans extends Component {
 	}
 
 	selectPlan = cartItem => {
-		const checkoutPath = `/checkout/${ this.props.selectedSite.slug }`;
 		clearPlan();
 
 		if ( ! cartItem || cartItem.product_slug === PLAN_JETPACK_FREE ) {
@@ -179,7 +158,7 @@ class Plans extends Component {
 
 		addItem( cartItem );
 		this.props.completeFlow();
-		page.redirect( checkoutPath );
+		this.redirect( '/checkout/' );
 	};
 
 	render() {
@@ -196,6 +175,7 @@ class Plans extends Component {
 		} = this.props;
 
 		if (
+			this.redirecting ||
 			selectedPlanSlug ||
 			notJetpack ||
 			! canPurchasePlans ||
@@ -236,25 +216,13 @@ class Plans extends Component {
 
 export { Plans as PlansTestComponent };
 
-const getPlanSlug = ( flowType, planSlug ) => {
-	const flowTypeToSlug = {
-		personal: PLAN_JETPACK_PERSONAL,
-		premium: PLAN_JETPACK_PREMIUM,
-		pro: PLAN_JETPACK_BUSINESS,
-	};
-
-	return flowTypeToSlug[ flowType ] || planSlug;
-};
-
 export default connect(
 	state => {
 		const user = getCurrentUser( state );
 		const selectedSite = getSelectedSite( state );
 		const selectedSiteSlug = selectedSite ? selectedSite.slug : '';
 
-		const flowType = retrieveFlowType();
-		const preSelectedPlan = retrievePlan();
-		const selectedPlanSlug = getPlanSlug( flowType, preSelectedPlan );
+		const selectedPlanSlug = retrievePlan();
 		const selectedPlan = getPlanBySlug( state, selectedPlanSlug );
 
 		return {

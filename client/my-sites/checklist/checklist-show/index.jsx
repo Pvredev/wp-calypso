@@ -12,10 +12,11 @@ import page from 'page';
  * Internal dependencies
  */
 
-import Card from 'components/card';
+import FormattedHeader from 'components/formatted-header';
 import Checklist from 'components/checklist';
 import Main from 'components/main';
 import DocumentHead from 'components/data/document-head';
+import { requestSiteChecklistTaskUpdate } from 'state/site-checklist/actions';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import { getSiteChecklist } from 'state/selectors';
 import { getSiteSlug } from 'state/sites/selectors';
@@ -39,6 +40,14 @@ class ChecklistShow extends PureComponent {
 		}
 	};
 
+	onToggle = taskId => {
+		const { siteId, siteChecklist, update } = this.props;
+
+		if ( siteChecklist && siteChecklist.tasks && ! siteChecklist.tasks[ taskId ] ) {
+			update( siteId, taskId );
+		}
+	};
+
 	render() {
 		const { siteId, siteChecklist } = this.props;
 		let tasks = null;
@@ -51,13 +60,16 @@ class ChecklistShow extends PureComponent {
 			<Main>
 				<DocumentHead title="Site Checklist" />
 				{ siteId && <QuerySiteChecklist siteId={ siteId } /> }
-				<Card>
-					<h1 className="checklist-show__header-heading">Welcome back!</h1>
-					<h2 className="checklist-show__header-text">
-						Let's get your site ready for its debut with a few quick setup steps
-					</h2>
-					<Checklist isLoading={ ! tasks } tasks={ tasks } onAction={ this.onAction } />
-				</Card>
+				<FormattedHeader
+					headerText="Welcome back!"
+					subHeaderText="Let’s get your site ready for its debut with a few quick setup steps."
+				/>
+				<Checklist
+					isLoading={ ! tasks }
+					tasks={ tasks }
+					onAction={ this.onAction }
+					onToggle={ this.onToggle }
+				/>
 			</Main>
 		);
 	}
@@ -69,6 +81,6 @@ const mapStateToProps = state => {
 	const siteSlug = getSiteSlug( state, siteId );
 	return { siteId, siteSlug, siteChecklist };
 };
-const mapDispatchToProps = { track: recordTracksEvent };
+const mapDispatchToProps = { track: recordTracksEvent, update: requestSiteChecklistTaskUpdate };
 
 export default connect( mapStateToProps, mapDispatchToProps )( ChecklistShow );

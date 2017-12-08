@@ -62,6 +62,11 @@ class TransferDomainPrecheck extends React.PureComponent {
 				this.showNextStep();
 			}
 
+			// Reset steps if domain became locked again
+			if ( ! result.unlocked ) {
+				this.resetSteps();
+			}
+
 			this.setState( {
 				email: result.admin_email,
 				privacy: result.privacy,
@@ -73,6 +78,12 @@ class TransferDomainPrecheck extends React.PureComponent {
 
 	refreshStatusOnly = () => {
 		this.refreshStatus( false );
+	};
+
+	resetSteps = () => {
+		if ( this.state.currentStep !== 1 ) {
+			this.setState( { currentStep: 1 } );
+		}
 	};
 
 	showNextStep = () => {
@@ -179,15 +190,16 @@ class TransferDomainPrecheck extends React.PureComponent {
 		const isStepFinished = currentStep > step;
 
 		const heading = translate( 'Verify we can get in touch.' );
-		const message = translate(
-			"We'll send an email to {{strong}}%(email)s{{/strong}} to start the transfer process. Make sure " +
-				"you have access to that address. Don't recognize it? Then you have privacy protection enabled. " +
-				"You'll need to log in to your current domain provider and {{a}}turn it off{{/a}} before we start. " +
-				"Don't worry, you can re-enable it once the transfer is done.",
+		let message = translate(
+			"Make sure you have access to the email address on your domain's contact information with privacy " +
+				"protection turned off. We couldn't get the email address on file and we need to send an important " +
+				'email to start the transfer process.' +
+				'{{br/}}{{br/}}' +
+				'Log in to your current domain provider to check your contact information and make sure privacy ' +
+				"is disabled. {{a}}Here's how to do that{{/a}}. Don't worry, you can turn it on once the transfer is done.",
 			{
-				args: { email },
 				components: {
-					strong: <strong className="transfer-domain-step__admin-email" />,
+					br: <br />,
 					a: (
 						<a
 							href={ support.INCOMING_DOMAIN_TRANSFER_PREPARE_PRIVACY }
@@ -198,7 +210,34 @@ class TransferDomainPrecheck extends React.PureComponent {
 				},
 			}
 		);
-		const buttonText = translate( 'I can access this email address' );
+		let buttonText = translate( 'I can access the email address' );
+
+		if ( email ) {
+			message = translate(
+				"Make sure you have access to the email address on your domain's contact information with privacy " +
+					"protection turned off. We'll send an email to {{strong}}%(email)s{{/strong}} to start the " +
+					"transfer process. Don't recognize that address? Then you might have privacy protection enabled." +
+					'{{br/}}{{br/}}' +
+					'Log in to your current domain provider to check your contact information and make sure privacy ' +
+					"is disabled. {{a}}Here's how to do that{{/a}}. Don't worry, you can turn it on once the transfer is done.",
+				{
+					args: { email },
+					components: {
+						strong: <strong className="transfer-domain-step__admin-email" />,
+						br: <br />,
+						a: (
+							<a
+								href={ support.INCOMING_DOMAIN_TRANSFER_PREPARE_PRIVACY }
+								rel="noopener noreferrer"
+								target="_blank"
+							/>
+						),
+					},
+				}
+			);
+
+			buttonText = translate( 'I can access this email address' );
+		}
 
 		const statusClasses = loading
 			? 'transfer-domain-step__lock-status transfer-domain-step__checking'
@@ -222,7 +261,7 @@ class TransferDomainPrecheck extends React.PureComponent {
 		const heading = translate( 'Get a domain authorization code.' );
 		const message = translate(
 			'A domain authorization code is a unique code linked only to your domain — kind of like a ' +
-				"password for your domain. Log in to your current registrar to get one. We'll send you an email " +
+				"password for your domain. Log in to your current domain provider to get one. We'll send you an email " +
 				'with a link to enter it and officially okay the transfer. We call it a domain authorization code, ' +
 				'but it might be called a secret code, auth code, or EPP code. {{a}}Learn more{{/a}}.',
 			{
@@ -253,7 +292,7 @@ class TransferDomainPrecheck extends React.PureComponent {
 						components: { strong: <strong /> },
 					} ) }
 					subHeaderText={ translate(
-						'Log into your current registrar to complete a few preliminary steps.'
+						'Log into your current domain provider to complete a few preliminary steps.'
 					) }
 				/>
 				<img

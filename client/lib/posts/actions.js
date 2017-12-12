@@ -107,7 +107,6 @@ PostActions = {
 
 		args = {
 			type: 'DRAFT_NEW_POST',
-			siteId: site.ID,
 			postType: options.type || 'post',
 			title: options.title,
 			content: options.content,
@@ -354,7 +353,7 @@ PostActions = {
 		}
 
 		if ( ! options || options.recordSaveEvent !== false ) {
-			recordSaveEvent( context, site ); // do this before changing status from 'future'
+			recordSaveEvent( site, context ); // do this before changing status from 'future'
 		}
 
 		if (

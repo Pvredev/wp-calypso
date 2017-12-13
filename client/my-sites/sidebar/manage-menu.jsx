@@ -107,7 +107,7 @@ class ManageMenu extends PureComponent {
 			{
 				name: 'comments',
 				label: this.props.translate( 'Comments' ),
-				capability: 'moderate_comments',
+				capability: 'edit_posts',
 				queryable: true,
 				config: 'comments/management',
 				link: '/comments',
@@ -157,6 +157,8 @@ class ManageMenu extends PureComponent {
 		let preload;
 		if ( includes( [ 'post', 'page' ], menuItem.name ) ) {
 			preload = 'posts-pages';
+		} else if ( 'comments' === menuItem.name ) {
+			preload = 'comments';
 		} else {
 			preload = 'posts-custom';
 		}

@@ -24,9 +24,9 @@ const tasks = {
 	avatar_uploaded: {
 		title: 'Upload your profile picture',
 		description:
-			'Who’s the person behind the site? Personalize your posts and comments with a custom avatar.',
+			'Who’s the person behind the site? Personalize your posts and comments with a custom profile picture.',
 		duration: '2 mins',
-		completedTitle: 'You uploaded an avatar',
+		completedTitle: 'You uploaded a profile picture',
 		completedButtonText: 'Change',
 		url: '/me',
 		image: '/calypso/images/stats/tasks/upload-profile-picture.svg',
@@ -39,6 +39,7 @@ const tasks = {
 		completedButtonText: 'Edit',
 		url: '/settings/general/$siteSlug',
 		image: '/calypso/images/stats/tasks/personalize-your-site.svg',
+		tour: 'checklistSiteTitle',
 	},
 	blogdescription_set: {
 		title: 'Create a tagline',
@@ -48,6 +49,7 @@ const tasks = {
 		completedButtonText: 'Change',
 		url: '/settings/general/$siteSlug',
 		image: '/calypso/images/stats/tasks/create-tagline.svg',
+		tour: 'checklistSiteTagline',
 	},
 	contact_page_updated: {
 		title: 'Personalize your Contact page',
@@ -98,6 +100,7 @@ const tasks = {
 		completedButtonText: 'Change',
 		url: '/settings/general/$siteSlug',
 		image: '/calypso/images/stats/tasks/upload-icon.svg',
+		tour: 'checklistSiteIcon',
 	},
 	social_links_set: {
 		title: 'Display links to your social accounts',
@@ -128,6 +131,13 @@ export const urlForTask = ( id, siteSlug ) => {
 	const task = tasks[ id ];
 	if ( task && task.url ) {
 		return task.url.replace( '$siteSlug', siteSlug );
+	}
+};
+
+export const tourForTask = id => {
+	const task = tasks[ id ];
+	if ( task ) {
+		return task.tour;
 	}
 };
 

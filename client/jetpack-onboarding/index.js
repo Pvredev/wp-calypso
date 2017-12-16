@@ -9,15 +9,15 @@ import { values } from 'lodash';
 /**
  * Internal dependencies
  */
-import { onboarding } from './controller';
 import { JETPACK_ONBOARDING_STEPS } from './constants';
+import { onboarding } from './controller';
 import { makeLayout, render as clientRender } from 'controller';
 
 export default function() {
 	if ( isEnabled( 'jetpack/onboarding' ) ) {
 		const validStepNames = values( JETPACK_ONBOARDING_STEPS );
 		page(
-			`/jetpack/onboarding/:stepName(${ validStepNames.join( '|' ) })?`,
+			`/jetpack/onboarding/:stepName(${ validStepNames.join( '|' ) })?/:site`,
 			onboarding,
 			makeLayout,
 			clientRender

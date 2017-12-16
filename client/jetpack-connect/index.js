@@ -36,8 +36,8 @@ export default function() {
 
 	page(
 		'/jetpack/connect/authorize/:localeOrInterval?',
+		controller.maybeOnboard,
 		controller.redirectWithoutLocaleifLoggedIn,
-		controller.saveQueryObject,
 		controller.authorizeForm,
 		makeLayout,
 		clientRender
@@ -45,8 +45,8 @@ export default function() {
 
 	page(
 		'/jetpack/connect/authorize/:interval/:locale',
+		controller.maybeOnboard,
 		controller.redirectWithoutLocaleifLoggedIn,
-		controller.saveQueryObject,
 		controller.authorizeForm,
 		makeLayout,
 		clientRender

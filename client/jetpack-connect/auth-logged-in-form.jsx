@@ -177,14 +177,13 @@ export class LoggedInForm extends Component {
 	}
 
 	shouldAutoAuthorize() {
-		const { autoAuthorize } = this.props.authorizationData;
-		const { alreadyAuthorized, newUserStartedConnection } = this.props.authQuery;
+		const { alreadyAuthorized, authApproved } = this.props.authQuery;
 		return (
 			this.isSso() ||
 			this.isWoo() ||
 			( ! this.props.isAlreadyOnSitesList &&
 				! alreadyAuthorized &&
-				( this.props.calypsoStartedConnection || newUserStartedConnection || autoAuthorize ) )
+				( this.props.calypsoStartedConnection || authApproved ) )
 		);
 	}
 
@@ -523,7 +522,7 @@ export class LoggedInForm extends Component {
 		} = this.props.authorizationData;
 		const { blogname, redirectAfterAuth } = this.props.authQuery;
 		const backToWpAdminLink = (
-			<LoggedOutFormLinkItem icon={ true } href={ redirectAfterAuth }>
+			<LoggedOutFormLinkItem href={ redirectAfterAuth }>
 				<Gridicon size={ 18 } icon="arrow-left" />{' '}
 				{ translate( 'Return to %(sitename)s', {
 					args: { sitename: decodeEntities( blogname ) },

@@ -12,7 +12,7 @@ import i18n from 'i18n-calypso';
  */
 import { getDomainType, getTransferStatus } from './utils';
 
-function createDomainObjects( dataTransferObject ) {
+export function createDomainObjects( dataTransferObject ) {
 	let domains = [];
 
 	if ( ! Array.isArray( dataTransferObject ) ) {
@@ -22,6 +22,7 @@ function createDomainObjects( dataTransferObject ) {
 	domains = dataTransferObject.map( domain => {
 		return {
 			autoRenewalMoment: domain.auto_renewal_date && i18n.moment( domain.auto_renewal_date ),
+			adminEmail: domain.admin_email,
 			currentUserCanManage: domain.current_user_can_manage,
 			canSetAsPrimary: domain.can_set_as_primary,
 			domainLockingAvailable: domain.domain_locking_available,
@@ -36,6 +37,7 @@ function createDomainObjects( dataTransferObject ) {
 			isPrimary: domain.primary_domain,
 			isPendingWhoisUpdate: domain.pending_whois_update,
 			manualTransferRequired: domain.manual_transfer_required,
+			manualWhois: domain.manual_whois,
 			name: domain.domain,
 			owner: domain.owner,
 			privacyAvailable: domain.privacy_available,
@@ -55,7 +57,7 @@ function createDomainObjects( dataTransferObject ) {
 	return ensurePrimaryDomainIsFirst( domains );
 }
 
-function assembleGoogleAppsSubscription( googleAppsSubscription ) {
+export function assembleGoogleAppsSubscription( googleAppsSubscription ) {
 	if ( ! googleAppsSubscription ) {
 		return;
 	}
@@ -72,8 +74,3 @@ function ensurePrimaryDomainIsFirst( domains ) {
 
 	return [ primaryDomain ].concat( without( domains, primaryDomain ) );
 }
-
-export default {
-	assembleGoogleAppsSubscription,
-	createDomainObjects,
-};

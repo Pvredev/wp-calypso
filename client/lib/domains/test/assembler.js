@@ -1,5 +1,4 @@
 /** @format */
-
 /**
  * External dependencies
  */
@@ -9,7 +8,7 @@ import { expect } from 'chai';
 /**
  * Internal dependencies
  */
-import domainsAssembler from './../assembler';
+import { createDomainObjects } from './../assembler';
 import { type as domainTypes } from './../constants';
 
 describe( 'assembler', () => {
@@ -35,6 +34,7 @@ describe( 'assembler', () => {
 		} ),
 		redirectDomainObject = {
 			autoRenewalMoment: undefined,
+			adminEmail: undefined,
 			currentUserCanManage: undefined,
 			canSetAsPrimary: undefined,
 			domainLockingAvailable: undefined,
@@ -49,6 +49,7 @@ describe( 'assembler', () => {
 			isPrimary: false,
 			name: DOMAIN_NAME,
 			manualTransferRequired: undefined,
+			manualWhois: undefined,
 			owner: undefined,
 			privateDomain: undefined,
 			privacyAvailable: undefined,
@@ -75,18 +76,18 @@ describe( 'assembler', () => {
 		} );
 
 	test( 'should produce empty array when null data transfer object passed', () => {
-		expect( domainsAssembler.createDomainObjects( null ) ).to.be.eql( [] );
+		expect( createDomainObjects( null ) ).to.be.eql( [] );
 	} );
 
 	test( 'should produce array with domains even when there is no primary domain', () => {
-		expect( domainsAssembler.createDomainObjects( [ redirectDataTransferObject ] ) ).to.be.eql( [
+		expect( createDomainObjects( [ redirectDataTransferObject ] ) ).to.be.eql( [
 			redirectDomainObject,
 		] );
 	} );
 
 	test( 'should produce array with registered domain first when registered domain is set as primary domain', () => {
 		expect(
-			domainsAssembler.createDomainObjects( [
+			createDomainObjects( [
 				mappedDataTransferObject,
 				primaryRegisteredDataTransferObject,
 				redirectDataTransferObject,

@@ -4,8 +4,9 @@
  * External dependencies
  */
 import React from 'react';
+import classNames from 'classnames';
 import Gridicon from 'gridicons';
-import { compact, map, without } from 'lodash';
+import { compact, get, map, without } from 'lodash';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 
@@ -16,7 +17,7 @@ import Button from 'components/button';
 import DocumentHead from 'components/data/document-head';
 import FormattedHeader from 'components/formatted-header';
 import PageViewTracker from 'lib/analytics/page-view-tracker';
-import { getUnconnectedSiteUrl } from 'state/selectors';
+import { getJetpackOnboardingProgress, getUnconnectedSiteUrl } from 'state/selectors';
 import {
 	JETPACK_ONBOARDING_STEP_TITLES as STEP_TITLES,
 	JETPACK_ONBOARDING_STEPS as STEPS,
@@ -25,13 +26,19 @@ import {
 
 class JetpackOnboardingSummaryStep extends React.PureComponent {
 	renderCompleted = () => {
-		return map( without( this.props.steps, STEPS.SUMMARY ), stepName => (
-			// TODO: Make step completed state dynamic
-			<div key={ stepName } className="steps__summary-entry completed">
-				<Gridicon icon="checkmark" size={ 18 } />
-				{ STEP_TITLES[ stepName ] }
-			</div>
-		) );
+		const { steps, stepsCompleted } = this.props;
+
+		return map( without( steps, STEPS.SUMMARY ), stepName => {
+			const isCompleted = get( stepsCompleted, stepName ) === true;
+			const className = classNames( 'steps__summary-entry', isCompleted ? 'completed' : 'todo' );
+
+			return (
+				<div key={ stepName } className={ className }>
+					<Gridicon icon={ isCompleted ? 'checkmark' : 'cross' } size={ 18 } />
+					{ STEP_TITLES[ stepName ] }
+				</div>
+			);
+		} );
 	};
 
 	renderTodo = () => {
@@ -97,10 +104,13 @@ class JetpackOnboardingSummaryStep extends React.PureComponent {
 	}
 }
 
-export default connect( ( state, { siteId } ) => {
+export default connect( ( state, { siteId, steps } ) => {
 	const tasks = compact( [] );
+	const stepsCompleted = getJetpackOnboardingProgress( state, siteId, steps );
+
 	return {
 		siteUrl: getUnconnectedSiteUrl( state, siteId ),
+		stepsCompleted,
 		tasks,
 	};
 } )( localize( JetpackOnboardingSummaryStep ) );

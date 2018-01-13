@@ -13,11 +13,9 @@ import { first, get, groupBy, includes, isEmpty, isNull, last, range, sortBy } f
 /**
  * Internal dependencies
  */
-import ActivityLogBanner from '../activity-log-banner';
-import ActivityLogConfirmDialog from '../activity-log-confirm-dialog';
-import ActivityLogCredentialsNotice from '../activity-log-credentials-notice';
 import ActivityLogDay from '../activity-log-day';
 import ActivityLogDayPlaceholder from '../activity-log-day/placeholder';
+import Banner from 'components/banner';
 import DatePicker from 'my-sites/stats/stats-date-picker';
 import EmptyContent from 'components/empty-content';
 import ErrorBanner from '../activity-log-banner/error-banner';
@@ -42,9 +40,7 @@ import { recordTracksEvent, withAnalytics } from 'state/analytics/actions';
 import {
 	activityLogRequest,
 	rewindRequestDismiss,
-	rewindRequestRestore,
 	rewindRestore,
-	rewindRequestBackup,
 	rewindBackupDismiss,
 	rewindBackup,
 } from 'state/activity-log/actions';
@@ -167,7 +163,7 @@ const daysInMonth = ( moment, startMoment, today ) => {
 };
 
 const logsByDay = ( moment, logs, startMoment, applyOffset ) => {
-	const dayGroups = groupBy( sortBy( logs, [ 'activityDate' ] ).reverse(), log =>
+	const dayGroups = groupBy( sortBy( logs, [ 'activityDate', 'activityTs' ] ).reverse(), log =>
 		applyOffset( moment.utc( log.activityTs ) )
 			.endOf( 'day' )
 			.valueOf()
@@ -219,13 +215,11 @@ class ActivityLog extends Component {
 		} ),
 		requestedRestoreId: PropTypes.string,
 		rewindRequestDismiss: PropTypes.func.isRequired,
-		rewindRequestRestore: PropTypes.func.isRequired,
 		rewindRestore: PropTypes.func.isRequired,
 		rewindStatusError: PropTypes.shape( {
 			error: PropTypes.string.isRequired,
 			message: PropTypes.string.isRequired,
 		} ),
-		requestBackup: PropTypes.func.isRequired,
 		createBackup: PropTypes.func.isRequired,
 		siteId: PropTypes.number,
 		siteTitle: PropTypes.string,
@@ -258,26 +252,6 @@ class ActivityLog extends Component {
 	};
 
 	/**
-	 * The link to download a backup in ellipsis menu in ActivityLogDay > ActivityLogItem,
-	 * or the rewind buttons and links use this method display a certain dialog.
-	 *
-	 * @param {string} activityId Id of the activity up to the one we're downloading.
-	 * @param {string} from       Context for tracking.
-	 * @param {string} type       Type of dialog to show.
-	 */
-	handleRequestDialog = ( activityId, from, type ) => {
-		const { siteId } = this.props;
-		switch ( type ) {
-			case 'restore':
-				this.props.rewindRequestRestore( siteId, activityId, from );
-				break;
-			case 'backup':
-				this.props.requestBackup( siteId, activityId, from );
-				break;
-		}
-	};
-
-	/**
 	 * Close Restore, Backup, or Transfer confirmation dialog.
 	 * @param {string} type Type of dialog to close.
 	 */
@@ -292,24 +266,6 @@ class ActivityLog extends Component {
 				break;
 		}
 	};
-
-	confirmDownload = () => {
-		const { requestedBackup: { rewindId }, siteId } = this.props;
-
-		this.props.createBackup( siteId, rewindId );
-		scrollTo( { x: 0, y: 0, duration: 250 } );
-	};
-
-	confirmRestore = () => {
-		const { requestedRestore: { rewindId }, siteId } = this.props;
-
-		this.props.rewindRestore( siteId, rewindId );
-		scrollTo( { x: 0, y: 0, duration: 250 } );
-	};
-
-	dismissBackup = () => this.props.dismissBackup( this.props.siteId );
-
-	dismissRestore = () => this.props.rewindRequestDismiss( this.props.siteId );
 
 	/**
 	 * Adjust a moment by the site timezone or gmt offset. Use the resulting function wherever log
@@ -500,10 +456,6 @@ class ActivityLog extends Component {
 			logs,
 			moment,
 			requestData,
-			requestedRestore,
-			requestedRestoreId,
-			requestedBackup,
-			requestedBackupId,
 			rewindState,
 			siteId,
 			slug,
@@ -527,72 +479,25 @@ class ActivityLog extends Component {
 			'active' !== rewindState.state;
 		const disableBackup = 0 <= get( this.props, [ 'backupProgress', 'progress' ], -Infinity );
 
-		const restoreConfirmDialog = requestedRestore && (
-			<ActivityLogConfirmDialog
-				key="activity-rewind-dialog"
-				confirmTitle={ translate( 'Confirm Rewind' ) }
-				notice={
-					<span className="activity-log-confirm-dialog__notice-content">
-						{ translate(
-							'This will remove all content and options created or changed since then.'
-						) }
-					</span>
-				}
-				onClose={ this.dismissRestore }
-				onConfirm={ this.confirmRestore }
-				supportLink="https://jetpack.com/support/how-to-rewind"
-				title={ translate( 'Rewind Site' ) }
-			>
-				{ translate(
-					'This is the selected point for your site Rewind. ' +
-						'Are you sure you want to rewind your site back to {{time/}}?',
-					{
-						components: {
-							time: (
-								<b>
-									{ this.applySiteOffset( moment.utc( requestedRestore.activityTs ) ).format(
-										'LLL'
-									) }
-								</b>
-							),
-						},
-					}
-				) }
-			</ActivityLogConfirmDialog>
-		);
-
-		const backupConfirmDialog = requestedBackup && (
-			<ActivityLogConfirmDialog
-				key="activity-backup-dialog"
-				confirmTitle={ translate( 'Create download' ) }
-				onClose={ this.dismissBackup }
-				onConfirm={ this.confirmDownload }
-				supportLink="https://jetpack.com/support/backups"
-				title={ translate( 'Create downloadable backup' ) }
-				type={ 'backup' }
-				icon={ 'cloud-download' }
-			>
-				{ translate(
-					'We will build a downloadable backup of your site at {{time/}}. ' +
-						'You will get a notification when the backup is ready to download.',
-					{
-						components: {
-							time: (
-								<b>
-									{ this.applySiteOffset( moment.utc( requestedBackup.activityTs ) ).format(
-										'LLL'
-									) }
-								</b>
-							),
-						},
-					}
-				) }
-			</ActivityLogConfirmDialog>
-		);
-
 		const today = moment()
 			.utc()
 			.startOf( 'day' );
+
+		// Content shown when there are no logs.
+		// The network request either finished with no events or is still ongoing.
+		const noLogsContent = requestData.logs.hasLoaded ? (
+			<EmptyContent
+				title={ translate( 'No activity for %s', {
+					args: this.getStartMoment().format( 'MMMM YYYY' ),
+				} ) }
+			/>
+		) : (
+			<section className="activity-log__wrapper">
+				<ActivityLogDayPlaceholder />
+				<ActivityLogDayPlaceholder />
+				<ActivityLogDayPlaceholder />
+			</section>
+		);
 
 		return (
 			<Main wideLayout>
@@ -605,26 +510,33 @@ class ActivityLog extends Component {
 				<StatsFirstView />
 				<SidebarNavigation />
 				<StatsNavigation selectedItem={ 'activity' } siteId={ siteId } slug={ slug } />
-				{ 'awaitingCredentials' === rewindState.state && <ActivityLogCredentialsNotice /> }
+				{ 'awaitingCredentials' === rewindState.state && (
+					<Banner
+						icon="history"
+						href={ `/settings/security/${ slug }` }
+						title={ translate( 'Add site credentials' ) }
+						description={ translate(
+							'Backups and security scans require access to your site to work properly.'
+						) }
+					/>
+				) }
+				{ 'provisioning' === rewindState.state && (
+					<Banner
+						icon="history"
+						disableHref
+						title={ translate( 'Site configuration underway' ) }
+						description={ translate(
+							"There's nothing more you need to do right now. " +
+								"You'll be able to restore backups soon."
+						) }
+					/>
+				) }
 				{ this.renderErrorMessage() }
 				{ hasFirstBackup && this.renderMonthNavigation() }
 				{ this.renderActionProgress() }
-				{ ! requestData.logs.hasLoaded && (
-					<section className="activity-log__wrapper">
-						<ActivityLogDayPlaceholder />
-						<ActivityLogDayPlaceholder />
-						<ActivityLogDayPlaceholder />
-					</section>
-				) }
-				{ requestData.logs.hasLoaded &&
-					isEmpty( logs ) && (
-						<EmptyContent
-							title={ translate( 'No activity for %s', {
-								args: this.getStartMoment().format( 'MMMM YYYY' ),
-							} ) }
-						/>
-					) }
-				{ ! isEmpty( logs ) && (
+				{ isEmpty( logs ) ? (
+					noLogsContent
+				) : (
 					<section className="activity-log__wrapper">
 						{ intoVisualGroups( moment, logs, this.getStartMoment(), this.applySiteOffset ).map(
 							( [ type, [ start, end ], events ] ) => {
@@ -667,15 +579,10 @@ class ActivityLog extends Component {
 											<ActivityLogDay
 												key={ start.format() }
 												applySiteOffset={ this.applySiteOffset }
-												requestedRestoreId={ requestedRestoreId }
-												requestedBackupId={ requestedBackupId }
-												restoreConfirmDialog={ restoreConfirmDialog }
-												backupConfirmDialog={ backupConfirmDialog }
 												disableRestore={ disableRestore }
 												disableBackup={ disableBackup }
 												isRewindActive={ isRewindActive }
 												logs={ events }
-												requestDialog={ this.handleRequestDialog }
 												closeDialog={ this.handleCloseDialog }
 												siteId={ siteId }
 												tsEndOfSiteDay={ start.valueOf() }
@@ -753,20 +660,10 @@ export default connect(
 				recordTracksEvent( 'calypso_activitylog_restore_cancel' ),
 				rewindRequestDismiss( siteId )
 			),
-		rewindRequestRestore: ( siteId, activityId, from ) =>
-			withAnalytics(
-				recordTracksEvent( 'calypso_activitylog_restore_request', { from } ),
-				rewindRequestRestore( siteId, activityId )
-			),
 		rewindRestore: ( siteId, actionId ) =>
 			withAnalytics(
 				recordTracksEvent( 'calypso_activitylog_restore_confirm', { actionId } ),
 				rewindRestore( siteId, actionId )
-			),
-		requestBackup: ( siteId, activityId, from ) =>
-			withAnalytics(
-				recordTracksEvent( 'calypso_activitylog_backup_request', { from } ),
-				rewindRequestBackup( siteId, activityId )
 			),
 	}
 )( localize( ActivityLog ) );

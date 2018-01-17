@@ -15,7 +15,7 @@ import { translate } from 'i18n-calypso';
 import analytics from 'lib/analytics';
 import CheckoutData from 'components/data/checkout';
 import config from 'config';
-import i18nUtils from 'lib/i18n-utils';
+import { getLocaleFromPath, removeLocaleFromPath } from 'lib/i18n-utils';
 import JetpackAuthorize from './authorize';
 import JetpackConnect from './main';
 import JetpackNewSite from './jetpack-new-site/index';
@@ -29,7 +29,7 @@ import userFactory from 'lib/user';
 import { authorizeQueryDataSchema } from './schema';
 import { authQueryTransformer } from './utils';
 import { JETPACK_CONNECT_QUERY_SET } from 'state/action-types';
-import { MOBILE_APP_REDIRECT_URL_WHITELIST } from './constants';
+import { JPC_PATH_PLANS, MOBILE_APP_REDIRECT_URL_WHITELIST } from './constants';
 import { receiveJetpackOnboardingCredentials } from 'state/jetpack-onboarding/actions';
 import { setDocumentHeadTitle as setTitle } from 'state/document-head/actions';
 import { setSection } from 'state/ui/actions';
@@ -94,8 +94,8 @@ const getPlanSlugFromFlowType = ( type, interval = 'yearly' ) => {
 };
 
 export function redirectWithoutLocaleIfLoggedIn( context, next ) {
-	if ( userModule.get() && i18nUtils.getLocaleFromPath( context.path ) ) {
-		const urlWithoutLocale = i18nUtils.removeLocaleFromPath( context.path );
+	if ( userModule.get() && getLocaleFromPath( context.path ) ) {
+		const urlWithoutLocale = removeLocaleFromPath( context.path );
 		debug( 'redirectWithoutLocaleIfLoggedIn to %s', urlWithoutLocale );
 		return page.redirect( urlWithoutLocale );
 	}
@@ -309,7 +309,7 @@ export function plansSelection( context, next ) {
 	context.primary = (
 		<CheckoutData>
 			<Plans
-				basePlansPath={ '/jetpack/connect/plans' }
+				basePlansPath={ JPC_PATH_PLANS }
 				context={ context }
 				destinationType={ context.params.destinationType }
 				interval={ context.params.interval }

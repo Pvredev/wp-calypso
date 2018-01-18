@@ -13,6 +13,14 @@ import createSelector from 'lib/create-selector';
 import { getJetpackOnboardingSettings } from 'state/selectors';
 import { JETPACK_ONBOARDING_STEPS as STEPS } from 'jetpack-onboarding/constants';
 
+/**
+ * Returns whether a Jetpack onboarding step is completed or not.
+ *
+ * @param  {Object}   state     Global state tree.
+ * @param  {Integer}  siteId    Unconnected site ID.
+ * @param  {String}   stepName  Name of the Jetpack onboarding step.
+ * @return {Boolean}            True if step has been completed, false otherwise.
+ */
 export default createSelector(
 	( state, siteId, stepName ) => {
 		const settings = getJetpackOnboardingSettings( state, siteId );
@@ -33,11 +41,11 @@ export default createSelector(
 			case STEPS.HOMEPAGE:
 				return !! get( settings, 'homepageFormat' );
 			case STEPS.CONTACT_FORM:
-				return !! get( settings, 'contactForm' );
+				return !! get( settings, 'addContactForm' );
 			case STEPS.BUSINESS_ADDRESS:
 				return !! get( settings, 'businessAddress' );
 			case STEPS.WOOCOMMERCE:
-				return !! get( settings, 'woocommerce' );
+				return !! get( settings, 'installWooCommerce' );
 			default:
 				return false;
 		}

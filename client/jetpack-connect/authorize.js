@@ -8,7 +8,7 @@ import debugModule from 'debug';
 import Gridicon from 'gridicons';
 import page from 'page';
 import { connect } from 'react-redux';
-import { get, includes, pick, startsWith } from 'lodash';
+import { get, includes, startsWith } from 'lodash';
 import { localize } from 'i18n-calypso';
 
 /**
@@ -107,10 +107,14 @@ export class JetpackAuthorize extends Component {
 	retryingAuth = false;
 
 	componentWillMount() {
-		const { recordTracksEvent } = this.props;
+		const { recordTracksEvent, isMobileAppFlow } = this.props;
 
-		const tracksProperties = pick( this.props.authQuery, 'from' );
-		tracksProperties.is_mobile_app_flow = this.props.isMobileAppFlow;
+		const { from, clientId } = this.props.authQuery;
+		const tracksProperties = {
+			from,
+			is_mobile_app_flow: isMobileAppFlow,
+			site: clientId,
+		};
 
 		recordTracksEvent( 'calypso_jpc_authorize_form_view', tracksProperties );
 		recordTracksEvent( 'calypso_jpc_auth_view', tracksProperties );
@@ -161,6 +165,7 @@ export class JetpackAuthorize extends Component {
 		this.props.authorize( {
 			_wp_nonce: this.props.authQuery.nonce,
 			client_id: this.props.authQuery.clientId,
+			from: this.props.authQuery.from,
 			jp_version: this.props.authQuery.jpVersion,
 			redirect_uri: this.props.authQuery.redirectUri,
 			scope: this.props.authQuery.scope,

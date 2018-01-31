@@ -38,8 +38,7 @@ import { mergeFormWithValue } from 'signup/utils';
 import SocialSignupForm from './social';
 import { recordTracksEventWithClientId as recordTracksEvent } from 'state/analytics/actions';
 import { createSocialUserFailed } from 'state/login/actions';
-import Card from 'components/card';
-import { preventWidows } from 'lib/formatting';
+import { getCurrentOAuth2Client } from 'state/ui/oauth2-clients/selectors';
 
 const VALIDATION_DELAY_AFTER_FIELD_CHANGES = 1500,
 	debug = debugModule( 'calypso:signup-form:form' );
@@ -67,7 +66,6 @@ class SignupForm extends Component {
 		goToNextStep: PropTypes.func,
 		handleSocialResponse: PropTypes.func,
 		isSocialSignupEnabled: PropTypes.bool,
-		isSocialSignupFirst: PropTypes.bool,
 		locale: PropTypes.string,
 		positionInFlow: PropTypes.number,
 		save: PropTypes.func,
@@ -77,11 +75,11 @@ class SignupForm extends Component {
 		submitting: PropTypes.bool,
 		suggestedUsername: PropTypes.string.isRequired,
 		translate: PropTypes.func.isRequired,
+		oauth2Client: PropTypes.object,
 	};
 
 	static defaultProps = {
 		isSocialSignupEnabled: false,
-		isSocialSignupFirst: false,
 	};
 
 	state = {
@@ -324,11 +322,17 @@ class SignupForm extends Component {
 		} );
 	};
 
-	getNoticeMessageWithLogin( notice ) {
-		const link = login( {
+	getLoginLink() {
+		return login( {
 			isNative: config.isEnabled( 'login/native-login-links' ),
 			redirectTo: this.props.redirectToAfterLoginUrl,
+			locale: this.props.locale,
+			oauth2ClientId: this.props.oauth2Client && this.props.oauth2Client.id,
 		} );
+	}
+
+	getNoticeMessageWithLogin( notice ) {
+		const link = this.getLoginLink();
 
 		if ( notice.error === '2FA_enabled' ) {
 			return (
@@ -372,11 +376,7 @@ class SignupForm extends Component {
 			return;
 		}
 
-		let link = login( {
-			isNative: config.isEnabled( 'login/native-login-links' ),
-			locale: this.props.locale,
-			redirectTo: this.props.redirectToAfterLoginUrl,
-		} );
+		let link = this.getLoginLink();
 
 		return map( messages, ( message, error_code ) => {
 			if ( error_code === 'taken' ) {
@@ -570,11 +570,7 @@ class SignupForm extends Component {
 		}
 
 		const logInUrl = config.isEnabled( 'login/native-login-links' )
-			? login( {
-					isNative: true,
-					locale: this.props.locale,
-					redirectTo: this.props.redirectToAfterLoginUrl,
-				} )
+			? this.getLoginLink()
 			: addLocaleToWpcomUrl( config( 'login_url' ), this.props.locale );
 
 		return (
@@ -595,20 +591,6 @@ class SignupForm extends Component {
 			<div className={ classNames( 'signup-form', this.props.className ) }>
 				{ this.getNotice() }
 
-				{ this.props.isSocialSignupEnabled &&
-					this.props.isSocialSignupFirst && (
-						<Card className="signup-form__social logged-out-form">
-							<SocialSignupForm
-								handleResponse={ this.props.handleSocialResponse }
-								socialService={ this.props.socialService }
-								socialServiceResponse={ this.props.socialServiceResponse }
-							/>
-							<p>
-								{ preventWidows( this.props.translate( 'Or sign up with your email address:' ) ) }
-							</p>
-						</Card>
-					) }
-
 				<LoggedOutForm onSubmit={ this.handleSubmit } noValidate={ true }>
 					{ this.props.formHeader && (
 						<header className="signup-form__header">{ this.props.formHeader }</header>
@@ -619,21 +601,13 @@ class SignupForm extends Component {
 					{ this.props.formFooter || this.formFooter() }
 				</LoggedOutForm>
 
-				{ this.props.isSocialSignupEnabled &&
-					! this.props.isSocialSignupFirst && (
-						<Card className="signup-form__social">
-							<p>
-								{ preventWidows(
-									this.props.translate( 'Or connect your existing profile to get started faster.' )
-								) }
-							</p>
-							<SocialSignupForm
-								handleResponse={ this.props.handleSocialResponse }
-								socialService={ this.props.socialService }
-								socialServiceResponse={ this.props.socialServiceResponse }
-							/>
-						</Card>
-					) }
+				{ this.props.isSocialSignupEnabled && (
+					<SocialSignupForm
+						handleResponse={ this.props.handleSocialResponse }
+						socialService={ this.props.socialService }
+						socialServiceResponse={ this.props.socialServiceResponse }
+					/>
+				) }
 
 				{ this.props.footerLink || this.footerLink() }
 			</div>
@@ -641,7 +615,12 @@ class SignupForm extends Component {
 	}
 }
 
-export default connect( null, {
-	trackLoginMidFlow: () => recordTracksEvent( 'calypso_signup_login_midflow' ),
-	createSocialUserFailed,
-} )( localize( SignupForm ) );
+export default connect(
+	state => ( {
+		oauth2Client: getCurrentOAuth2Client( state ),
+	} ),
+	{
+		trackLoginMidFlow: () => recordTracksEvent( 'calypso_signup_login_midflow' ),
+		createSocialUserFailed,
+	}
+)( localize( SignupForm ) );

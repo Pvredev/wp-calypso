@@ -329,7 +329,7 @@ class RemovePurchase extends Component {
 	}
 
 	renderPlanDialog() {
-		const { selectedPurchase, translate } = this.props;
+		const { selectedPurchase, selectedSite, translate } = this.props;
 		const buttons = {
 			cancel: {
 				action: 'cancel',
@@ -391,6 +391,7 @@ class RemovePurchase extends Component {
 					defaultContent={ this.renderPlanDialogText() }
 					onInputChange={ this.onSurveyChange }
 					isJetpack={ isJetpackPlan( selectedPurchase ) }
+					selectedSite={ selectedSite }
 				/>
 			</Dialog>
 		);
@@ -461,7 +462,7 @@ class RemovePurchase extends Component {
 				<p>
 					{ translate(
 						'To cancel your %(productName)s plan, please contact our support team' +
-							'-- a Happiness Engineer will take care of it.',
+							' — a Happiness Engineer will take care of it.',
 						{
 							args: { productName },
 						}

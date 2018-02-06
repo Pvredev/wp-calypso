@@ -105,8 +105,7 @@ export class RewindCredentialsForm extends Component {
 		const nextForm = Object.assign( {}, this.state.form );
 
 		// Populate the fields with data from state if credentials are already saved
-		nextForm.protocol =
-			isEmpty( nextForm.protocol ) && credentials ? credentials.protocol : nextForm.protocol;
+		nextForm.protocol = credentials ? credentials.type : nextForm.protocol;
 		nextForm.host = isEmpty( nextForm.host ) && credentials ? credentials.host : nextForm.host;
 		nextForm.port = isEmpty( nextForm.port ) && credentials ? credentials.port : nextForm.port;
 		nextForm.user = isEmpty( nextForm.user ) && credentials ? credentials.user : nextForm.user;
@@ -136,8 +135,7 @@ export class RewindCredentialsForm extends Component {
 						onChange={ this.handleFieldChange }
 						disabled={ formIsSubmitting }
 					>
-						<option value="ssh">{ translate( 'SSH' ) }</option>
-						<option value="sftp">{ translate( 'SFTP' ) }</option>
+						<option value="ssh">{ translate( 'SSH/SFTP' ) }</option>
 						<option value="ftp">{ translate( 'FTP' ) }</option>
 					</FormSelect>
 				</FormFieldset>

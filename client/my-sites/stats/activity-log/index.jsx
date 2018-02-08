@@ -484,7 +484,7 @@ class ActivityLog extends Component {
 				{ 'awaitingCredentials' === rewindState.state && (
 					<Banner
 						icon="history"
-						href={ `/settings/security/${ slug }` }
+						href={ `/start/rewind-setup/?siteId=${ siteId }&siteSlug=${ slug }` }
 						title={ translate( 'Add site credentials' ) }
 						description={ translate(
 							'Backups and security scans require access to your site to work properly.'
@@ -588,7 +588,10 @@ class ActivityLog extends Component {
 		const { siteId, context, rewindState } = this.props;
 
 		const rewindNoThanks = get( context, 'query.rewind-redirect', '' );
-		const rewindIsNotReady = ! includes( [ 'active', 'provisioning' ], rewindState.state );
+		const rewindIsNotReady = includes(
+			[ 'unavailable', 'awaitingCredentials' ],
+			rewindState.state
+		);
 
 		return (
 			<Main wideLayout>

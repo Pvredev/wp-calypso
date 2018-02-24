@@ -27,6 +27,7 @@ import AuthorSelector from 'blocks/author-selector/docs/example';
 import CommentButtons from 'blocks/comment-button/docs/example';
 import DisconnectJetpackDialog from 'blocks/disconnect-jetpack/docs/example';
 import FollowButton from 'blocks/follow-button/docs/example';
+import FollowMenu from 'blocks/follow-menu/docs/example';
 import LikeButtons from 'blocks/like-button/docs/example';
 import PostSchedule from 'components/post-schedule/docs/example';
 import PostSelector from 'my-sites/post-selector/docs/example';
@@ -81,6 +82,7 @@ import SimplePaymentsDialog from 'components/tinymce/plugins/simple-payments/dia
 import ConversationCaterpillar from 'blocks/conversation-caterpillar/docs/example';
 import ConversationFollowButton from 'blocks/conversation-follow-button/docs/example';
 import ColorSchemePicker from 'blocks/color-scheme-picker/docs/example';
+import SiteRenamer from 'blocks/simple-site-rename-form/docs/example';
 
 export default class AppComponents extends React.Component {
 	static displayName = 'AppComponents';
@@ -122,6 +124,7 @@ export default class AppComponents extends React.Component {
 					<DisconnectJetpackDialog />
 					<CreditCardForm />
 					<FollowButton />
+					<FollowMenu />
 					<HappinessSupport />
 					<ImageEditor />
 					<VideoEditor />
@@ -176,6 +179,7 @@ export default class AppComponents extends React.Component {
 					<ConversationCaterpillar />
 					<ConversationFollowButton />
 					<ColorSchemePicker />
+					{ isEnabled( 'site-renamer/devdocs' ) && <SiteRenamer /> }
 				</Collection>
 			</Main>
 		);

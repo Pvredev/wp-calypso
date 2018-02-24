@@ -67,6 +67,7 @@ class JetpackOnboardingMain extends React.PureComponent {
 
 	render() {
 		const {
+			action,
 			isRequestingSettings,
 			recordJpoEvent,
 			settings,
@@ -80,6 +81,7 @@ class JetpackOnboardingMain extends React.PureComponent {
 				<QueryJetpackOnboardingSettings siteId={ siteId } />
 				{ siteId ? (
 					<Wizard
+						action={ action }
 						basePath="/jetpack/start"
 						baseSuffix={ siteSlug }
 						components={ COMPONENTS }
@@ -118,6 +120,7 @@ export default connect(
 			STEPS.CONTACT_FORM,
 			isBusiness && STEPS.BUSINESS_ADDRESS,
 			isBusiness && STEPS.WOOCOMMERCE,
+			STEPS.STATS,
 			STEPS.SUMMARY,
 		] );
 		return {

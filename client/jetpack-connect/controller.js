@@ -156,6 +156,8 @@ export function connect( context, next ) {
 	debug( 'entered connect flow with params %o', params );
 
 	const planSlug = getPlanSlugFromFlowType( type, interval );
+
+	// Not clearing the plan here, because other flows can set the cookie before arriving here.
 	planSlug && storePlan( planSlug );
 
 	analytics.pageView.record( pathname, analyticsPageTitle );
@@ -168,6 +170,8 @@ export function connect( context, next ) {
 		path,
 		type,
 		url: query.url,
+		ctaId: query.cta_id, // origin tracking params
+		ctaFrom: query.cta_from,
 	} );
 	next();
 }

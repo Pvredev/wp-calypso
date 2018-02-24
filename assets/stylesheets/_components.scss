@@ -39,7 +39,9 @@
 @import 'blocks/domain-to-plan-nudge/style';
 @import 'blocks/edit-gravatar/style';
 @import 'blocks/follow-button/style';
+@import 'blocks/follow-menu/style';
 @import 'blocks/eligibility-warnings/style';
+@import 'blocks/google-my-business/style';
 @import 'blocks/image-editor/style';
 @import 'blocks/inline-help/style';
 @import 'blocks/like-button/style';
@@ -75,6 +77,7 @@
 @import 'blocks/reader-subscription-list-item/style';
 @import 'blocks/reader-visit-link/style';
 @import 'blocks/sharing-preview-pane/style';
+@import 'blocks/simple-site-rename-form/style';
 @import 'blocks/taxonomy-manager/style';
 @import 'blocks/term-form-dialog/style';
 @import 'blocks/term-tree-selector/style';
@@ -97,7 +100,6 @@
 @import 'components/credit-card-form-fields/style';
 @import 'components/date-picker/style';
 @import 'components/dialog/style';
-@import 'components/domains/domain-mapping-suggestion/style';
 @import 'components/domains/domain-product-price/style';
 @import 'components/domains/domain-search-results/style';
 @import 'components/domains/domain-suggestion/style';
@@ -143,7 +145,6 @@
 @import 'components/forms/range/style';
 @import 'components/forms/sortable-list/index';
 @import 'components/gauge/style';
-@import 'components/google-my-business/style';
 @import 'components/global-notices/style';
 @import 'components/gravatar/style';
 @import 'components/happiness-support/style';
@@ -265,6 +266,7 @@
 @import 'lib/directly/style';
 @import 'lib/keyboard-shortcuts/style';
 @import 'lib/abtest/test-helper/style';
+@import 'lib/preferences-helper/style';
 @import 'mailing-lists/style';
 @import 'me/account-password/style';
 @import 'me/account/style';
@@ -339,6 +341,7 @@
 @import 'my-sites/draft/style';
 @import 'my-sites/exporter/style';
 @import 'my-sites/feature-comparison/style';
+@import 'my-sites/google-my-business/style';
 @import 'my-sites/guided-transfer/style';
 @import 'my-sites/invites/invite-form-header/style';
 @import 'my-sites/invites/invite-header/style';

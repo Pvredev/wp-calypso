@@ -13,6 +13,7 @@ import { localize } from 'i18n-calypso';
  */
 import DocumentHead from 'components/data/document-head';
 import FormattedHeader from 'components/formatted-header';
+import JetpackLogo from 'components/jetpack-logo';
 import PageViewTracker from 'lib/analytics/page-view-tracker';
 import Tile from 'components/tile-grid/tile';
 import TileGrid from 'components/tile-grid';
@@ -31,13 +32,13 @@ class JetpackOnboardingContactFormStep extends React.PureComponent {
 
 	render() {
 		const { basePath, getForwardUrl, settings, translate } = this.props;
-		const headerText = translate( "Let's shape your new site." );
+		const headerText = translate( "Let's grow your audience with Jetpack." );
 		const subHeaderText = (
 			<Fragment>
-				{ translate( 'Would you like to create a Contact Us page with a contact form on it?' ) }
+				{ translate( "A great first step is adding Jetpack's contact form." ) }
 				<br />
 				{ translate(
-					'This form will allow visitors to contact you with their name, email, website, and a message.'
+					'Create a Jetpack account to get started and unlock this and dozens of other features.'
 				) }
 			</Fragment>
 		);
@@ -51,15 +52,15 @@ class JetpackOnboardingContactFormStep extends React.PureComponent {
 					title="Contact Form ‹ Jetpack Start"
 				/>
 
+				<JetpackLogo full size={ 45 } />
+
 				<FormattedHeader headerText={ headerText } subHeaderText={ subHeaderText } />
 
 				<TileGrid>
 					<Tile
-						buttonLabel={ ! hasContactForm ? translate( 'Add a contact form' ) : undefined }
+						buttonLabel={ ! hasContactForm ? translate( 'Add a contact form' ) : null }
 						description={
-							hasContactForm
-								? translate( 'Your contact form has been created.' )
-								: translate( 'Not sure? You can skip this step and add a contact form later.' )
+							hasContactForm ? translate( 'Your contact form has been created.' ) : null
 						}
 						image={ '/calypso/images/illustrations/contact-us.svg' }
 						onClick={ this.handleAddContactForm }

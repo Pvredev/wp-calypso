@@ -44,10 +44,12 @@ export const jetpackOnboardingSettingsSchema = {
 						city: { type: 'string' },
 						state: { type: 'string' },
 						zip: { type: 'string' },
+						country: { type: 'string' },
 					},
 				},
 			],
 		},
 		installWooCommerce: { type: 'boolean' },
+		stats: { type: 'boolean' },
 	},
 };

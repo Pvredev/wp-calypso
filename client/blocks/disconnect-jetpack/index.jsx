@@ -10,7 +10,6 @@ import Gridicon from 'gridicons';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 import { noop } from 'lodash';
-import page from 'page';
 
 /**
  * Internal dependencies
@@ -22,9 +21,10 @@ import QueryRewindState from 'components/data/query-rewind-state';
 import {
 	recordGoogleEvent as recordGoogleEventAction,
 	recordTracksEvent as recordTracksEventAction,
+	withAnalytics,
 } from 'state/analytics/actions';
 import { disconnect } from 'state/jetpack/connection/actions';
-import { setAllSitesSelected } from 'state/ui/actions';
+import { setAllSitesSelected, navigate } from 'state/ui/actions';
 import { successNotice, errorNotice, infoNotice, removeNotice } from 'state/notices/actions';
 import { getPlanClass } from 'lib/plans/constants';
 import { getSiteSlug, getSiteTitle, getSitePlanSlug } from 'state/sites/selectors';
@@ -279,9 +279,7 @@ class DisconnectJetpack extends PureComponent {
 						{ translate( 'Experiencing connection issues? Try to go back and rewind your site.' ) }
 					</p>
 					<div className="disconnect-jetpack__try-rewind-button-wrap">
-						<Button href={ `/stats/activity/${ siteSlug }` } onClick={ this.handleTryRewind }>
-							{ translate( 'Rewind site' ) }
-						</Button>
+						<Button onClick={ this.handleTryRewind }>{ translate( 'Rewind site' ) }</Button>
 						<HappychatButton borderless={ false } onClick={ this.props.trackTryRewindHelp } primary>
 							<Gridicon icon="chat" size={ 18 } />
 							{ translate( 'Get help' ) }
@@ -305,20 +303,21 @@ export default connect(
 			rewindState: rewindState.state,
 		};
 	},
-	dispatch => ( {
-		setAllSitesSelected: () => dispatch( setAllSitesSelected ),
-		recordGoogleEvent: () => dispatch( recordGoogleEventAction ),
-		recordTracksEvent: () => dispatch( recordTracksEventAction ),
-		disconnect: () => dispatch( disconnect ),
-		successNotice: () => dispatch( successNotice ),
-		errorNotice: () => dispatch( errorNotice ),
-		infoNotice: () => dispatch( infoNotice ),
-		removeNotice: () => dispatch( removeNotice ),
-		trackTryRewind: siteSlug => {
-			dispatch( recordTracksEventAction( 'calypso_disconnect_jetpack_try_rewind' ) );
-			page.redirect( `/stats/activity/${ siteSlug }` );
-		},
+	{
+		setAllSitesSelected,
+		recordGoogleEvent: recordGoogleEventAction,
+		recordTracksEvent: recordTracksEventAction,
+		disconnect,
+		successNotice,
+		errorNotice,
+		infoNotice,
+		removeNotice,
+		trackTryRewind: siteSlug =>
+			withAnalytics(
+				recordTracksEventAction( 'calypso_disconnect_jetpack_try_rewind' ),
+				navigate( `/stats/activity/${ siteSlug }` )
+			),
 		trackTryRewindHelp: () =>
-			dispatch( recordTracksEventAction( 'calypso_disconnect_jetpack_try_rewind_help' ) ),
-	} )
+			recordTracksEventAction( 'calypso_disconnect_jetpack_try_rewind_help' ),
+	}
 )( localize( DisconnectJetpack ) );

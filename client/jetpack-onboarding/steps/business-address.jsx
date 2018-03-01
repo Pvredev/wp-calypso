@@ -5,7 +5,7 @@
  */
 import React, { Fragment } from 'react';
 import { connect } from 'react-redux';
-import { get, map, omit, reduce, some } from 'lodash';
+import { every, get, map, reduce } from 'lodash';
 import { localize } from 'i18n-calypso';
 /**
  * Internal dependencies
@@ -18,7 +18,6 @@ import FormattedHeader from 'components/formatted-header';
 import FormFieldset from 'components/forms/form-fieldset';
 import FormLabel from 'components/forms/form-label';
 import FormTextInput from 'components/forms/form-text-input';
-import FormInputValidation from 'components/forms/form-input-validation';
 import JetpackLogo from 'components/jetpack-logo';
 import PageViewTracker from 'lib/analytics/page-view-tracker';
 import QuerySites from 'components/data/query-sites';
@@ -138,8 +137,8 @@ class JetpackOnboardingBusinessAddressStep extends React.PureComponent {
 		this.props.saveJpoSettings( siteId, { businessAddress: this.state.fields } );
 	};
 
-	hasEmptyFields = () => {
-		return some( omit( this.state.fields, 'state' ), val => val === '' );
+	isFormEmpty = () => {
+		return every( this.state.fields, val => val === '' );
 	};
 
 	renderHeader() {
@@ -147,7 +146,7 @@ class JetpackOnboardingBusinessAddressStep extends React.PureComponent {
 		const headerText = translate( 'Help your customers find you with Jetpack.' );
 		const subHeaderText = translate(
 			"Add your business address and a map of your location with Jetpack's business address widget. " +
-				"You can adjust the widget's location later."
+				"You can edit the widget's content and position later."
 		);
 
 		return <FormattedHeader headerText={ headerText } subHeaderText={ subHeaderText } />;
@@ -174,7 +173,7 @@ class JetpackOnboardingBusinessAddressStep extends React.PureComponent {
 				<TileGrid>
 					<Tile
 						buttonLabel={ translate( 'Add a business address' ) }
-						image="/calypso/images/illustrations/illustration-layout.svg"
+						image="/calypso/images/illustrations/business-address.svg"
 						onClick={ this.handleAddBusinessAddressClick }
 						href={ href }
 					/>
@@ -193,9 +192,6 @@ class JetpackOnboardingBusinessAddressStep extends React.PureComponent {
 				<Card className="steps__form">
 					<form onSubmit={ this.handleSubmit }>
 						{ map( this.fields, ( fieldLabel, fieldName ) => {
-							const isValidatingField = ! isRequestingSettings && fieldName !== 'state';
-							const isValidField = this.state.fields[ fieldName ] !== '';
-
 							return (
 								<FormFieldset key={ fieldName }>
 									<FormLabel htmlFor={ fieldName }>{ fieldLabel }</FormLabel>
@@ -203,28 +199,13 @@ class JetpackOnboardingBusinessAddressStep extends React.PureComponent {
 										autoFocus={ fieldName === 'name' }
 										disabled={ isRequestingSettings }
 										id={ fieldName }
-										isError={ isValidatingField && ! isValidField }
-										isValid={ isValidatingField && isValidField }
 										onChange={ this.getChangeHandler( fieldName ) }
 										value={ this.state.fields[ fieldName ] || '' }
 									/>
-									{ isValidatingField &&
-										! isValidField && (
-											<FormInputValidation
-												isError
-												text={ translate( 'Please enter a %(fieldLabel)s', {
-													args: { fieldLabel },
-												} ) }
-											/>
-										) }
 								</FormFieldset>
 							);
 						} ) }
-						<Button
-							disabled={ isRequestingSettings || this.hasEmptyFields() }
-							primary
-							type="submit"
-						>
+						<Button disabled={ isRequestingSettings || this.isFormEmpty() } primary type="submit">
 							{ translate( 'Add address' ) }
 						</Button>
 					</form>
@@ -260,7 +241,7 @@ class JetpackOnboardingBusinessAddressStep extends React.PureComponent {
 				{ hasBusinessAddress ? (
 					<ConnectSuccess
 						href={ getForwardUrl() }
-						illustration="/calypso/images/illustrations/illustration-layout.svg"
+						illustration="/calypso/images/illustrations/business-address.svg"
 						onClick={ this.handleNextButtonClick }
 						title={ translate( 'Success! Jetpack has added your business address to your site.' ) }
 					/>

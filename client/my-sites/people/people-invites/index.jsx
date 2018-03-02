@@ -25,6 +25,8 @@ import QuerySiteInvites from 'components/data/query-site-invites';
 import Dialog from 'components/dialog';
 import InvitesListEnd from './invites-list-end';
 import { getSelectedSite } from 'state/ui/selectors';
+import { isJetpackMinimumVersion, isJetpackSite } from 'state/sites/selectors';
+import { isPrivateSite, canCurrentUser } from 'state/selectors';
 import {
 	isRequestingInvitesForSite,
 	getPendingInvitesForSite,
@@ -64,14 +66,32 @@ class PeopleInvites extends React.PureComponent {
 	};
 
 	render() {
-		const { site } = this.props;
+		const { site, canViewPeople, isJetpack, isPrivate, jetpackPeopleSupported } = this.props;
 		const siteId = site && site.ID;
+
+		if ( siteId && ! canViewPeople ) {
+			return (
+				<Main>
+					<SidebarNavigation />
+					<EmptyContent
+						title={ this.props.translate( 'You are not authorized to view this page' ) }
+						illustration={ '/calypso/images/illustrations/illustration-404.svg' }
+					/>
+				</Main>
+			);
+		}
 
 		return (
 			<Main className="people-invites">
 				{ siteId && <QuerySiteInvites siteId={ siteId } /> }
 				<SidebarNavigation />
-				<PeopleSectionNav filter="invites" site={ site } />
+				<PeopleSectionNav
+					filter="invites"
+					site={ site }
+					isJetpack={ isJetpack }
+					isPrivate={ isPrivate }
+					jetpackPeopleSupported={ jetpackPeopleSupported }
+				/>
 				{ this.renderInvitesList() }
 			</Main>
 		);
@@ -217,11 +237,15 @@ export default connect(
 
 		return {
 			site,
+			isJetpack: isJetpackSite( state, siteId ),
+			isPrivate: isPrivateSite( state, siteId ),
+			jetpackPeopleSupported: isJetpackMinimumVersion( state, siteId, '3.7.0-beta' ),
 			requesting: isRequestingInvitesForSite( state, siteId ),
 			pendingInvites: getPendingInvitesForSite( state, siteId ),
 			acceptedInvites: getAcceptedInvitesForSite( state, siteId ),
 			totalInvitesFound: getNumberOfInvitesFoundForSite( state, siteId ),
 			deleting: isDeletingAnyInvite( state, siteId ),
+			canViewPeople: canCurrentUser( state, siteId, 'list_users' ),
 		};
 	},
 	{ deleteInvites }

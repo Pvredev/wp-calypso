@@ -74,7 +74,7 @@ export default {
 		allowExistingUsers: true,
 	},
 	domainSuggestionTestV6: {
-		datestamp: '20180219',
+		datestamp: '20180301',
 		variations: {
 			group_0: 1, // Default group
 			group_1: 1000,
@@ -102,5 +102,13 @@ export default {
 		},
 		defaultVariation: 'original',
 		allowExistingUsers: true,
+	},
+	redesignedSidebarBanner: {
+		datestamp: '20180222',
+		variations: {
+			newBanner: 50,
+			oldBanner: 50,
+		},
+		defaultVariation: 'oldBanner',
 	},
 };

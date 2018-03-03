@@ -3,6 +3,7 @@
  * Component which handle remote credentials for installing Jetpack
  */
 import React, { Component } from 'react';
+import config from 'config';
 import Gridicon from 'gridicons';
 import page from 'page';
 import { connect } from 'react-redux';
@@ -18,14 +19,13 @@ import FormTextInput from 'components/forms/form-text-input';
 import FormattedHeader from 'components/formatted-header';
 import FormPasswordInput from 'components/forms/form-password-input';
 import HelpButton from './help-button';
-import JetpackLogo from 'components/jetpack-logo';
 import LoggedOutFormLinks from 'components/logged-out-form/links';
 import LoggedOutFormLinkItem from 'components/logged-out-form/link-item';
 import MainWrapper from './main-wrapper';
 import { addCalypsoEnvQueryArg } from './utils';
 import { externalRedirect } from 'lib/route';
 import { jetpackRemoteInstall } from 'state/jetpack-remote-install/actions';
-import { getJetpackRemoteInstallError, isJetpackRemoteInstallComplete } from 'state/selectors';
+import { getJetpackRemoteInstallErrorCode, isJetpackRemoteInstallComplete } from 'state/selectors';
 import { getConnectingSite } from 'state/jetpack-connect/selectors';
 import { REMOTE_PATH_AUTH } from './constants';
 
@@ -56,6 +56,16 @@ export class OrgCredentialsForm extends Component {
 		this.props.jetpackRemoteInstall( siteToConnect, this.state.username, this.state.password );
 	};
 
+	componentWillMount() {
+		if ( config.isEnabled( 'jetpack/connect/remote-install' ) ) {
+			const { siteToConnect } = this.props;
+
+			if ( ! siteToConnect ) {
+				page.redirect( '/jetpack/connect' );
+			}
+		}
+	}
+
 	componentDidUpdate() {
 		const { installError, isResponseCompleted, siteToConnect } = this.props;
 
@@ -70,14 +80,6 @@ export class OrgCredentialsForm extends Component {
 	getChangeHandler = field => event => {
 		this.setState( { [ field ]: event.target.value } );
 	};
-
-	getHeaderImage() {
-		return (
-			<div className="jetpack-connect__jetpack-logo">
-				<JetpackLogo full size={ 45 } />
-			</div>
-		);
-	}
 
 	getHeaderText() {
 		const { translate } = this.props;
@@ -147,15 +149,6 @@ export class OrgCredentialsForm extends Component {
 		);
 	}
 
-	formHeader() {
-		return (
-			<div>
-				{ this.getHeaderImage() }
-				{ this.renderHeadersText() }
-			</div>
-		);
-	}
-
 	onClickBack() {
 		page.redirect( '/jetpack/connect' );
 	}
@@ -195,7 +188,7 @@ export class OrgCredentialsForm extends Component {
 	render() {
 		return (
 			<MainWrapper>
-				{ this.formHeader() }
+				{ this.renderHeadersText() }
 				<Card className="jetpack-connect__site-url-input-container">
 					<div onSubmit={ this.handleSubmit }>
 						{ this.formFields() }
@@ -212,7 +205,7 @@ export default connect(
 	state => {
 		const jetpackConnectSite = getConnectingSite( state );
 		const siteToConnect = jetpackConnectSite.url;
-		const installError = getJetpackRemoteInstallError( state, siteToConnect );
+		const installError = getJetpackRemoteInstallErrorCode( state, siteToConnect );
 		const isResponseCompleted = isJetpackRemoteInstallComplete( state, siteToConnect );
 		return {
 			installError,

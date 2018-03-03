@@ -6,6 +6,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compact, get } from 'lodash';
 import { connect } from 'react-redux';
+import { localize } from 'i18n-calypso';
 import { recordTracksEvent } from 'state/analytics/actions';
 
 /**
@@ -21,8 +22,10 @@ import {
 	JETPACK_ONBOARDING_STEPS as STEPS,
 } from './constants';
 import {
+	getJetpackOnboardingCompletedSteps,
 	getJetpackOnboardingSettings,
 	getRequest,
+	getSiteId,
 	getUnconnectedSite,
 	getUnconnectedSiteUserHash,
 	getUnconnectedSiteIdBySlug,
@@ -45,11 +48,26 @@ class JetpackOnboardingMain extends React.PureComponent {
 	state = { hasFinishedRequestingSite: false };
 
 	componentDidMount() {
-		const { siteId, siteSlug } = this.props;
+		this.retrieveOnboardingCredentials();
+	}
 
-		// If we are missing the Jetpack onboarding credentials,
+	componentDidUpdate() {
+		this.retrieveOnboardingCredentials();
+	}
+
+	componentWillReceiveProps( nextProps ) {
+		if ( this.props.isRequestingWhetherConnected && ! nextProps.isRequestingWhetherConnected ) {
+			this.setState( { hasFinishedRequestingSite: true } );
+		}
+	}
+
+	retrieveOnboardingCredentials() {
+		const { isConnected, siteId, siteSlug } = this.props;
+		const { hasFinishedRequestingSite } = this.state;
+
+		// If we are not connected and missing the Jetpack onboarding credentials,
 		// redirect back to wp-admin so we can obtain them again.
-		if ( ! siteId && siteSlug ) {
+		if ( hasFinishedRequestingSite && ! isConnected && ! siteId && siteSlug ) {
 			const siteDomain = siteSlug.replace( '::', '/' );
 			const url = addQueryArgs(
 				{
@@ -63,12 +81,6 @@ class JetpackOnboardingMain extends React.PureComponent {
 		}
 	}
 
-	componentWillReceiveProps( nextProps ) {
-		if ( this.props.isRequestingWhetherConnected && ! nextProps.isRequestingWhetherConnected ) {
-			this.setState( { hasFinishedRequestingSite: true } );
-		}
-	}
-
 	getNavigationLinkClickHandler = direction => () => {
 		const { recordJpoEvent, stepName } = this.props;
 
@@ -77,6 +89,15 @@ class JetpackOnboardingMain extends React.PureComponent {
 			direction,
 		} );
 	};
+
+	getSkipLinkText() {
+		const { stepName, stepsCompleted, translate } = this.props;
+
+		if ( get( stepsCompleted, stepName ) ) {
+			return translate( 'Next' );
+		}
+		return null;
+	}
 
 	render() {
 		const {
@@ -92,6 +113,7 @@ class JetpackOnboardingMain extends React.PureComponent {
 			stepName,
 			steps,
 		} = this.props;
+
 		return (
 			<Main className="jetpack-onboarding">
 				{ /* We only allow querying of site settings once we know that we have finished
@@ -107,6 +129,7 @@ class JetpackOnboardingMain extends React.PureComponent {
 						basePath="/jetpack/start"
 						baseSuffix={ siteSlug }
 						components={ COMPONENTS }
+						forwardText={ this.getSkipLinkText() }
 						hideNavigation={ stepName === STEPS.SUMMARY }
 						isRequestingSettings={ isRequestingSettings }
 						isRequestingWhetherConnected={ isRequestingWhetherConnected }
@@ -129,7 +152,14 @@ class JetpackOnboardingMain extends React.PureComponent {
 }
 export default connect(
 	( state, { siteSlug } ) => {
-		const siteId = getUnconnectedSiteIdBySlug( state, siteSlug );
+		let siteId = getUnconnectedSiteIdBySlug( state, siteSlug );
+		if ( ! siteId ) {
+			// We rely on the fact that all sites are being requested automatically early in <Layout />.
+			// If sites aren't loaded, we'll consider that the site is not connected,
+			// which will always result in redirecting to wp-admin to obtain the onboarding credentials.
+			siteId = getSiteId( state, siteSlug );
+		}
+
 		const settings = getJetpackOnboardingSettings( state, siteId );
 		const isBusiness = get( settings, 'siteType' ) === 'business';
 
@@ -155,7 +185,6 @@ export default connect(
 		).isLoading;
 
 		const userIdHashed = getUnconnectedSiteUserHash( state, siteId );
-		// Note: here we can select which steps to display, based on user's input
 		const steps = compact( [
 			STEPS.SITE_TITLE,
 			STEPS.SITE_TYPE,
@@ -166,14 +195,18 @@ export default connect(
 			STEPS.STATS,
 			STEPS.SUMMARY,
 		] );
+		const stepsCompleted = getJetpackOnboardingCompletedSteps( state, siteId, steps );
+
 		return {
 			jpoAuth,
+			isConnected,
 			isRequestingSettings,
 			isRequestingWhetherConnected,
 			siteId,
 			siteSlug,
 			settings,
 			steps,
+			stepsCompleted,
 			userIdHashed,
 		};
 	},
@@ -203,4 +236,4 @@ export default connect(
 			} ),
 		...ownProps,
 	} )
-)( JetpackOnboardingMain );
+)( localize( JetpackOnboardingMain ) );

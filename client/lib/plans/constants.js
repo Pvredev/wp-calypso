@@ -15,8 +15,11 @@ import { isEnabled } from 'config';
 
 // plans constants
 export const PLAN_BUSINESS = 'business-bundle';
+export const PLAN_BUSINESS_2_YEARS = 'business-bundle-2y';
 export const PLAN_PREMIUM = 'value_bundle';
+export const PLAN_PREMIUM_2_YEARS = 'value_bundle-2y';
 export const PLAN_PERSONAL = 'personal-bundle';
+export const PLAN_PERSONAL_2_YEARS = 'personal-bundle-2y';
 export const PLAN_FREE = 'free_plan';
 export const PLAN_JETPACK_FREE = 'jetpack_free';
 export const PLAN_JETPACK_PREMIUM = 'jetpack_premium';
@@ -137,6 +140,217 @@ export const FEATURE_CONCIERGE_SETUP = 'concierge-setup-jetpack';
 export const FEATURE_MARKETING_AUTOMATION = 'marketing-automation';
 export const FEATURE_SEARCH = 'search';
 
+const getPlanPersonalDetails = () => ( {
+	getTitle: () => i18n.translate( 'Personal' ),
+	getAudience: () => i18n.translate( 'Best for hobbyists' ),
+	getBlogAudience: () => i18n.translate( 'Best for hobbyists' ),
+	getPortfolioAudience: () => i18n.translate( 'Best for hobbyists' ),
+	getStoreAudience: () => i18n.translate( 'Best for hobbyists' ),
+	getDescription: () =>
+		i18n.translate(
+			'{{strong}}Best for Personal Use:{{/strong}} Boost your' +
+				' website with a custom domain name, and remove all WordPress.com advertising. ' +
+				'Get access to high-quality email and live chat support.',
+			{
+				components: {
+					strong: (
+						<strong className="plans__features plan-features__targeted-description-heading" />
+					),
+				},
+			}
+		),
+	getFeatures: () => [
+		// pay attention to ordering, shared features should align on /plan page
+		FEATURE_CUSTOM_DOMAIN,
+		FEATURE_JETPACK_ESSENTIAL,
+		FEATURE_EMAIL_LIVE_CHAT_SUPPORT,
+		FEATURE_FREE_THEMES,
+		FEATURE_BASIC_DESIGN,
+		FEATURE_6GB_STORAGE,
+		FEATURE_NO_ADS,
+	],
+	getSignupFeatures: () => [
+		FEATURE_EMAIL_LIVE_CHAT_SUPPORT_SIGNUP,
+		FEATURE_FREE_DOMAIN,
+		FEATURE_ALL_FREE_FEATURES,
+	],
+	getBlogSignupFeatures: () => [
+		FEATURE_FREE_DOMAIN,
+		FEATURE_EMAIL_LIVE_CHAT_SUPPORT_SIGNUP,
+		FEATURE_ALL_FREE_FEATURES,
+	],
+	getPortfolioSignupFeatures: () => [
+		FEATURE_FREE_DOMAIN,
+		FEATURE_EMAIL_LIVE_CHAT_SUPPORT_SIGNUP,
+		FEATURE_ALL_FREE_FEATURES,
+	],
+	getBillingTimeFrame: abtest => {
+		if ( abtest && abtest( 'upgradePricingDisplayV2' ) === 'modified' ) {
+			// Note: Don't make this translatable because it's only visible to English-language users
+			return '/month, billed annually';
+		}
+		return i18n.translate( 'per month, billed yearly' );
+	},
+} );
+
+const getPlanPremiumDetails = () => ( {
+	getTitle: () => i18n.translate( 'Premium' ),
+	getAudience: () => i18n.translate( 'Best for entrepreneurs' ),
+	getBlogAudience: () => i18n.translate( 'Best for professionals' ),
+	getPortfolioAudience: () => i18n.translate( 'Best for freelancers' ),
+	getStoreAudience: () => i18n.translate( 'Best for freelancers' ),
+	getDescription: () =>
+		i18n.translate(
+			'{{strong}}Best for Entrepreneurs & Freelancers:{{/strong}}' +
+				' Build a unique website with advanced design tools, CSS editing, lots of space for audio and video,' +
+				' and the ability to monetize your site with ads.',
+			{
+				components: {
+					strong: (
+						<strong className="plans__features plan-features__targeted-description-heading" />
+					),
+				},
+			}
+		),
+	getFeatures: () =>
+		compact( [
+			// pay attention to ordering, shared features should align on /plan page
+			FEATURE_CUSTOM_DOMAIN,
+			FEATURE_JETPACK_ESSENTIAL,
+			FEATURE_EMAIL_LIVE_CHAT_SUPPORT,
+			FEATURE_UNLIMITED_PREMIUM_THEMES,
+			FEATURE_ADVANCED_DESIGN,
+			FEATURE_13GB_STORAGE,
+			FEATURE_NO_ADS,
+			isEnabled( 'republicize' ) && FEATURE_REPUBLICIZE,
+			isEnabled( 'simple-payments' ) && FEATURE_SIMPLE_PAYMENTS,
+			FEATURE_WORDADS_INSTANT,
+			FEATURE_VIDEO_UPLOADS,
+		] ),
+	getPromotedFeatures: () => [
+		FEATURE_CUSTOM_DOMAIN,
+		FEATURE_NO_ADS,
+		FEATURE_ADVANCED_DESIGN,
+		FEATURE_13GB_STORAGE,
+	],
+	getSignupFeatures: () =>
+		compact( [
+			FEATURE_ADVANCED_CUSTOMIZATION,
+			FEATURE_PREMIUM_THEMES,
+			FEATURE_ALL_PERSONAL_FEATURES,
+		] ),
+	getBlogSignupFeatures: () => [
+		FEATURE_MONETISE,
+		FEATURE_PREMIUM_THEMES,
+		FEATURE_ALL_PERSONAL_FEATURES,
+	],
+	getPortfolioSignupFeatures: () => [
+		FEATURE_ADVANCED_CUSTOMIZATION,
+		FEATURE_PREMIUM_THEMES,
+		FEATURE_ALL_PERSONAL_FEATURES,
+	],
+	getBillingTimeFrame: abtest => {
+		if ( abtest && abtest( 'upgradePricingDisplayV2' ) === 'modified' ) {
+			// Note: Don't make this translatable because it's only visible to English-language users
+			return '/month, billed annually';
+		}
+		return i18n.translate( 'per month, billed yearly' );
+	},
+} );
+
+const getPlanBusinessDetails = () => ( {
+	getTitle: () => i18n.translate( 'Business' ),
+	getAudience: () => i18n.translate( 'Best for small businesses' ),
+	getBlogAudience: () => i18n.translate( 'Best for brands' ),
+	getPortfolioAudience: () => i18n.translate( 'Best for small businesses' ),
+	getStoreAudience: () => i18n.translate( 'The plan for stores and small businesses' ),
+	getDescription: abtest => {
+		if ( abtest && abtest( 'businessPlanDescriptionAT' ) === 'pluginsAndThemes' ) {
+			return i18n.translate(
+				'{{strong}}Best for Small Business:{{/strong}} Power your' +
+					' business website with custom plugins and themes, unlimited premium and business theme templates,' +
+					' Google Analytics support, unlimited' +
+					' storage, and the ability to remove WordPress.com branding.',
+				{
+					components: {
+						strong: (
+							<strong className="plans__features plan-features__targeted-description-heading" />
+						),
+					},
+				}
+			);
+		}
+		return i18n.translate(
+			'{{strong}}Best for Small Business:{{/strong}} Power your' +
+				' business website with unlimited premium and business theme templates, Google Analytics support, unlimited' +
+				' storage, and the ability to remove WordPress.com branding.',
+			{
+				components: {
+					strong: (
+						<strong className="plans__features plan-features__targeted-description-heading" />
+					),
+				},
+			}
+		);
+	},
+	getTagline: () =>
+		i18n.translate(
+			'Learn more about everything included with Business and take advantage of its professional features.'
+		),
+	getFeatures: () =>
+		compact( [
+			// pay attention to ordering, shared features should align on /plan page
+			FEATURE_CUSTOM_DOMAIN,
+			FEATURE_JETPACK_ESSENTIAL,
+			FEATURE_EMAIL_LIVE_CHAT_SUPPORT,
+			FEATURE_UNLIMITED_PREMIUM_THEMES,
+			FEATURE_ADVANCED_DESIGN,
+			FEATURE_UNLIMITED_STORAGE,
+			FEATURE_NO_ADS,
+			isEnabled( 'republicize' ) && FEATURE_REPUBLICIZE,
+			isEnabled( 'simple-payments' ) && FEATURE_SIMPLE_PAYMENTS,
+			FEATURE_WORDADS_INSTANT,
+			FEATURE_VIDEO_UPLOADS,
+			FEATURE_BUSINESS_ONBOARDING,
+			FEATURE_ADVANCED_SEO,
+			isEnabled( 'automated-transfer' ) && FEATURE_UPLOAD_PLUGINS,
+			isEnabled( 'automated-transfer' ) && FEATURE_UPLOAD_THEMES,
+			FEATURE_GOOGLE_ANALYTICS,
+			FEATURE_NO_BRANDING,
+		] ),
+	getPromotedFeatures: () => [
+		FEATURE_UNLIMITED_STORAGE,
+		FEATURE_UNLIMITED_PREMIUM_THEMES,
+		FEATURE_CUSTOM_DOMAIN,
+		FEATURE_NO_ADS,
+		FEATURE_ADVANCED_DESIGN,
+		FEATURE_VIDEO_UPLOADS,
+		FEATURE_BUSINESS_ONBOARDING,
+	],
+	getSignupFeatures: () => [
+		FEATURE_UPLOAD_THEMES_PLUGINS,
+		FEATURE_GOOGLE_ANALYTICS_SIGNUP,
+		FEATURE_ALL_PREMIUM_FEATURES,
+	],
+	getBlogSignupFeatures: () => [
+		FEATURE_UPLOAD_THEMES_PLUGINS,
+		FEATURE_ADVANCED_SEO_TOOLS,
+		FEATURE_ALL_PREMIUM_FEATURES,
+	],
+	getPortfolioSignupFeatures: () => [
+		FEATURE_UPLOAD_THEMES_PLUGINS,
+		FEATURE_UNLIMITED_STORAGE_SIGNUP,
+		FEATURE_ALL_PREMIUM_FEATURES,
+	],
+	getBillingTimeFrame: abtest => {
+		if ( abtest && abtest( 'upgradePricingDisplayV2' ) === 'modified' ) {
+			// Note: Don't make this translatable because it's only visible to English-language users
+			return '/month, billed annually';
+		}
+		return i18n.translate( 'per month, billed yearly' );
+	},
+} );
+
 // DO NOT import. Use `getPlan` from `lib/plans` instead.
 export const PLANS_LIST = {
 	[ PLAN_FREE ]: {
@@ -182,229 +396,71 @@ export const PLANS_LIST = {
 	},
 
 	[ PLAN_PERSONAL ]: {
-		getTitle: () => i18n.translate( 'Personal' ),
-		getAudience: () => i18n.translate( 'Best for hobbyists' ),
-		getBlogAudience: () => i18n.translate( 'Best for hobbyists' ),
-		getPortfolioAudience: () => i18n.translate( 'Best for hobbyists' ),
-		getStoreAudience: () => i18n.translate( 'Best for hobbyists' ),
+		...getPlanPersonalDetails(),
+		availableFor: plan => includes( [ PLAN_FREE ], plan ),
 		getProductId: () => 1009,
 		getStoreSlug: () => PLAN_PERSONAL,
-		availableFor: plan => includes( [ PLAN_FREE ], plan ),
 		getPathSlug: () => 'personal',
-		getDescription: () =>
-			i18n.translate(
-				'{{strong}}Best for Personal Use:{{/strong}} Boost your' +
-					' website with a custom domain name, and remove all WordPress.com advertising. ' +
-					'Get access to high-quality email and live chat support.',
-				{
-					components: {
-						strong: (
-							<strong className="plans__features plan-features__targeted-description-heading" />
-						),
-					},
-				}
-			),
-		getFeatures: () => [
-			// pay attention to ordering, shared features should align on /plan page
-			FEATURE_CUSTOM_DOMAIN,
-			FEATURE_JETPACK_ESSENTIAL,
-			FEATURE_EMAIL_LIVE_CHAT_SUPPORT,
-			FEATURE_FREE_THEMES,
-			FEATURE_BASIC_DESIGN,
-			FEATURE_6GB_STORAGE,
-			FEATURE_NO_ADS,
-		],
-		getSignupFeatures: () => [
-			FEATURE_EMAIL_LIVE_CHAT_SUPPORT_SIGNUP,
-			FEATURE_FREE_DOMAIN,
-			FEATURE_ALL_FREE_FEATURES,
-		],
-		getBlogSignupFeatures: () => [
-			FEATURE_FREE_DOMAIN,
-			FEATURE_EMAIL_LIVE_CHAT_SUPPORT_SIGNUP,
-			FEATURE_ALL_FREE_FEATURES,
-		],
-		getPortfolioSignupFeatures: () => [
-			FEATURE_FREE_DOMAIN,
-			FEATURE_EMAIL_LIVE_CHAT_SUPPORT_SIGNUP,
-			FEATURE_ALL_FREE_FEATURES,
-		],
-		getBillingTimeFrame: abtest => {
-			if ( abtest && abtest( 'upgradePricingDisplayV2' ) === 'modified' ) {
-				// Note: Don't make this translatable because it's only visible to English-language users
-				return '/month, billed annually';
-			}
-			return i18n.translate( 'per month, billed yearly' );
-		},
+	},
+
+	[ PLAN_PERSONAL_2_YEARS ]: {
+		...getPlanPersonalDetails(),
+		availableFor: plan => includes( [ PLAN_FREE, PLAN_PERSONAL ], plan ),
+		getProductId: () => 1029,
+		getStoreSlug: () => PLAN_PERSONAL_2_YEARS,
+		getPathSlug: () => 'personal-2-years',
 	},
 
 	[ PLAN_PREMIUM ]: {
-		getTitle: () => i18n.translate( 'Premium' ),
-		getAudience: () => i18n.translate( 'Best for entrepreneurs' ),
-		getBlogAudience: () => i18n.translate( 'Best for professionals' ),
-		getPortfolioAudience: () => i18n.translate( 'Best for freelancers' ),
-		getStoreAudience: () => i18n.translate( 'Best for freelancers' ),
-		getPriceTitle: () => i18n.translate( '$99 per year' ), //TODO: DO NOT USE
+		...getPlanPremiumDetails(),
+		availableFor: plan => includes( [ PLAN_FREE, PLAN_PERSONAL, PLAN_PERSONAL_2_YEARS ], plan ),
 		getProductId: () => 1003,
-		getPathSlug: () => 'premium',
 		getStoreSlug: () => PLAN_PREMIUM,
-		availableFor: plan => includes( [ PLAN_FREE, PLAN_PERSONAL ], plan ),
-		getDescription: () =>
-			i18n.translate(
-				'{{strong}}Best for Entrepreneurs & Freelancers:{{/strong}}' +
-					' Build a unique website with advanced design tools, CSS editing, lots of space for audio and video,' +
-					' and the ability to monetize your site with ads.',
-				{
-					components: {
-						strong: (
-							<strong className="plans__features plan-features__targeted-description-heading" />
-						),
-					},
-				}
-			),
-		getFeatures: () =>
-			compact( [
-				// pay attention to ordering, shared features should align on /plan page
-				FEATURE_CUSTOM_DOMAIN,
-				FEATURE_JETPACK_ESSENTIAL,
-				FEATURE_EMAIL_LIVE_CHAT_SUPPORT,
-				FEATURE_UNLIMITED_PREMIUM_THEMES,
-				FEATURE_ADVANCED_DESIGN,
-				FEATURE_13GB_STORAGE,
-				FEATURE_NO_ADS,
-				isEnabled( 'republicize' ) && FEATURE_REPUBLICIZE,
-				isEnabled( 'simple-payments' ) && FEATURE_SIMPLE_PAYMENTS,
-				FEATURE_WORDADS_INSTANT,
-				FEATURE_VIDEO_UPLOADS,
-			] ),
-		getPromotedFeatures: () => [
-			FEATURE_CUSTOM_DOMAIN,
-			FEATURE_NO_ADS,
-			FEATURE_ADVANCED_DESIGN,
-			FEATURE_13GB_STORAGE,
-		],
-		getSignupFeatures: () =>
-			compact( [
-				FEATURE_ADVANCED_CUSTOMIZATION,
-				FEATURE_PREMIUM_THEMES,
-				FEATURE_ALL_PERSONAL_FEATURES,
-			] ),
-		getBlogSignupFeatures: () => [
-			FEATURE_MONETISE,
-			FEATURE_PREMIUM_THEMES,
-			FEATURE_ALL_PERSONAL_FEATURES,
-		],
-		getPortfolioSignupFeatures: () => [
-			FEATURE_ADVANCED_CUSTOMIZATION,
-			FEATURE_PREMIUM_THEMES,
-			FEATURE_ALL_PERSONAL_FEATURES,
-		],
-		getBillingTimeFrame: abtest => {
-			if ( abtest && abtest( 'upgradePricingDisplayV2' ) === 'modified' ) {
-				// Note: Don't make this translatable because it's only visible to English-language users
-				return '/month, billed annually';
-			}
-			return i18n.translate( 'per month, billed yearly' );
-		},
+		getPathSlug: () => 'premium',
+		getPriceTitle: () => i18n.translate( '$99 per year' ), //TODO: DO NOT USE
+	},
+
+	[ PLAN_PREMIUM_2_YEARS ]: {
+		...getPlanPremiumDetails(),
+		availableFor: plan =>
+			includes( [ PLAN_FREE, PLAN_PERSONAL, PLAN_PERSONAL_2_YEARS, PLAN_PREMIUM ], plan ),
+		getProductId: () => 1023,
+		getStoreSlug: () => PLAN_PREMIUM_2_YEARS,
+		getPathSlug: () => 'premium-2-years',
+		getPriceTitle: () => i18n.translate( '$90 per year' ), //TODO: DO NOT USE
 	},
 
 	[ PLAN_BUSINESS ]: {
-		getTitle: () => i18n.translate( 'Business' ),
-		getAudience: () => i18n.translate( 'Best for small businesses' ),
-		getBlogAudience: () => i18n.translate( 'Best for brands' ),
-		getPortfolioAudience: () => i18n.translate( 'Best for small businesses' ),
-		getStoreAudience: () => i18n.translate( 'The plan for stores and small businesses' ),
-		getPriceTitle: () => i18n.translate( '$299 per year' ), //TODO: DO NOT USE
+		...getPlanBusinessDetails(),
+		availableFor: plan =>
+			includes(
+				[ PLAN_FREE, PLAN_PERSONAL, PLAN_PERSONAL_2_YEARS, PLAN_PREMIUM, PLAN_PREMIUM_2_YEARS ],
+				plan
+			),
 		getProductId: () => 1008,
 		getStoreSlug: () => PLAN_BUSINESS,
-		availableFor: plan => includes( [ PLAN_FREE, PLAN_PERSONAL, PLAN_PREMIUM ], plan ),
 		getPathSlug: () => 'business',
-		getDescription: abtest => {
-			if ( abtest && abtest( 'businessPlanDescriptionAT' ) === 'pluginsAndThemes' ) {
-				return i18n.translate(
-					'{{strong}}Best for Small Business:{{/strong}} Power your' +
-						' business website with custom plugins and themes, unlimited premium and business theme templates,' +
-						' Google Analytics support, unlimited' +
-						' storage, and the ability to remove WordPress.com branding.',
-					{
-						components: {
-							strong: (
-								<strong className="plans__features plan-features__targeted-description-heading" />
-							),
-						},
-					}
-				);
-			}
-			0;
-			return i18n.translate(
-				'{{strong}}Best for Small Business:{{/strong}} Power your' +
-					' business website with unlimited premium and business theme templates, Google Analytics support, unlimited' +
-					' storage, and the ability to remove WordPress.com branding.',
-				{
-					components: {
-						strong: (
-							<strong className="plans__features plan-features__targeted-description-heading" />
-						),
-					},
-				}
-			);
-		},
-		getTagline: () =>
-			i18n.translate(
-				'Learn more about everything included with Business and take advantage of its professional features.'
+		getPriceTitle: () => i18n.translate( '$288 per year' ), //TODO: DO NOT USE
+	},
+
+	[ PLAN_BUSINESS_2_YEARS ]: {
+		...getPlanBusinessDetails(),
+		availableFor: plan =>
+			includes(
+				[
+					PLAN_FREE,
+					PLAN_PERSONAL,
+					PLAN_PERSONAL_2_YEARS,
+					PLAN_PREMIUM,
+					PLAN_PREMIUM_2_YEARS,
+					PLAN_BUSINESS,
+				],
+				plan
 			),
-		getFeatures: () =>
-			compact( [
-				// pay attention to ordering, shared features should align on /plan page
-				FEATURE_CUSTOM_DOMAIN,
-				FEATURE_JETPACK_ESSENTIAL,
-				FEATURE_EMAIL_LIVE_CHAT_SUPPORT,
-				FEATURE_UNLIMITED_PREMIUM_THEMES,
-				FEATURE_ADVANCED_DESIGN,
-				FEATURE_UNLIMITED_STORAGE,
-				FEATURE_NO_ADS,
-				isEnabled( 'republicize' ) && FEATURE_REPUBLICIZE,
-				isEnabled( 'simple-payments' ) && FEATURE_SIMPLE_PAYMENTS,
-				FEATURE_WORDADS_INSTANT,
-				FEATURE_VIDEO_UPLOADS,
-				FEATURE_BUSINESS_ONBOARDING,
-				FEATURE_ADVANCED_SEO,
-				isEnabled( 'automated-transfer' ) && FEATURE_UPLOAD_PLUGINS,
-				isEnabled( 'automated-transfer' ) && FEATURE_UPLOAD_THEMES,
-				FEATURE_GOOGLE_ANALYTICS,
-				FEATURE_NO_BRANDING,
-			] ),
-		getPromotedFeatures: () => [
-			FEATURE_UNLIMITED_STORAGE,
-			FEATURE_UNLIMITED_PREMIUM_THEMES,
-			FEATURE_CUSTOM_DOMAIN,
-			FEATURE_NO_ADS,
-			FEATURE_ADVANCED_DESIGN,
-			FEATURE_VIDEO_UPLOADS,
-			FEATURE_BUSINESS_ONBOARDING,
-		],
-		getSignupFeatures: () => [
-			FEATURE_UPLOAD_THEMES_PLUGINS,
-			FEATURE_GOOGLE_ANALYTICS_SIGNUP,
-			FEATURE_ALL_PREMIUM_FEATURES,
-		],
-		getBlogSignupFeatures: () => [
-			FEATURE_UPLOAD_THEMES_PLUGINS,
-			FEATURE_ADVANCED_SEO_TOOLS,
-			FEATURE_ALL_PREMIUM_FEATURES,
-		],
-		getPortfolioSignupFeatures: () => [
-			FEATURE_UPLOAD_THEMES_PLUGINS,
-			FEATURE_UNLIMITED_STORAGE_SIGNUP,
-			FEATURE_ALL_PREMIUM_FEATURES,
-		],
-		getBillingTimeFrame: abtest => {
-			if ( abtest && abtest( 'upgradePricingDisplayV2' ) === 'modified' ) {
-				// Note: Don't make this translatable because it's only visible to English-language users
-				return '/month, billed annually';
-			}
-			return i18n.translate( 'per month, billed yearly' );
-		},
+		getProductId: () => 1028,
+		getStoreSlug: () => PLAN_BUSINESS_2_YEARS,
+		getPathSlug: () => 'business-2-years',
+		getPriceTitle: () => i18n.translate( '$299 per year' ), //TODO: DO NOT USE
 	},
 
 	[ PLAN_JETPACK_FREE ]: {
@@ -580,7 +636,6 @@ export const PLANS_LIST = {
 		],
 		getSignupFeatures: () => [
 			FEATURE_OFFSITE_BACKUP_VAULTPRESS_DAILY,
-			FEATURE_UNLIMITED_STORAGE,
 			FEATURE_SPAM_AKISMET_PLUS,
 			FEATURE_PREMIUM_SUPPORT,
 			FEATURE_ALL_FREE_FEATURES,
@@ -617,7 +672,6 @@ export const PLANS_LIST = {
 		],
 		getSignupFeatures: () => [
 			FEATURE_OFFSITE_BACKUP_VAULTPRESS_DAILY,
-			FEATURE_UNLIMITED_STORAGE,
 			FEATURE_SPAM_AKISMET_PLUS,
 			FEATURE_PREMIUM_SUPPORT,
 			FEATURE_ALL_FREE_FEATURES,
@@ -762,21 +816,54 @@ export const FEATURES_LIST = {
 
 	[ FEATURE_ALL_FREE_FEATURES ]: {
 		getSlug: () => FEATURE_ALL_FREE_FEATURES,
-		getTitle: () => i18n.translate( 'All free features' ),
+		getTitle: () =>
+			i18n.translate( '{{a}}All free features{{/a}}', {
+				components: {
+					a: (
+						<a
+							href="https://jetpack.com/features/comparison"
+							target="_blank"
+							rel="noopener noreferrer"
+						/>
+					),
+				},
+			} ),
 		getDescription: () =>
 			i18n.translate( 'Also includes all features offered in the free version of Jetpack.' ),
 	},
 
 	[ FEATURE_ALL_PERSONAL_FEATURES ]: {
 		getSlug: () => FEATURE_ALL_PERSONAL_FEATURES,
-		getTitle: () => i18n.translate( 'All Personal features' ),
+		getTitle: () =>
+			i18n.translate( '{{a}}All Personal features{{/a}}', {
+				components: {
+					a: (
+						<a
+							href="https://jetpack.com/features/comparison"
+							target="_blank"
+							rel="noopener noreferrer"
+						/>
+					),
+				},
+			} ),
 		getDescription: () =>
 			i18n.translate( 'Also includes all features offered in the Personal plan.' ),
 	},
 
 	[ FEATURE_ALL_PREMIUM_FEATURES ]: {
 		getSlug: () => FEATURE_ALL_PREMIUM_FEATURES,
-		getTitle: () => i18n.translate( 'All Premium features' ),
+		getTitle: () =>
+			i18n.translate( '{{a}}All Premium features{{/a}}', {
+				components: {
+					a: (
+						<a
+							href="https://jetpack.com/features/comparison"
+							target="_blank"
+							rel="noopener noreferrer"
+						/>
+					),
+				},
+			} ),
 		getDescription: () =>
 			i18n.translate( 'Also includes all features offered in the Premium plan.' ),
 	},
@@ -962,7 +1049,12 @@ export const FEATURES_LIST = {
 
 	[ FEATURE_VIDEO_UPLOADS_JETPACK_PRO ]: {
 		getSlug: () => FEATURE_VIDEO_UPLOADS_JETPACK_PRO,
-		getTitle: () => i18n.translate( '{{strong}}Unlimited{{/strong}} Video Hosting' ),
+		getTitle: () =>
+			i18n.translate( '{{strong}}Unlimited{{/strong}} Video Hosting', {
+				components: {
+					strong: <strong />,
+				},
+			} ),
 		getDescription: () =>
 			i18n.translate(
 				'Easy video uploads, and a fast, unbranded, customizable video player, ' +
@@ -1451,14 +1543,17 @@ export function getPlanClass( plan ) {
 		case PLAN_FREE:
 			return 'is-free-plan';
 		case PLAN_PERSONAL:
+		case PLAN_PERSONAL_2_YEARS:
 		case PLAN_JETPACK_PERSONAL:
 		case PLAN_JETPACK_PERSONAL_MONTHLY:
 			return 'is-personal-plan';
 		case PLAN_PREMIUM:
+		case PLAN_PREMIUM_2_YEARS:
 		case PLAN_JETPACK_PREMIUM:
 		case PLAN_JETPACK_PREMIUM_MONTHLY:
 			return 'is-premium-plan';
 		case PLAN_BUSINESS:
+		case PLAN_BUSINESS_2_YEARS:
 		case PLAN_JETPACK_BUSINESS:
 		case PLAN_JETPACK_BUSINESS_MONTHLY:
 			return 'is-business-plan';

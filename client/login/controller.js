@@ -4,7 +4,7 @@
  * External dependencies
  */
 import page from 'page';
-import qs from 'qs';
+import { parse } from 'qs';
 import React from 'react';
 import { includes, map } from 'lodash';
 import { parse as parseUrl } from 'url';
@@ -27,7 +27,7 @@ const enhanceContextWithLogin = context => {
 		query: { back_to },
 	} = context;
 
-	context.cacheQueryKeys = [ 'client_id' ];
+	context.cacheQueryKeys = [ 'client_id', 'signup_flow' ];
 
 	context.primary = (
 		<WPLogin
@@ -59,7 +59,7 @@ export function login( context, next ) {
 		}
 
 		const parsedRedirectUrl = parseUrl( redirect_to );
-		const redirectQueryString = qs.parse( parsedRedirectUrl.query );
+		const redirectQueryString = parse( parsedRedirectUrl.query );
 
 		if ( client_id !== redirectQueryString.client_id ) {
 			recordTracksEvent( 'calypso_login_phishing_attempt', context.query );

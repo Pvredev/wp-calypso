@@ -21,7 +21,7 @@ import {
 	uniqBy,
 } from 'lodash';
 import page from 'page';
-import qs from 'qs';
+import { stringify } from 'qs';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 
@@ -137,6 +137,7 @@ class RegisterDomainStep extends React.Component {
 		onAddDomain: PropTypes.func,
 		onAddTransfer: PropTypes.func,
 		designType: PropTypes.string,
+		onDomainSearchChange: PropTypes.func,
 	};
 
 	static defaultProps = {
@@ -145,6 +146,7 @@ class RegisterDomainStep extends React.Component {
 		onSave: noop,
 		onAddMapping: noop,
 		onAddDomain: noop,
+		onDomainSearchChange: noop,
 	};
 
 	constructor( props ) {
@@ -228,6 +230,11 @@ class RegisterDomainStep extends React.Component {
 				}
 
 				delete state.lastSurveyVertical;
+			}
+
+			if ( this.props.suggestion ) {
+				state.lastQuery = this.props.suggestion;
+				state.loadingResults = true;
 			}
 
 			this.setState( state );
@@ -328,8 +335,13 @@ class RegisterDomainStep extends React.Component {
 	};
 
 	onSearchChange = searchQuery => {
+		if ( ! this._isMounted ) {
+			return;
+		}
+
 		const loadingResults = Boolean( getFixedDomainSearch( searchQuery ) );
 
+		this.props.onDomainSearchChange( searchQuery );
 		this.setState( {
 			exactMatchDomain: null,
 			lastQuery: searchQuery,
@@ -748,7 +760,7 @@ class RegisterDomainStep extends React.Component {
 		if ( this.props.mapDomainUrl ) {
 			mapDomainUrl = this.props.mapDomainUrl;
 		} else {
-			const query = qs.stringify( { initialQuery: this.state.lastQuery.trim() } );
+			const query = stringify( { initialQuery: this.state.lastQuery.trim() } );
 			mapDomainUrl = `${ this.props.basePath }/mapping`;
 			if ( this.props.selectedSite ) {
 				mapDomainUrl += `/${ this.props.selectedSite.slug }?${ query }`;
@@ -764,7 +776,7 @@ class RegisterDomainStep extends React.Component {
 		if ( this.props.transferDomainUrl ) {
 			transferDomainUrl = this.props.transferDomainUrl;
 		} else {
-			const query = qs.stringify( { initialQuery: this.state.lastQuery.trim() } );
+			const query = stringify( { initialQuery: this.state.lastQuery.trim() } );
 			transferDomainUrl = `${ this.props.basePath }/transfer`;
 			if ( this.props.selectedSite ) {
 				transferDomainUrl += `/${ this.props.selectedSite.slug }?${ query }`;

@@ -13,6 +13,7 @@ import { recordTracksEvent } from 'state/analytics/actions';
  * Internal dependencies
  */
 import config from 'config';
+import DocumentHead from 'components/data/document-head';
 import Main from 'components/main';
 import QueryJetpackOnboardingSettings from 'components/data/query-jetpack-onboarding-settings';
 import Wizard from 'components/wizard';
@@ -21,6 +22,7 @@ import { addQueryArgs, externalRedirect } from 'lib/route';
 import {
 	JETPACK_ONBOARDING_COMPONENTS as COMPONENTS,
 	JETPACK_ONBOARDING_STEPS as STEPS,
+	JETPACK_ONBOARDING_STEP_TITLES as STEP_TITLES,
 } from './constants';
 import {
 	getJetpackOnboardingCompletedSteps,
@@ -113,10 +115,14 @@ class JetpackOnboardingMain extends React.PureComponent {
 			siteSlug,
 			stepName,
 			steps,
+			translate,
 		} = this.props;
 
 		return (
 			<Main className="jetpack-onboarding">
+				<DocumentHead
+					title={ get( STEP_TITLES, stepName ) + ' ‹ ' + translate( 'Jetpack Start' ) }
+				/>
 				{ /* We only allow querying of site settings once we know that we have finished
 				   * querying data for the given site. The `jpoAuth` connected prop depends on whether
 				   * the site is a connected Jetpack site or not, and a network request that uses
@@ -152,7 +158,7 @@ class JetpackOnboardingMain extends React.PureComponent {
 	}
 }
 export default connect(
-	( state, { siteSlug } ) => {
+	( state, { action, siteSlug } ) => {
 		let siteId = getUnconnectedSiteIdBySlug( state, siteSlug );
 		if ( ! siteId ) {
 			// We rely on the fact that all sites are being requested automatically early in <Layout />.
@@ -186,6 +192,13 @@ export default connect(
 		).isLoading;
 
 		const userIdHashed = getUnconnectedSiteUserHash( state, siteId );
+
+		// Only show the Stats Step either if we aren't connected to WP.com yet,
+		// or if we're just being redirected back to JP Onboarding right after
+		// going through JP Connect, in which case the `action` query arg will be
+		// set to `activate_stats`.
+		const showStatsStep = ! isConnected || action === 'activate_stats';
+
 		const steps = compact( [
 			STEPS.SITE_TITLE,
 			STEPS.SITE_TYPE,
@@ -193,7 +206,7 @@ export default connect(
 			STEPS.CONTACT_FORM,
 			isBusiness && STEPS.BUSINESS_ADDRESS,
 			isBusiness && STEPS.WOOCOMMERCE,
-			STEPS.STATS,
+			showStatsStep && STEPS.STATS,
 			STEPS.SUMMARY,
 		] );
 		const stepsCompleted = getJetpackOnboardingCompletedSteps( state, siteId, steps );

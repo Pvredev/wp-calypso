@@ -9,7 +9,7 @@ import React, { Component } from 'react';
 import { localize } from 'i18n-calypso';
 import { connect } from 'react-redux';
 import Gridicon from 'gridicons';
-import { flowRight } from 'lodash';
+import { flowRight, isEqual, size, without } from 'lodash';
 
 /**
  * Internal dependencies
@@ -108,7 +108,22 @@ class Pages extends Component {
 		page: 0,
 		pages: [],
 		trackScrollPage: function() {},
+		query: {},
 	};
+
+	state = {
+		pages: this.props.pages,
+		shadowItems: {},
+	};
+
+	componentWillReceiveProps( nextProps ) {
+		if (
+			nextProps.pages !== this.props.pages &&
+			( size( this.state.shadowItems ) === 0 || ! isEqual( nextProps.query, this.props.query ) )
+		) {
+			this.setState( { pages: nextProps.pages, shadowItems: {} } );
+		}
+	}
 
 	fetchPages = options => {
 		if ( this.props.loading || this.props.lastPage ) {
@@ -154,9 +169,38 @@ class Pages extends Component {
 		return markedPages;
 	}
 
+	updateShadowStatus = ( globalID, shadowStatus ) =>
+		new Promise( resolve =>
+			this.setState( ( state, props ) => {
+				if ( shadowStatus ) {
+					// add or update the `globalID` key in the `shadowItems` map
+					return {
+						shadowItems: {
+							...state.shadowItems,
+							[ globalID ]: shadowStatus,
+						},
+					};
+				}
+
+				// remove `globalID` from the `shadowItems` map
+				const newShadowItems = without( state.shadowItems, globalID );
+				const newState = {
+					shadowItems: newShadowItems,
+				};
+
+				// if the last shadow item just got removed, start showing the up-to-date post
+				// list as specified by props.
+				if ( size( newShadowItems ) === 0 ) {
+					newState.pages = props.pages;
+				}
+
+				return newState;
+			}, resolve )
+		);
+
 	getNoContentMessage() {
-		const { query = {}, translate, site, siteId } = this.props;
-		const { search, status = 'published' } = query;
+		const { query, translate, site, siteId } = this.props;
+		const { search, status } = query;
 
 		if ( search ) {
 			return (
@@ -246,23 +290,21 @@ class Pages extends Component {
 	}
 
 	renderPagesList( { pages } ) {
-		const { site } = this.props;
-		const status = this.props.status || 'published';
+		const { site, lastPage, query } = this.props;
 
 		// Pages only display hierarchically for published pages on single-sites when
 		// there are 100 or fewer pages and no more pages to load (last page).
 		// Pages are not displayed hierarchically for search.
-		if (
+		const showHierarchical =
 			site &&
-			status === 'published' &&
-			this.props.lastPage &&
+			query.status === 'publish,private' &&
+			lastPage &&
 			pages.length <= 100 &&
-			! this.props.search
-		) {
-			return this.renderHierarchical( { pages, site } );
-		}
+			! query.search;
 
-		return this.renderChronological( { pages, site } );
+		return showHierarchical
+			? this.renderHierarchical( { pages, site } )
+			: this.renderChronological( { pages, site } );
 	}
 
 	renderHierarchical( { pages, site } ) {
@@ -271,6 +313,8 @@ class Pages extends Component {
 			return (
 				<Page
 					key={ 'page-' + page.global_ID }
+					shadowStatus={ this.state.shadowItems[ page.global_ID ] }
+					onShadowStatusChange={ this.updateShadowStatus }
 					page={ page }
 					site={ site }
 					multisite={ false }
@@ -289,7 +333,9 @@ class Pages extends Component {
 	}
 
 	renderChronological( { pages, site } ) {
-		if ( ! this.props.search ) {
+		const { search, status } = this.props.query;
+
+		if ( ! search ) {
 			// we're listing in reverse chrono. use the markers.
 			pages = this._insertTimeMarkers( pages );
 		}
@@ -302,6 +348,7 @@ class Pages extends Component {
 			return (
 				<Page
 					key={ 'page-' + page.global_ID }
+					onShadow={ this.handleShadow }
 					page={ page }
 					multisite={ this.props.siteId === null }
 				/>
@@ -312,15 +359,14 @@ class Pages extends Component {
 			this.addLoadingRows( rows, 1 );
 		}
 
-		const blogPostsPage = site &&
-			status === 'published' && (
-				<BlogPostsPage key="blog-posts-page" site={ site } pages={ pages } />
-			);
+		const showBlogPostsPage = site && status === 'publish,private' && ! search;
 
 		return (
 			<div id="pages" className="pages__page-list">
 				<InfiniteScroll nextPageMethod={ this.fetchPages } />
-				{ blogPostsPage }
+				{ showBlogPostsPage && (
+					<BlogPostsPage key="blog-posts-page" site={ site } pages={ pages } />
+				) }
 				{ rows }
 				{ this.props.lastPage && pages.length ? <ListEnd /> : null }
 			</div>
@@ -336,7 +382,8 @@ class Pages extends Component {
 	}
 
 	render() {
-		const { hasSites, loading, pages } = this.props;
+		const { hasSites, loading } = this.props;
+		const { pages } = this.state;
 
 		if ( pages.length && hasSites ) {
 			return this.renderPagesList( { pages } );

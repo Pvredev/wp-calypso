@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compact, get } from 'lodash';
+import { compact, get, includes } from 'lodash';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 import { recordTracksEvent } from 'state/analytics/actions';
@@ -112,13 +112,15 @@ class JetpackOnboardingMain extends React.PureComponent {
 		} );
 	};
 
-	getSkipLinkText() {
-		const { stepName, stepsCompleted, translate } = this.props;
+	shouldHideForwardLink() {
+		const { stepName, stepsCompleted } = this.props;
+		const stepsWithSuccessScreens = [ STEPS.CONTACT_FORM, STEPS.BUSINESS_ADDRESS, STEPS.STATS ];
 
-		if ( get( stepsCompleted, stepName ) ) {
-			return translate( 'Next' );
+		if ( ! includes( stepsWithSuccessScreens, stepName ) ) {
+			return false;
 		}
-		return null;
+
+		return get( stepsCompleted, stepName, false );
 	}
 
 	render() {
@@ -165,7 +167,7 @@ class JetpackOnboardingMain extends React.PureComponent {
 						basePath="/jetpack/start"
 						baseSuffix={ siteSlug }
 						components={ COMPONENTS }
-						forwardText={ this.getSkipLinkText() }
+						hideForwardLink={ this.shouldHideForwardLink() }
 						hideNavigation={ stepName === STEPS.SUMMARY }
 						isRequestingSettings={ isRequestingSettings }
 						isRequestingWhetherConnected={ isRequestingWhetherConnected }
@@ -187,7 +189,7 @@ class JetpackOnboardingMain extends React.PureComponent {
 	}
 }
 export default connect(
-	( state, { action, siteSlug } ) => {
+	( state, { siteSlug } ) => {
 		let siteId = getUnconnectedSiteIdBySlug( state, siteSlug );
 		if ( ! siteId ) {
 			// We rely on the fact that all sites are being requested automatically early in <Layout />.
@@ -227,12 +229,6 @@ export default connect(
 
 		const userIdHashed = getUnconnectedSiteUserHash( state, siteId );
 
-		// Only show the Stats Step either if we aren't connected to WP.com yet,
-		// or if we're just being redirected back to JP Onboarding right after
-		// going through JP Connect, in which case the `action` query arg will be
-		// set to `activate_stats`.
-		const showStatsStep = ! isConnected || action === 'activate_stats';
-
 		const steps = compact( [
 			STEPS.SITE_TITLE,
 			STEPS.SITE_TYPE,
@@ -240,7 +236,7 @@ export default connect(
 			STEPS.CONTACT_FORM,
 			isBusiness && STEPS.BUSINESS_ADDRESS,
 			isBusiness && STEPS.WOOCOMMERCE,
-			showStatsStep && STEPS.STATS,
+			STEPS.STATS,
 			STEPS.SUMMARY,
 		] );
 		const stepsCompleted = getJetpackOnboardingCompletedSteps( state, siteId, steps );

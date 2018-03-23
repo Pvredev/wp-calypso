@@ -22,6 +22,7 @@ import HorizontalBar from 'woocommerce/components/d3/horizontal-bar';
 import Card from 'components/card';
 import ErrorPanel from 'my-sites/stats/stats-error';
 import { sortBySales } from 'woocommerce/app/store-stats/referrers/helpers';
+import { getWidgetPath } from 'woocommerce/app/store-stats/utils';
 
 class StoreStatsReferrerWidget extends Component {
 	static propTypes = {
@@ -30,6 +31,9 @@ class StoreStatsReferrerWidget extends Component {
 		siteId: PropTypes.number,
 		statType: PropTypes.string.isRequired,
 		selectedDate: PropTypes.string.isRequired,
+		unit: PropTypes.string.isRequired,
+		queryParams: PropTypes.object.isRequired,
+		slug: PropTypes.string,
 	};
 
 	isPreCollection( selectedData ) {
@@ -46,9 +50,9 @@ class StoreStatsReferrerWidget extends Component {
 	}
 
 	getEmptyDataMessage( selectedData ) {
-		const { slugAndQuery, translate } = this.props;
+		const { translate, slug, queryParams } = this.props;
 		if ( ! this.hasNosaraJobRun( selectedData ) ) {
-			const href = `/store/stats/orders/week${ slugAndQuery }`;
+			const href = `/store/stats/orders${ getWidgetPath( 'week', slug, queryParams ) }`;
 			const primary = translate( 'Data is being processed – check back soon' );
 			const secondary = translate(
 				'Expand to a {{a}}wider{{/a}} view to see your latest referrers',
@@ -66,7 +70,8 @@ class StoreStatsReferrerWidget extends Component {
 	}
 
 	render() {
-		const { data, selectedDate, translate } = this.props;
+		const { data, selectedDate, translate, unit, slug, queryParams } = this.props;
+		const basePath = '/store/stats/referrers';
 		const selectedData = find( data, d => d.date === selectedDate ) || { data: [] };
 		if ( selectedData.data.length === 0 ) {
 			const messages = this.getEmptyDataMessage( selectedData );
@@ -89,9 +94,17 @@ class StoreStatsReferrerWidget extends Component {
 		return (
 			<Table className="store-stats-referrer-widget" header={ header } compact>
 				{ sortedAndTrimmedData.map( d => {
+					const widgetPath = getWidgetPath(
+						unit,
+						slug,
+						Object.assign( {}, { referrer: d.referrer }, queryParams )
+					);
+					const href = `${ basePath }${ widgetPath }`;
 					return (
 						<TableRow key={ d.referrer }>
-							<TableItem isTitle>{ d.referrer }</TableItem>
+							<TableItem isTitle>
+								<a href={ href }>{ d.referrer }</a>
+							</TableItem>
 							<TableItem>
 								<HorizontalBar
 									extent={ extent }

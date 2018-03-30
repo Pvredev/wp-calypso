@@ -4,7 +4,6 @@
  * External dependencies
  */
 
-import async from 'async';
 import cookie from 'cookie';
 import debugFactory from 'debug';
 import { assign, clone, cloneDeep, noop } from 'lodash';
@@ -16,8 +15,9 @@ import { v4 as uuid } from 'uuid';
 import config from 'config';
 import productsValues from 'lib/products-values';
 import userModule from 'lib/user';
-import { loadScript } from 'lib/load-script';
+import { loadScript as loadScriptCallback } from 'lib/load-script';
 import { shouldSkipAds } from 'lib/analytics/utils';
+import { promisify } from '../../utils';
 
 /**
  * Module variables
@@ -253,139 +253,125 @@ function setupOutbrainGlobal() {
 	api.queue = [];
 }
 
-function loadTrackingScripts( callback ) {
+const loadScript = promisify( loadScriptCallback );
+
+async function loadTrackingScripts( callback ) {
 	hasStartedFetchingScripts = true;
 
 	const scripts = [];
 
 	if ( isFacebookEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( FACEBOOK_TRACKING_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( FACEBOOK_TRACKING_SCRIPT_URL );
 	}
 
 	if ( isAdwordsEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( GOOGLE_TRACKING_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( GOOGLE_TRACKING_SCRIPT_URL );
 	}
+	scripts.push( 'chicken://example' );
 
 	if ( isBingEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( BING_TRACKING_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( BING_TRACKING_SCRIPT_URL );
 	}
 
 	if ( isCriteoEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( CRITEO_TRACKING_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( CRITEO_TRACKING_SCRIPT_URL );
 	}
 
 	if ( isQuantcastEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( quantcastAsynchronousTagURL(), onComplete );
-		} );
+		scripts.push( quantcastAsynchronousTagURL() );
 	}
 
 	if ( isYahooEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( YAHOO_TRACKING_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( YAHOO_TRACKING_SCRIPT_URL );
 	}
 
 	if ( isTwitterEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( TWITTER_TRACKING_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( TWITTER_TRACKING_SCRIPT_URL );
 	}
 
 	if ( isLinkedinEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( LINKED_IN_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( LINKED_IN_SCRIPT_URL );
 	}
 
 	if ( isMediaWallahEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( MEDIA_WALLAH_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( MEDIA_WALLAH_SCRIPT_URL );
 	}
 
 	if ( isQuoraEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( QUORA_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( QUORA_SCRIPT_URL );
 	}
 
 	if ( isYandexEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( YANDEX_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( YANDEX_SCRIPT_URL );
 	}
 
 	if ( isOutbrainEnabled ) {
-		scripts.push( function( onComplete ) {
-			loadScript( OUTBRAIN_SCRIPT_URL, onComplete );
-		} );
+		scripts.push( OUTBRAIN_SCRIPT_URL );
 	}
 
-	async.series( scripts, function( error ) {
-		if ( error ) {
-			debug( 'Some scripts failed to load: ', error );
-		} else {
-			// init Facebook
-			if ( isFacebookEnabled ) {
-				window.fbq( 'init', TRACKING_IDS.facebookInit );
-			}
-
-			// init Bing
-			if ( isBingEnabled ) {
-				const bingConfig = {
-					ti: TRACKING_IDS.bingInit,
-					q: window.uetq,
-				};
-
-				if ( typeof UET !== 'undefined' ) {
-					// bing's script creates the UET global for us
-					window.uetq = new UET( bingConfig ); // eslint-disable-line
-					window.uetq.push( 'pageLoad' );
-				}
-			}
-
-			// init Twitter
-			if ( isTwitterEnabled ) {
-				window.twq( 'init', TRACKING_IDS.twitterPixelId );
-			}
-
-			// init Media Wallah
-			if ( isMediaWallahEnabled ) {
-				initMediaWallah();
-			}
-
-			// init Quora
-			if ( isQuoraEnabled ) {
-				window.qp( 'init', TRACKING_IDS.quoraPixelId );
-			}
-
-			// init Yandex counter
-			if ( isYandexEnabled ) {
-				if ( window.Ya ) {
-					window.yaCounter45268389 = new window.Ya.Metrika( { id: 45268389 } );
-				} else {
-					debug( "Error: Yandex's window.Ya not ready or missing" );
-					isYandexEnabled = false;
-				}
-			}
-
-			hasFinishedFetchingScripts = true;
-
-			if ( typeof callback === 'function' ) {
-				callback();
-			}
-			debug( 'Scripts loaded successfully' );
+	let hasError = false;
+	for ( const src of scripts ) {
+		try {
+			await loadScript( src );
+		} catch ( error ) {
+			hasError = true;
+			debug( 'A tracking script failed to load: ', error );
 		}
-	} );
+	}
+
+	if ( hasError ) {
+		return;
+	}
+
+	// init Facebook
+	if ( isFacebookEnabled ) {
+		window.fbq( 'init', TRACKING_IDS.facebookInit );
+	}
+
+	// init Bing
+	if ( isBingEnabled ) {
+		const bingConfig = {
+			ti: TRACKING_IDS.bingInit,
+			q: window.uetq,
+		};
+
+		if ( typeof UET !== 'undefined' ) {
+			// bing's script creates the UET global for us
+			window.uetq = new UET( bingConfig ); // eslint-disable-line
+			window.uetq.push( 'pageLoad' );
+		}
+	}
+
+	// init Twitter
+	if ( isTwitterEnabled ) {
+		window.twq( 'init', TRACKING_IDS.twitterPixelId );
+	}
+
+	// init Media Wallah
+	if ( isMediaWallahEnabled ) {
+		initMediaWallah();
+	}
+
+	// init Quora
+	if ( isQuoraEnabled ) {
+		window.qp( 'init', TRACKING_IDS.quoraPixelId );
+	}
+
+	// init Yandex counter
+	if ( isYandexEnabled ) {
+		if ( window.Ya ) {
+			window.yaCounter45268389 = new window.Ya.Metrika( { id: 45268389 } );
+		} else {
+			debug( "Error: Yandex's window.Ya not ready or missing" );
+			isYandexEnabled = false;
+		}
+	}
+
+	hasFinishedFetchingScripts = true;
+
+	if ( typeof callback === 'function' ) {
+		callback();
+	}
 }
 
 /**
@@ -580,10 +566,12 @@ export function recordViewCheckout( cart ) {
  */
 export function recordOrder( cart, orderId ) {
 	if ( ! isAdTrackingAllowed() ) {
+		debug( 'recordOrder: skipping as ad tracking is disallowed' );
 		return;
 	}
 
 	// load the ecommerce plugin
+	debug( 'recordOrder: ga ecommerce plugin load' );
 	window.ga( 'require', 'ecommerce' );
 
 	// Purchase tracking happens in one of three ways:
@@ -604,6 +592,7 @@ export function recordOrder( cart, orderId ) {
 	} );
 
 	// Ensure we submit the cart to Google Analytics
+	debug( 'recordOrder: ga ecommerce send' );
 	window.ga( 'ecommerce:send' );
 
 	// 3. Fire a single tracking event without any details about what was purchased
@@ -660,12 +649,16 @@ function recordProduct( product, orderId ) {
 
 	try {
 		// Google Analytics
-		window.ga( 'ecommerce:addItem', {
+		const item = {
+			currency: product.currency,
 			id: orderId,
 			name: product.product_slug,
 			price: product.cost,
-			currency: product.currency,
-		} );
+			sku: product.product_slug,
+			quantity: 1,
+		};
+		debug( 'recordProduct: ga ecommerce add item', item );
+		window.ga( 'ecommerce:addItem', item );
 
 		// Google AdWords
 		if ( isAdwordsEnabled ) {
@@ -1194,15 +1187,18 @@ function criteoSiteType() {
  */
 function recordOrderInGoogleAnalytics( cart, orderId ) {
 	if ( ! isAdTrackingAllowed() ) {
+		debug( 'recordOrderInGoogleAnalytics: skipping as ad tracking is disallowed' );
 		return;
 	}
 
-	window.ga( 'ecommerce:addTransaction', {
+	const transaction = {
 		id: orderId,
 		affiliation: 'WordPress.com',
 		revenue: cart.total_cost,
 		currency: cart.currency,
-	} );
+	};
+	debug( 'recordOrderInGoogleAnalytics: ga ecommerce add transaction', transaction );
+	window.ga( 'ecommerce:addTransaction', transaction );
 }
 
 /**

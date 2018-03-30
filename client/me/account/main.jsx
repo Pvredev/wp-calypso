@@ -43,7 +43,7 @@ import Main from 'components/main';
 import SitesDropdown from 'components/sites-dropdown';
 import ColorSchemePicker from 'blocks/color-scheme-picker';
 import { successNotice, errorNotice } from 'state/notices/actions';
-import { getLanguage, isLocaleVariant, hasTranslationSet } from 'lib/i18n-utils';
+import { getLanguage, isLocaleVariant, canBeTranslated } from 'lib/i18n-utils';
 import { isRequestingMissingSites } from 'state/selectors';
 import _user from 'lib/user';
 
@@ -117,7 +117,7 @@ const Account = createReactClass( {
 		// TODO: the API should provide a default value, which would make this line obsolete
 		update( this.props.userSettings.settings, colorSchemeKey, value => value || 'default' );
 
-		this.props.recordTracksEvent( 'calypso_color_schemes_select', { colorScheme } );
+		this.props.recordTracksEvent( 'calypso_color_schemes_select', { color_scheme: colorScheme } );
 		this.updateUserSetting( colorSchemeKey, colorScheme );
 	},
 
@@ -153,14 +153,14 @@ const Account = createReactClass( {
 		const locale = this.getUserSetting( 'language' );
 
 		// disable for locales
-		if ( ! locale || ! hasTranslationSet( locale ) ) {
+		if ( ! locale || ! canBeTranslated( locale ) ) {
 			return false;
 		}
 
 		// disable for locale variants with no official GP translation sets
 		if (
 			this.state.localeVariantSelected &&
-			! hasTranslationSet( this.state.localeVariantSelected )
+			! canBeTranslated( this.state.localeVariantSelected )
 		) {
 			return false;
 		}
@@ -168,7 +168,7 @@ const Account = createReactClass( {
 		// if the user hasn't yet selected a language, and the locale variants has no official GP translation set
 		if (
 			typeof this.state.localeVariantSelected !== 'string' &&
-			! hasTranslationSet( this.getUserSetting( 'locale_variant' ) )
+			! canBeTranslated( this.getUserSetting( 'locale_variant' ) )
 		) {
 			return false;
 		}
@@ -266,7 +266,7 @@ const Account = createReactClass( {
 		this.recordClickEvent( 'Save Account Settings Button' );
 		if ( has( unsavedSettings, colorSchemeKey ) ) {
 			this.props.recordTracksEvent( 'calypso_color_schemes_save', {
-				colorScheme: get( unsavedSettings, colorSchemeKey ),
+				color_scheme: get( unsavedSettings, colorSchemeKey ),
 			} );
 		}
 	},

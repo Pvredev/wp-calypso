@@ -196,8 +196,10 @@ function addStorePage( storePage, storeNavigation ) {
 		storeNavigation,
 		( context, next ) => {
 			const component = React.createElement( storePage.container, { params: context.params } );
-			const appProps =
-				( storePage.documentTitle && { documentTitle: storePage.documentTitle } ) || {};
+			const appProps = {};
+			if ( storePage.documentTitle ) {
+				appProps.documentTitle = storePage.documentTitle;
+			}
 
 			let analyticsPath = storePage.path;
 			const { filter } = context.params;
@@ -249,6 +251,8 @@ function addTracksContext( context, next ) {
 }
 
 export default function() {
+	page( '/store', siteSelection, sites, makeLayout, clientRender );
+
 	// Add pages that use the store navigation
 	getStorePages().forEach( function( storePage ) {
 		if ( config.isEnabled( storePage.configKey ) ) {

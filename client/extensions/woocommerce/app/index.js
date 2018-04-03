@@ -1,19 +1,16 @@
 /** @format */
-
 /**
  * External dependencies
  */
-
 import React, { Component } from 'react';
-import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
-import page from 'page';
 import PropTypes from 'prop-types';
 
 /**
  * Internal dependencies
  */
+import { areAllRequiredPluginsActive } from 'woocommerce/state/selectors/plugins';
 import {
 	canCurrentUser,
 	isSiteAutomatedTransfer,
@@ -23,8 +20,9 @@ import config from 'config';
 import DocumentHead from 'components/data/document-head';
 import { fetchSetupChoices } from 'woocommerce/state/sites/setup-choices/actions';
 import { getSelectedSiteId } from 'state/ui/selectors';
+import { isLoaded as arePluginsLoaded } from 'state/plugins/installed/selectors';
 import QueryJetpackPlugins from 'components/data/query-jetpack-plugins';
-import { getSiteFragment } from 'lib/route';
+import RequiredPluginsInstallView from 'woocommerce/app/dashboard/required-plugins-install-view';
 import WooCommerceColophon from 'woocommerce/components/woocommerce-colophon';
 
 class App extends Component {
@@ -32,19 +30,14 @@ class App extends Component {
 		siteId: PropTypes.number,
 		documentTitle: PropTypes.string,
 		canUserManageOptions: PropTypes.bool.isRequired,
-		currentRoute: PropTypes.string.isRequired,
 		isAtomicSite: PropTypes.bool.isRequired,
 		hasPendingAutomatedTransfer: PropTypes.bool.isRequired,
 		children: PropTypes.element.isRequired,
 	};
 
-	componentDidMount = () => {
-		const { siteId } = this.props;
-
-		if ( siteId ) {
-			this.props.fetchSetupChoices( siteId );
-		}
-	};
+	componentDidMount() {
+		this.fetchData( this.props );
+	}
 
 	componentWillReceiveProps( newProps ) {
 		if ( this.props.children !== newProps.children ) {
@@ -53,37 +46,59 @@ class App extends Component {
 	}
 
 	componentDidUpdate( prevProps ) {
-		const { siteId } = this.props;
+		const { allRequiredPluginsActive, pluginsLoaded, siteId } = this.props;
 		const oldSiteId = prevProps.siteId ? prevProps.siteId : null;
 
-		if ( siteId && oldSiteId !== siteId ) {
-			this.props.fetchSetupChoices( siteId );
+		// If the site has changed, or plugin status has changed, re-fetch data
+		if (
+			siteId !== oldSiteId ||
+			prevProps.allRequiredPluginsActive !== allRequiredPluginsActive ||
+			prevProps.pluginsLoaded !== pluginsLoaded
+		) {
+			this.fetchData( this.props );
 		}
 	}
 
-	redirect = () => {
+	fetchData( { allRequiredPluginsActive, pluginsLoaded, siteId } ) {
+		if ( ! siteId ) {
+			return;
+		}
+
+		// We don't know yet if we can get a response
+		if ( ! pluginsLoaded || ! allRequiredPluginsActive ) {
+			return;
+		}
+
+		this.props.fetchSetupChoices( siteId );
+	}
+
+	redirect() {
 		window.location.href = '/stats/day';
-	};
+	}
+
+	maybeRenderChildren() {
+		const { allRequiredPluginsActive, children, pluginsLoaded, translate } = this.props;
+		if ( ! pluginsLoaded ) {
+			return null;
+		}
+
+		if ( pluginsLoaded && ! allRequiredPluginsActive ) {
+			return (
+				<RequiredPluginsInstallView title={ translate( 'Updating your store' ) } skipConfirmation />
+			);
+		}
+
+		return children;
+	}
 
 	render = () => {
 		const {
 			siteId,
-			children,
 			canUserManageOptions,
 			isAtomicSite,
 			hasPendingAutomatedTransfer,
-			currentRoute,
 			translate,
 		} = this.props;
-
-		// TODO This is temporary, until we have a valid "all sites" path to show.
-		// Calypso will detect if a user doesn't have access to a site at all, and redirects to the 'all sites'
-		// version of that URL. We don't want to render anything right now, so continue redirecting to my-sites.
-		if ( ! getSiteFragment( currentRoute ) ) {
-			this.redirect();
-			return null;
-		}
-
 		if ( ! siteId ) {
 			return null;
 		}
@@ -109,7 +124,7 @@ class App extends Component {
 			<div className={ className }>
 				<DocumentHead title={ documentTitle } />
 				<QueryJetpackPlugins siteIds={ [ siteId ] } />
-				{ children }
+				{ this.maybeRenderChildren() }
 				<WooCommerceColophon />
 			</div>
 		);
@@ -118,28 +133,21 @@ class App extends Component {
 
 function mapStateToProps( state ) {
 	const siteId = getSelectedSiteId( state );
-	const canUserManageOptions =
-		( siteId && canCurrentUser( state, siteId, 'manage_options' ) ) || false;
-	const isAtomicSite = ( siteId && !! isSiteAutomatedTransfer( state, siteId ) ) || false;
-	const hasPendingAutomatedTransfer =
-		( siteId && !! hasSitePendingAutomatedTransfer( state, siteId ) ) || false;
+	const canUserManageOptions = canCurrentUser( state, siteId, 'manage_options' );
+	const isAtomicSite = !! isSiteAutomatedTransfer( state, siteId );
+	const hasPendingAutomatedTransfer = !! hasSitePendingAutomatedTransfer( state, siteId );
+
+	const pluginsLoaded = arePluginsLoaded( state, siteId );
+	const allRequiredPluginsActive = areAllRequiredPluginsActive( state, siteId );
 
 	return {
 		siteId,
-		canUserManageOptions,
-		isAtomicSite,
-		hasPendingAutomatedTransfer,
-		currentRoute: page.current,
+		allRequiredPluginsActive,
+		canUserManageOptions: siteId ? canUserManageOptions : false,
+		isAtomicSite: siteId ? isAtomicSite : false,
+		hasPendingAutomatedTransfer: siteId ? hasPendingAutomatedTransfer : false,
+		pluginsLoaded,
 	};
 }
 
-function mapDispatchToProps( dispatch ) {
-	return bindActionCreators(
-		{
-			fetchSetupChoices,
-		},
-		dispatch
-	);
-}
-
-export default connect( mapStateToProps, mapDispatchToProps )( localize( App ) );
+export default connect( mapStateToProps, { fetchSetupChoices } )( localize( App ) );

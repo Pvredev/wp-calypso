@@ -26,9 +26,11 @@ import SectionHeader from 'components/section-header';
 import HelpResult from './help-results/item';
 import HelpUnverifiedWarning from './help-unverified-warning';
 import { getUserPurchases, isFetchingUserPurchases } from 'state/purchases/selectors';
-import { PLAN_BUSINESS } from 'lib/plans/constants';
+import { planMatches } from 'lib/plans';
+import { GROUP_WPCOM, TYPE_BUSINESS } from 'lib/plans/constants';
 import QueryUserPurchases from 'components/data/query-user-purchases';
 import config from 'config';
+import PageViewTracker from 'lib/analytics/page-view-tracker';
 
 /**
  * Module variables
@@ -235,6 +237,7 @@ class Help extends React.PureComponent {
 
 		return (
 			<Main className="help">
+				<PageViewTracker path="/help" title="Help" />
 				<MeSidebarNavigation />
 				<HelpSearch />
 				{ ! isEmailVerified && <HelpUnverifiedWarning /> }
@@ -248,13 +251,15 @@ class Help extends React.PureComponent {
 	}
 }
 
-export default connect( ( state, ownProps ) => {
+const isWPCOMBusinessPlan = purchase =>
+	planMatches( purchase.productSlug, { type: TYPE_BUSINESS, group: GROUP_WPCOM } );
+
+export const mapStateToProps = ( state, ownProps ) => {
 	const isEmailVerified = isCurrentUserEmailVerified( state );
 	const userId = getCurrentUserId( state );
 	const purchases = getUserPurchases( state, userId );
 	const isLoading = isFetchingUserPurchases( state );
-	const isBusinessPlanUser =
-		purchases && !! find( purchases, purchase => purchase.productSlug === PLAN_BUSINESS );
+	const isBusinessPlanUser = purchases && !! find( purchases, isWPCOMBusinessPlan );
 	const showCoursesTeaser = ownProps.isCoursesEnabled && isBusinessPlanUser;
 
 	return {
@@ -264,4 +269,6 @@ export default connect( ( state, ownProps ) => {
 		isLoading,
 		isEmailVerified,
 	};
-} )( localize( Help ) );
+};
+
+export default connect( mapStateToProps )( localize( Help ) );

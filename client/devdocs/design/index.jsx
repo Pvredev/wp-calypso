@@ -34,6 +34,7 @@ import BulkSelect from 'components/bulk-select/docs/example';
 import ButtonGroups from 'components/button-group/docs/example';
 import Buttons from 'components/button/docs/example';
 import Cards from 'components/card/docs/example';
+import CardHeading from 'components/card-heading/docs/example';
 import Checklist from 'components/checklist/docs/example';
 import ClipboardButtonInput from 'components/clipboard-button-input/docs/example';
 import ClipboardButtons from 'components/forms/clipboard-button/docs/example';
@@ -69,6 +70,7 @@ import ListEnd from 'components/list-end/docs/example';
 import Notices from 'components/notice/docs/example';
 import PaginationExample from 'components/pagination/docs/example';
 import PaymentLogo from 'components/payment-logo/docs/example';
+import PieChart from 'components/pie-chart/docs/example';
 import Popovers from 'components/popover/docs/example';
 import ProgressBar from 'components/progress-bar/docs/example';
 import Ranges from 'components/forms/range/docs/example';
@@ -158,6 +160,7 @@ class DesignAssets extends React.Component {
 					<SplitButton readmeFilePath="split-button" />
 					<Badge />
 					<Cards readmeFilePath="card" />
+					<CardHeading />
 					<Checklist />
 					<ClipboardButtonInput readmeFilePath="clipboard-button-input" />
 					<ClipboardButtons readmeFilePath="forms/clipboard-button" />
@@ -194,6 +197,7 @@ class DesignAssets extends React.Component {
 					<Notices />
 					<PaginationExample readmeFilePath="pagination" />
 					<PaymentLogo readmeFilePath="payment-logo" />
+					<PieChart readmeFilePath="pie-chart" />
 					<Popovers readmeFilePath="popover" />
 					<ProgressBar readmeFilePath="progress-bar" />
 					<Ranges readmeFilePath="forms/range" />

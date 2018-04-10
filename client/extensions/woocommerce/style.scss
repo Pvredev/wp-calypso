@@ -27,6 +27,7 @@
 	@import 'app/store-stats/store-stats-chart/style';
 	@import 'app/store-stats/store-stats-module/style';
 	@import 'app/store-stats/store-stats-referrer-widget/style';
+	@import 'app/store-stats/referrers/style';
 	@import 'app/store-stats/store-stats-widget-list/style';
 	@import 'app/store-stats/style';
 
@@ -63,9 +64,23 @@
 
 	.main {
 		padding-top: 35px;
+
 		@include breakpoint( "<660px" ) {
 			padding-top: 72px;
 		}
+	}
+
+	.woocommerce__placeholder {
+		padding-top: 0;
+
+		@include breakpoint( "<660px" ) {
+			padding-top: 16px;
+		}
+	}
+
+	.woocommerce__placeholder-card {
+		@include placeholder();
+		height: 70vh;
 	}
 
 	@include breakpoint( ">660px" ) {

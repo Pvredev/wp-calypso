@@ -53,12 +53,12 @@ import {
 	getDomainsSuggestionsError,
 } from 'state/domains/suggestions/selectors';
 
-import { abtest } from 'lib/abtest';
 import {
 	getStrippedDomainBase,
 	getTldWeightOverrides,
-	isFreeOrUnknownSuggestion,
+	isFreeSuggestion,
 	isNumberString,
+	isUnknownSuggestion,
 } from 'components/domains/register-domain-step/utility';
 import {
 	recordDomainAvailabilityReceive,
@@ -78,7 +78,7 @@ const domains = wpcom.domains();
 const SUGGESTION_QUANTITY = 10;
 const INITIAL_SUGGESTION_QUANTITY = 2;
 
-let searchVendor = 'domainsbot';
+let searchVendor = 'group_1';
 const fetchAlgo = searchVendor + '/v1';
 
 let searchQueue = [];
@@ -332,16 +332,7 @@ class RegisterDomainStep extends React.Component {
 						maxLength={ 60 }
 					/>
 				</div>
-				{ isKrackenUi && (
-					<div className="register-domain-step__filter">
-						<SearchFilters
-							filters={ this.state.filters }
-							onChange={ this.onFiltersChange }
-							onFiltersReset={ this.onFiltersReset }
-							onFiltersSubmit={ this.onFiltersSubmit }
-						/>
-					</div>
-				) }
+				{ this.renderSearchFilters() }
 				{ this.state.notice && (
 					<Notice
 						text={ this.state.notice }
@@ -357,8 +348,24 @@ class RegisterDomainStep extends React.Component {
 		);
 	}
 
+	renderSearchFilters() {
+		const isKrackenUi = config.isEnabled( 'domains/kracken-ui/filters' );
+		return (
+			isKrackenUi && (
+				<div className="register-domain-step__filter">
+					<SearchFilters
+						filters={ this.state.filters }
+						onChange={ this.onFiltersChange }
+						onFiltersReset={ this.onFiltersReset }
+						onFiltersSubmit={ this.onFiltersSubmit }
+					/>
+				</div>
+			)
+		);
+	}
+
 	renderPaginationControls() {
-		const isKrackenUi = config.isEnabled( 'domains/kracken-ui' );
+		const isKrackenUi = config.isEnabled( 'domains/kracken-ui/pagination' );
 		if ( ! isKrackenUi || this.state.searchResults === null ) {
 			return null;
 		}
@@ -606,6 +613,8 @@ class RegisterDomainStep extends React.Component {
 			return;
 		}
 
+		const isKrackenUi = config.isEnabled( 'domains/kracken-ui' );
+
 		const suggestions = uniqBy( flatten( compact( results ) ), function( suggestion ) {
 			return suggestion.domain_name;
 		} );
@@ -616,9 +625,14 @@ class RegisterDomainStep extends React.Component {
 			startsWith( suggestion.domain_name, `${ strippedDomainBase }.` );
 		const bestAlternative = suggestion =>
 			! exactMatchBeforeTld( suggestion ) && suggestion.isRecommended !== true;
-		const availableSuggestions = reject( suggestions, isFreeOrUnknownSuggestion );
+
+		let availableSuggestions = reject( suggestions, isUnknownSuggestion );
+		if ( ! isKrackenUi ) {
+			availableSuggestions = reject( suggestions, isFreeSuggestion );
+		}
 
 		const recommendedSuggestion = find( availableSuggestions, exactMatchBeforeTld );
+
 		if ( recommendedSuggestion ) {
 			recommendedSuggestion.isRecommended = true;
 		} else if ( availableSuggestions.length > 0 ) {
@@ -729,9 +743,9 @@ class RegisterDomainStep extends React.Component {
 		} );
 
 		const timestamp = Date.now();
-		const testGroup = abtest( 'domainSuggestionKrakenV313' );
-		if ( includes( [ 'group_1', 'group_2', 'group_3', 'group_4', 'group_5' ], testGroup ) ) {
-			searchVendor = testGroup;
+
+		if ( this.props.isSignupStep ) {
+			searchVendor = 'group_2';
 		}
 
 		const domainSuggestions = Promise.all( [
@@ -837,13 +851,7 @@ class RegisterDomainStep extends React.Component {
 		const onAddMapping = domain => this.props.onAddMapping( domain, this.state );
 
 		const searchResults = this.state.searchResults || [];
-		const testGroup = abtest( 'domainSuggestionKrakenV313' );
-		let suggestions = includes(
-			[ 'group_1', 'group_2', 'group_3', 'group_4', 'group_5' ],
-			testGroup
-		)
-			? [ ...searchResults ]
-			: reject( searchResults, matchesSearchedDomain );
+		let suggestions = [ ...searchResults ];
 
 		if ( this.props.includeWordPressDotCom || this.props.includeDotBlogSubdomain ) {
 			if ( this.state.loadingSubdomainResults && ! this.state.loadingResults ) {

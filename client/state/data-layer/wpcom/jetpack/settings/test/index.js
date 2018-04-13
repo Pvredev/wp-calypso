@@ -19,10 +19,7 @@ import {
 	JETPACK_ONBOARDING_SETTINGS_UPDATE,
 } from 'state/action-types';
 import { normalizeSettings } from 'state/jetpack/settings/utils';
-import {
-	saveJetpackSettingsSuccess,
-	updateJetpackSettings,
-} from 'state/jetpack-onboarding/actions';
+import { saveJetpackSettingsSuccess, updateJetpackSettings } from 'state/jetpack/settings/actions';
 
 describe( 'requestJetpackSettings()', () => {
 	const dispatch = jest.fn();
@@ -210,7 +207,7 @@ describe( 'saveJetpackSettings()', () => {
 	};
 
 	const getState = () => ( {
-		jetpackOnboarding: { settings: { [ 12345678 ]: previousSettings } },
+		jetpack: { settings: { [ 12345678 ]: previousSettings } },
 	} );
 
 	const action = {

@@ -25,6 +25,7 @@ import { getSelectedSiteId } from 'state/ui/selectors';
 
 const SUBDOMAIN_LENGTH_MINIMUM = 4;
 const SUBDOMAIN_LENGTH_MAXIMUM = 50;
+const ADDRESS_CHANGE_SUPPORT_URL = 'https://support.wordpress.com/changing-blog-address/';
 
 export class SimpleSiteRenameForm extends Component {
 	static propTypes = {
@@ -122,6 +123,23 @@ export class SimpleSiteRenameForm extends Component {
 		const isDisabled =
 			! domainFieldValue || !! domainFieldError || domainFieldValue === currentDomainPrefix;
 
+		if ( ! currentDomain.currentUserCanManage ) {
+			return (
+				<div className="simple-site-rename-form simple-site-rename-form__only-owner-info">
+					<Gridicon icon="info-outline" />
+					{ isEmpty( currentDomain.owner )
+						? translate( 'Only the site owner can edit this domain name.' )
+						: translate(
+								'Only the site owner ({{strong}}%(ownerInfo)s{{/strong}}) can edit this domain name.',
+								{
+									args: { ownerInfo: currentDomain.owner },
+									components: { strong: <strong /> },
+								}
+							) }
+				</div>
+			);
+		}
+
 		return (
 			<div className="simple-site-rename-form">
 				<ConfirmationDialog
@@ -149,11 +167,16 @@ export class SimpleSiteRenameForm extends Component {
 								<Gridicon icon="info-outline" size={ 18 } />
 								<p>
 									{ translate(
-										'Once changed, the current site address %(currentDomainName)s will no longer be available.',
+										'Once you change your site address, %(currentDomainName)s will no longer be available.',
 										{
 											args: { currentDomainName },
 										}
-									) }
+									) }{' '}
+									<a href={ ADDRESS_CHANGE_SUPPORT_URL }>
+										{ translate(
+											'Before you confirm the change, please read this important information.'
+										) }
+									</a>
 								</p>
 							</div>
 							<FormButton disabled={ isDisabled } busy={ isSiteRenameRequesting } type="submit">

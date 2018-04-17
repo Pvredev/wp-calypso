@@ -150,6 +150,10 @@
 	margin-top: 16px;
 }
 
+.jetpack-connect__install {
+	margin-bottom: 16px;
+}
+
 .jetpack-connect__install-steps {
 	display: flex;
 	justify-content: center;
@@ -711,4 +715,8 @@
 	.button + .button {
 		margin-left: 10px;
 	}
+}
+
+.jetpack-connect__connect-button {
+	text-align: center;
 }

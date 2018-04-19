@@ -203,7 +203,7 @@ class PlanFeatures extends Component {
 	}
 
 	renderCreditSummary() {
-		const { canPurchase, planProperties, site, sitePlan } = this.props;
+		const { canPurchase, planProperties, site } = this.props;
 
 		return map( planProperties, properties => {
 			const {
@@ -224,13 +224,12 @@ class PlanFeatures extends Component {
 						canPurchase={ canPurchase }
 						currencyCode={ currencyCode }
 						current={ current }
-						currentPlanTitle={ sitePlan.product_name_short }
 						discountPrice={ discountPrice }
+						isJetpackSite={ site.jetpack }
 						planTitle={ planConstantObj.getTitle() }
 						planType={ planName }
 						rawPrice={ rawPrice }
 						relatedMonthlyPlan={ relatedMonthlyPlan }
-						site={ site }
 					/>
 				</td>
 			);
@@ -259,7 +258,6 @@ class PlanFeatures extends Component {
 			isLandingPage,
 			planProperties,
 			selectedPlan,
-			site,
 			translate,
 		} = this.props;
 
@@ -312,7 +310,6 @@ class PlanFeatures extends Component {
 						billingTimeFrame={ planConstantObj.getBillingTimeFrame( getABTestVariation ) }
 						hideMonthly={ hideMonthly }
 						isPlaceholder={ isPlaceholder }
-						site={ site }
 						basePlansPath={ basePlansPath }
 						relatedMonthlyPlan={ relatedMonthlyPlan }
 						isInSignup={ isInSignup }
@@ -357,7 +354,6 @@ class PlanFeatures extends Component {
 			isInSignup,
 			planProperties,
 			selectedPlan,
-			site,
 			siteType,
 			showModifiedPricingDisplay,
 		} = this.props;
@@ -420,7 +416,6 @@ class PlanFeatures extends Component {
 						popular={ popular }
 						rawPrice={ rawPrice }
 						relatedMonthlyPlan={ relatedMonthlyPlan }
-						site={ site }
 						selectedPlan={ selectedPlan }
 						title={ planConstantObj.getTitle() }
 						showModifiedPricingDisplay={ showModifiedPricingDisplay }
@@ -855,7 +850,10 @@ export default connect(
 
 		const maxCredits = getMaxCredits( planProperties, ownProps.site.jetpack );
 		const showModifiedPricingDisplay =
-			! isInSignup && !! maxCredits.amount && abtest( 'upgradePricingDisplayV2' ) === 'modified';
+			! isInSignup &&
+			isPaid &&
+			!! maxCredits.amount &&
+			abtest( 'upgradePricingDisplayV3' ) === 'modified';
 
 		return {
 			canPurchase,

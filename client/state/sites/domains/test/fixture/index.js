@@ -34,6 +34,7 @@ export const DOMAIN_PRIMARY = {
 	expired: false,
 	expiry: '2017-03-09T00:00:00+00:00',
 	expirySoon: false,
+	gdprConsentStatus: null,
 	googleAppsSubscription: {
 		status: 'no_subscription',
 	},
@@ -45,7 +46,6 @@ export const DOMAIN_PRIMARY = {
 	isPendingIcannVerification: false,
 	isPendingWhoisUpdate: false,
 	manualTransferRequired: false,
-	manualWhois: false,
 	newRegistration: false,
 	name: 'retronevergiveup.me',
 	owner: 'John Doe',
@@ -78,6 +78,7 @@ export const DOMAIN_NOT_PRIMARY = {
 	expired: false,
 	expiry: null,
 	expirySoon: false,
+	gdprConsentStatus: null,
 	googleAppsSubscription: {
 		status: 'no_subscription',
 	},
@@ -89,7 +90,6 @@ export const DOMAIN_NOT_PRIMARY = {
 	isPendingIcannVerification: false,
 	isPendingWhoisUpdate: false,
 	manualTransferRequired: false,
-	manualWhois: false,
 	newRegistration: false,
 	name: 'retronevergiveup.wordpress.me',
 	owner: typeof undefined,
@@ -124,6 +124,7 @@ export const REST_API_SITE_DOMAIN_FIRST = {
 	expired: false,
 	expiry: '2017-03-09T00:00:00+00:00',
 	expiry_soon: false,
+	gdprConsentStatus: null,
 	google_apps_subscription: {
 		status: 'no_subscription',
 	},
@@ -165,6 +166,7 @@ export const REST_API_SITE_DOMAIN_SECOND = {
 	expired: false,
 	expiry: false,
 	expiry_soon: false,
+	gdprConsentStatus: null,
 	google_apps_subscription: {
 		status: 'no_subscription',
 	},

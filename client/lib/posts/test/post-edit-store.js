@@ -65,22 +65,17 @@ describe( 'post-edit-store', () => {
 		assert( PostEditStore.getSavedPost().site_ID === siteId );
 		const post = PostEditStore.get();
 		assert( post.status === 'draft' );
-		assert( PostEditStore.isNew() );
 	} );
 
-	test( 'initialize existing post', () => {
-		const siteId = 12,
-			postId = 345;
-
+	test( 'reset the currently edited post and prepare to edit a new one', () => {
 		dispatcherCallback( {
 			action: {
 				type: 'START_EDITING_POST',
-				siteId: siteId,
-				postId: postId,
 			},
 		} );
 
-		assert( ! PostEditStore.isNew() );
+		assert( PostEditStore.getSavedPost() == null );
+		assert( PostEditStore.isLoading() );
 	} );
 
 	test( 'sets parent_id properly', () => {
@@ -207,7 +202,7 @@ describe( 'post-edit-store', () => {
 			},
 		} );
 
-		assert( PostEditStore.isNew() );
+		assert( PostEditStore.getSavedPost().ID === undefined );
 		assert( PostEditStore.getSavedPost().title === '' );
 		assert( PostEditStore.get().title === postEdits.title );
 		assert( PostEditStore.get().content === postEdits.content );
@@ -265,26 +260,30 @@ describe( 'post-edit-store', () => {
 		assert( PostEditStore.isDirty() );
 	} );
 
-	test( 'excludes metadata without an operation on edit', () => {
-		const postEdits = {
-				title: 'Super Duper',
-				metadata: [
-					{ key: 'super', value: 'duper', operation: 'update' },
-					{ key: 'foo', value: 'bar', operation: 'delete' },
-					{ key: 'bar', value: 'foo' },
-				],
-			},
-			expectedMetadata = [
-				{ key: 'super', value: 'duper', operation: 'update' },
-				{ key: 'foo', value: 'bar', operation: 'delete' },
-			];
-
+	test( 'updates existing metadata on edit', () => {
+		// initial post
 		dispatcherCallback( {
 			action: {
 				type: 'RECEIVE_POST_TO_EDIT',
-				post: {},
+				post: {
+					ID: 1234,
+					metadata: [
+						{ key: 'keepable', value: 'constvalue' },
+						{ key: 'updatable', value: 'oldvalue' },
+						{ key: 'deletable', value: 'trashvalue' },
+					],
+				},
 			},
 		} );
+
+		// apply some edits
+		const postEdits = {
+			title: 'Super Duper',
+			metadata: [
+				{ key: 'updatable', value: 'newvalue', operation: 'update' },
+				{ key: 'deletable', operation: 'delete' },
+			],
+		};
 
 		dispatcherCallback( {
 			action: {
@@ -293,18 +292,124 @@ describe( 'post-edit-store', () => {
 			},
 		} );
 
-		assert( PostEditStore.get().metadata === postEdits.metadata );
+		// check the expected values of post attributes after the edit is applied
 		assert( PostEditStore.get().title === postEdits.title );
+		assert(
+			isEqual( PostEditStore.get().metadata, [
+				{ key: 'keepable', value: 'constvalue' },
+				{ key: 'updatable', value: 'newvalue', operation: 'update' },
+				{ key: 'deletable', operation: 'delete' },
+			] )
+		);
+
+		// check the modifications sent to the API endpoint
 		assert( PostEditStore.getChangedAttributes().title === postEdits.title );
-		assert( isEqual( PostEditStore.getChangedAttributes().metadata, expectedMetadata ) );
+		assert(
+			isEqual( PostEditStore.getChangedAttributes().metadata, [
+				{ key: 'updatable', value: 'newvalue', operation: 'update' },
+				{ key: 'deletable', operation: 'delete' },
+			] )
+		);
+	} );
+
+	test( 'should include metadata edits made previously', () => {
+		// initial post
+		dispatcherCallback( {
+			action: {
+				type: 'RECEIVE_POST_TO_EDIT',
+				post: {
+					ID: 1234,
+					metadata: [ { key: 'deletable', value: 'trashvalue' } ],
+				},
+			},
+		} );
+
+		// first edit
+		dispatcherCallback( {
+			action: {
+				type: 'EDIT_POST',
+				post: {
+					metadata: [ { key: 'deletable', operation: 'delete' } ],
+				},
+			},
+		} );
+
+		// second edit
+		dispatcherCallback( {
+			action: {
+				type: 'EDIT_POST',
+				post: {
+					metadata: [ { key: 'updatable', value: 'newvalue', operation: 'update' } ],
+				},
+			},
+		} );
+
+		assert(
+			isEqual( PostEditStore.get().metadata, [
+				{ key: 'deletable', operation: 'delete' },
+				{ key: 'updatable', value: 'newvalue', operation: 'update' },
+			] )
+		);
+	} );
+
+	test( 'should not duplicate existing metadata edits', () => {
+		// initial post
+		dispatcherCallback( {
+			action: {
+				type: 'RECEIVE_POST_TO_EDIT',
+				post: {
+					ID: 1234,
+					metadata: [
+						{ key: 'keepable', value: 'constvalue' },
+						{ key: 'phoenixable', value: 'fawkes' },
+					],
+				},
+			},
+		} );
+
+		// delete metadata prop
+		dispatcherCallback( {
+			action: {
+				type: 'EDIT_POST',
+				post: {
+					metadata: [ { key: 'phoenixable', operation: 'delete' } ],
+				},
+			},
+		} );
+
+		// recreate the prop
+		dispatcherCallback( {
+			action: {
+				type: 'EDIT_POST',
+				post: {
+					metadata: [ { key: 'phoenixable', value: 'newfawkes', operation: 'update' } ],
+				},
+			},
+		} );
+
+		// edited post metadata after edits
+		assert(
+			isEqual( PostEditStore.get().metadata, [
+				{ key: 'keepable', value: 'constvalue' },
+				{ key: 'phoenixable', value: 'newfawkes', operation: 'update' },
+			] )
+		);
+
+		// metadata update request sent to the API endpoint
+		assert(
+			isEqual( PostEditStore.getChangedAttributes().metadata, [
+				{ key: 'phoenixable', value: 'newfawkes', operation: 'update' },
+			] )
+		);
 	} );
 
 	test( 'reset post after saving an edit', () => {
-		const siteId = 1234,
-			postEdits = {
-				title: 'hello, world!',
-				content: 'initial edit',
-			};
+		const siteId = 1234;
+		const postId = 5678;
+		const postEdits = {
+			title: 'hello, world!',
+			content: 'initial edit',
+		};
 
 		dispatcherCallback( {
 			action: {
@@ -325,11 +430,11 @@ describe( 'post-edit-store', () => {
 		dispatcherCallback( {
 			action: {
 				type: 'RECEIVE_POST_BEING_EDITED',
-				post: assign( { ID: 1234 }, postEdits ),
+				post: assign( { ID: postId }, postEdits ),
 			},
 		} );
 
-		assert( PostEditStore.isNew() === false );
+		assert( PostEditStore.getSavedPost().ID === postId );
 		assert( PostEditStore.getSavedPost().title === postEdits.title );
 		assert( PostEditStore.getSavedPost().content === postEdits.content );
 		assert( PostEditStore.get().title === postEdits.title );

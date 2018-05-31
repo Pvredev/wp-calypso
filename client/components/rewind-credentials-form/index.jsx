@@ -24,7 +24,8 @@ import Gridicon from 'gridicons';
 import QueryRewindState from 'components/data/query-rewind-state';
 import { deleteCredentials, updateCredentials } from 'state/jetpack/credentials/actions';
 import { getSiteSlug } from 'state/sites/selectors';
-import { getRewindState, getJetpackCredentialsUpdateStatus } from 'state/selectors';
+import getJetpackCredentialsUpdateStatus from 'state/selectors/get-jetpack-credentials-update-status';
+import getRewindState from 'state/selectors/get-rewind-state';
 
 export class RewindCredentialsForm extends Component {
 	static propTypes = {
@@ -34,6 +35,7 @@ export class RewindCredentialsForm extends Component {
 		allowDelete: PropTypes.bool,
 		onCancel: PropTypes.func,
 		onComplete: PropTypes.func,
+		siteUrl: PropTypes.string,
 	};
 
 	state = {
@@ -72,10 +74,11 @@ export class RewindCredentialsForm extends Component {
 	};
 
 	handleSubmit = () => {
-		const { role, siteId, translate, updateCredentials } = this.props;
+		const { role, siteId, siteUrl, translate, updateCredentials } = this.props;
 
 		const payload = {
 			role,
+			site_url: siteUrl,
 			...this.state.form,
 		};
 

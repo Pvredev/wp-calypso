@@ -12,11 +12,11 @@ import Gridicon from 'gridicons';
 /**
  * Internal dependencies
  */
-import { default as appConfig } from 'config';
-import { jsonStringifyForHtml } from '../../server/sanitize';
+import ExternalLink from 'components/external-link';
 import Head from '../components/head';
 import getStylesheet from './utils/stylesheet';
 import WordPressLogo from 'components/wordpress-logo';
+import { jsonStringifyForHtml } from '../../server/sanitize';
 
 class Document extends React.Component {
 	render() {
@@ -51,7 +51,6 @@ class Document extends React.Component {
 			devDocsURL,
 			feedbackURL,
 			inlineScriptNonce,
-			analyticsScriptNonce,
 		} = this.props;
 
 		const inlineScript =
@@ -143,14 +142,14 @@ class Document extends React.Component {
 								</span>
 							) }
 							<span className={ `environment is-${ badge } is-env` }>{ badge }</span>
-							<a
+							<ExternalLink
 								className="bug-report"
 								href={ feedbackURL }
-								title="Report an issue"
 								target="_blank"
+								title="Report an issue"
 							>
 								<Gridicon icon="bug" size={ 18 } />
-							</a>
+							</ExternalLink>
 						</div>
 					) }
 
@@ -201,15 +200,6 @@ class Document extends React.Component {
 						 `,
 						} }
 					/>
-					{ // Load GA only if enabled in the config.
-					appConfig( 'google_analytics_enabled' ) && (
-						<script
-							async={ true }
-							type="text/javascript"
-							src="https://www.google-analytics.com/analytics.js"
-							nonce={ analyticsScriptNonce }
-						/>
-					) }
 					<noscript className="wpcom-site__global-noscript">
 						Please enable JavaScript in your browser to enjoy WordPress.com.
 					</noscript>

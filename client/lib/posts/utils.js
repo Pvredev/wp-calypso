@@ -24,15 +24,15 @@ export const getEditURL = function( post, site ) {
 	return `${ basePath }/${ postType }/${ site.slug }/${ post.ID }`;
 };
 
-export const getPreviewURL = function( site, post ) {
+export const getPreviewURL = function( site, post, autosavePreviewUrl ) {
 	let parsed, previewUrl;
 
 	if ( ! post || ! post.URL || post.status === 'trash' ) {
 		return '';
 	}
 
-	if ( post.preview_URL ) {
-		previewUrl = post.preview_URL;
+	if ( autosavePreviewUrl ) {
+		previewUrl = autosavePreviewUrl;
 	} else if ( post.status === 'publish' ) {
 		previewUrl = post.URL;
 	} else {
@@ -84,6 +84,10 @@ export const isPublished = function( post ) {
 		post &&
 		( post.status === 'publish' || post.status === 'private' || isBackDatedPublished( post ) )
 	);
+};
+
+export const isScheduled = function( post ) {
+	return post && 'future' === post.status;
 };
 
 export const isPrivate = function( post ) {
@@ -153,7 +157,7 @@ export const normalizeSync = function( post, callback ) {
 
 export const getVisibility = function( post ) {
 	if ( ! post ) {
-		return;
+		return null;
 	}
 
 	if ( post.password ) {

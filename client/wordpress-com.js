@@ -34,6 +34,13 @@ const sections = [
 		secondary: true,
 	},
 	{
+		name: 'account-close',
+		paths: [ '/me/account/close' ],
+		module: 'me/account-close',
+		group: 'me',
+		secondary: true,
+	},
+	{
 		name: 'security',
 		paths: [ '/me/security' ],
 		module: 'me/security',
@@ -53,6 +60,7 @@ const sections = [
 		module: 'me/purchases',
 		group: 'me',
 		secondary: true,
+		enableLoggedOut: true,
 	},
 	{
 		name: 'notification-settings',
@@ -192,6 +200,7 @@ const sections = [
 		name: 'google-my-business',
 		paths: [ '/google-my-business' ],
 		module: 'my-sites/google-my-business',
+		enableLoggedOut: true,
 		secondary: true,
 		group: 'sites',
 		css: 'google-my-business',
@@ -416,7 +425,7 @@ sections.push( {
 	name: 'domain-connect-authorize',
 	paths: [ '/domain-connect' ],
 	module: 'my-sites/domains/domain-management/domain-connect',
-	enableLoggedOut: false,
+	enableLoggedOut: true,
 	secondary: false,
 	isomorphic: false,
 } );

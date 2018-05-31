@@ -14,6 +14,7 @@ import { connect } from 'react-redux';
  */
 import EmptyContent from 'components/empty-content';
 import CreditsPaymentBox from './credits-payment-box';
+import EmergentPaywallBox from './emergent-paywall-box';
 import FreeTrialConfirmationBox from './free-trial-confirmation-box';
 import FreeCartPaymentBox from './free-cart-payment-box';
 import CreditCardPaymentBox from './credit-card-payment-box';
@@ -195,6 +196,26 @@ const SecurePaymentForm = createReactClass( {
 		);
 	},
 
+	renderEmergentPaywallBox() {
+		return (
+			<PaymentBox
+				classSet="emergent-payments-box"
+				cart={ this.props.cart }
+				paymentMethods={ this.props.paymentMethods }
+				currentPaymentMethod="emergent-paywall"
+				onSelectPaymentMethod={ this.selectPaymentBox }
+			>
+				<EmergentPaywallBox
+					cart={ this.props.cart }
+					selectedSite={ this.props.selectedSite }
+					transaction={ this.props.transaction }
+				>
+					{ this.props.children }
+				</EmergentPaywallBox>
+			</PaymentBox>
+		);
+	},
+
 	renderCreditCardPaymentBox() {
 		return (
 			<PaymentBox
@@ -256,6 +277,7 @@ const SecurePaymentForm = createReactClass( {
 				<RedirectPaymentBox
 					cart={ this.props.cart }
 					transaction={ this.props.transaction }
+					countriesList={ countriesListForPayments }
 					selectedSite={ this.props.selectedSite }
 					paymentType={ paymentType }
 					redirectTo={ this.props.redirectTo }
@@ -319,20 +341,26 @@ const SecurePaymentForm = createReactClass( {
 						{ this.renderPayPalPaymentBox() }
 					</div>
 				);
-
+			case 'emergent-paywall':
+				return (
+					<div>
+						{ this.renderGreatChoiceHeader() }
+						{ this.renderEmergentPaywallBox() }
+					</div>
+				);
 			case 'alipay':
 			case 'bancontact':
 			case 'eps':
 			case 'giropay':
 			case 'ideal':
 			case 'p24':
+			case 'brazil-tef':
 				return (
 					<div>
 						{ this.renderGreatChoiceHeader() }
 						{ this.renderRedirectPaymentBox( visiblePaymentBox ) }
 					</div>
 				);
-
 			default:
 				debug( 'WARN: %o payment unknown', visiblePaymentBox );
 				return null;
@@ -356,7 +384,7 @@ const SecurePaymentForm = createReactClass( {
 		if ( this.state.visiblePaymentBox === null ) {
 			return (
 				<EmptyContent
-					illustration="/calypso/images/illustrations/illustration-500.svg"
+					illustration="/calypso/images/illustrations/error.svg"
 					title={ this.props.translate( 'Checkout is not available' ) }
 					line={ this.props.translate(
 						"We're hard at work on the issue. Please check back shortly."

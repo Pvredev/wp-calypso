@@ -19,7 +19,8 @@ import Item from './item';
 import WordPressLogo from 'components/wordpress-logo';
 import WordPressWordmark from 'components/wordpress-wordmark';
 import { addQueryArgs } from 'lib/route';
-import { getCurrentQueryArguments, getCurrentRoute } from 'state/selectors';
+import getCurrentQueryArguments from 'state/selectors/get-current-query-arguments';
+import getCurrentRoute from 'state/selectors/get-current-route';
 import { login } from 'lib/paths';
 
 class MasterbarLoggedOut extends PureComponent {
@@ -54,7 +55,7 @@ class MasterbarLoggedOut extends PureComponent {
 
 		const isJetpack = 'jetpack-connect' === sectionName;
 
-		const loginUrl = login( {
+		let loginUrl = login( {
 			// We may know the email from Jetpack connection details
 			emailAddress: isJetpack && get( currentQuery, 'user_email', false ),
 			isJetpack,
@@ -62,6 +63,10 @@ class MasterbarLoggedOut extends PureComponent {
 			locale: getLocaleSlug(),
 			redirectTo,
 		} );
+
+		if ( currentQuery && currentQuery.partner_id ) {
+			loginUrl = addQueryArgs( { partner_id: currentQuery.partner_id }, loginUrl );
+		}
 
 		return (
 			<Item url={ loginUrl }>

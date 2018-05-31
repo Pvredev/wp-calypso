@@ -26,6 +26,7 @@ import FormTextarea from 'components/forms/form-textarea';
 import HeaderCake from 'components/header-cake';
 import QueryTerms from 'components/data/query-terms';
 import TermTreeSelector from 'blocks/term-tree-selector';
+import PodcastCoverImageSetting from 'my-sites/site-settings/podcast-cover-image-setting';
 import wrapSettingsForm from 'my-sites/site-settings/wrap-settings-form';
 import podcastingTopics from './topics';
 import { getSelectedSiteId, getSelectedSiteSlug } from 'state/ui/selectors';
@@ -80,12 +81,13 @@ class PodcastingDetails extends Component {
 		);
 	}
 
-	renderTextField( { FormComponent = FormInput, key, label } ) {
+	renderTextField( { FormComponent = FormInput, key, label, explanation } ) {
 		const { fields, isRequestingSettings, onChangeField, isPodcastingEnabled } = this.props;
 
 		return (
 			<FormFieldset>
 				<FormLabel htmlFor={ key }>{ label }</FormLabel>
+				{ explanation && <FormSettingExplanation>{ explanation }</FormSettingExplanation> }
 				<FormComponent
 					id={ key }
 					name={ key }
@@ -156,6 +158,7 @@ class PodcastingDetails extends Component {
 			podcastingCategoryId,
 			translate,
 			isPodcastingEnabled,
+			fields,
 		} = this.props;
 		if ( ! siteId ) {
 			return null;
@@ -193,6 +196,7 @@ class PodcastingDetails extends Component {
 							<TermTreeSelector
 								taxonomy="category"
 								selected={ podcastingCategoryId ? [ podcastingCategoryId ] : [] }
+								podcastingCategoryId={ podcastingCategoryId }
 								onChange={ this.onCategorySelected }
 								addTerm={ true }
 								onAddTermSuccess={ this.onCategorySelected }
@@ -205,6 +209,12 @@ class PodcastingDetails extends Component {
 							) }
 						</FormFieldset>
 						<div className="podcasting-details__basic-settings">
+							<PodcastCoverImageSetting
+								coverImageId={ parseInt( fields.podcasting_image_id, 10 ) || 0 }
+								coverImageUrl={ fields.podcasting_image }
+								onRemove={ this.onCoverImageRemoved }
+								onSelect={ this.onCoverImageSelected }
+							/>
 							{ this.renderTextField( {
 								key: 'podcasting_title',
 								label: translate( 'Title' ),
@@ -226,6 +236,13 @@ class PodcastingDetails extends Component {
 							label: translate( 'Summary' ),
 						} ) }
 						{ this.renderTextField( {
+							key: 'podcasting_email',
+							label: translate( 'Email Address' ),
+							explanation: translate(
+								'This email address will be displayed in the feed and is required for some services such as Google Play.'
+							),
+						} ) }
+						{ this.renderTextField( {
 							key: 'podcasting_copyright',
 							label: translate( 'Copyright' ),
 						} ) }
@@ -240,22 +257,39 @@ class PodcastingDetails extends Component {
 	}
 
 	onCategorySelected = category => {
-		this.setPodcastingCategoryId( category.ID );
+		this.setFieldForcingString( 'podcasting_category_id' )( category.ID );
 	};
 
 	onCategoryCleared = () => {
-		this.setPodcastingCategoryId( 0 );
+		this.setFieldForcingString( 'podcasting_category_id' )( 0 );
 	};
 
-	setPodcastingCategoryId = newCategoryId => {
+	onCoverImageRemoved = () => {
+		// Do not call setFieldForcingString / onChangeField multiple times in
+		// the same render cycle - this breaks dirty detection in
+		// wrapSettingsForm.
+		this.props.updateFields( {
+			podcasting_image_id: '0',
+			podcasting_image: '',
+		} );
+	};
+
+	onCoverImageSelected = ( coverId, coverUrl ) => {
+		this.props.updateFields( {
+			podcasting_image_id: String( coverId ),
+			podcasting_image: coverUrl,
+		} );
+	};
+
+	setFieldForcingString = field => value => {
 		const { onChangeField } = this.props;
 
-		// Always send and save category IDs as strings because this is what
+		// Always send and save IDs as strings because this is what
 		// the settings form wrapper expects (otherwise the settings form will
 		// be marked dirty again immediately after saving).
-		const event = { target: { value: String( newCategoryId ) } };
+		const event = { target: { value: String( value ) } };
 
-		onChangeField( 'podcasting_category_id' )( event );
+		onChangeField( field )( event );
 	};
 }
 
@@ -273,6 +307,8 @@ const getFormSettings = settings => {
 		'podcasting_category_1',
 		'podcasting_category_2',
 		'podcasting_category_3',
+		'podcasting_email',
+		'podcasting_image_id',
 	] );
 };
 

@@ -16,6 +16,7 @@ import { stringify } from 'qs';
  * Internal dependencies
  */
 import {
+	checkAuthCode,
 	checkDomainAvailability,
 	checkInboundTransferStatus,
 	getDomainPrice,
@@ -43,6 +44,8 @@ import { fetchDomains } from 'lib/upgrades/actions';
 import { domainManagementTransferIn } from 'my-sites/domains/paths';
 import { errorNotice } from 'state/notices/actions';
 import QueryProducts from 'components/data/query-products-list';
+import { isPlan } from 'lib/products-values';
+import { isDomainBundledWithPlan, isNextDomainFree } from 'lib/cart-values/cart-items';
 
 class TransferDomainStep extends React.Component {
 	static propTypes = {
@@ -69,11 +72,13 @@ class TransferDomainStep extends React.Component {
 
 	getDefaultState() {
 		return {
+			authCodeValid: null,
 			domain: null,
 			domainsWithPlansOnly: false,
 			inboundTransferStatus: {},
 			precheck: get( this.props, 'forcePrecheck', false ),
 			searchQuery: this.props.initialQuery || '',
+			submittingAuthCodeCheck: false,
 			submittingAvailability: false,
 			submittingWhois: get( this.props, 'forcePrecheck', false ),
 			supportsPrivacy: false,
@@ -132,15 +137,24 @@ class TransferDomainStep extends React.Component {
 	};
 
 	addTransfer() {
-		const { translate } = this.props;
+		const { cart, domainsWithPlansOnly, isSignupStep, selectedSite, translate } = this.props;
 		const { searchQuery, submittingAvailability, submittingWhois } = this.state;
 		const submitting = submittingAvailability || submittingWhois;
 		const productSlug = getDomainProductSlug( searchQuery );
-		const domainProductPrice = getDomainPrice(
+		const domainsWithPlansOnlyButNoPlan =
+			domainsWithPlansOnly && ( ( selectedSite && ! isPlan( selectedSite.plan ) ) || isSignupStep );
+
+		let domainProductPrice = getDomainPrice(
 			productSlug,
 			this.props.productsList,
 			this.props.currencyCode
 		);
+
+		if ( isNextDomainFree( cart ) || isDomainBundledWithPlan( cart, searchQuery ) ) {
+			domainProductPrice = translate( 'Free with your plan' );
+		} else if ( domainsWithPlansOnlyButNoPlan ) {
+			domainProductPrice = translate( 'Included in paid plans' );
+		}
 
 		return (
 			<div>
@@ -148,16 +162,12 @@ class TransferDomainStep extends React.Component {
 				{ this.notice() }
 				<form className="transfer-domain-step__form card" onSubmit={ this.handleFormSubmit }>
 					<div className="transfer-domain-step__domain-description">
-						<img
-							className="transfer-domain-step__illustration"
-							src={ '/calypso/images/illustrations/migrating-host-diy.svg' }
-						/>
 						<div className="transfer-domain-step__domain-heading">
 							{ translate( 'Manage your domain and site together on WordPress.com.' ) }
 						</div>
 						<div>
 							{ translate(
-								'Move your domain from your current provider to WordPress.com so you can update settings, ' +
+								'Transfer your domain away from your current provider to WordPress.com so you can update settings, ' +
 									"renew your domain, and more \u2013 right in your dashboard. We'll renew it for another year " +
 									'when the transfer is successful. {{a}}Learn more{{/a}}.',
 								{
@@ -224,10 +234,10 @@ class TransferDomainStep extends React.Component {
 		);
 	}
 
-	startPendingInboundTransfer = domain => {
+	startPendingInboundTransfer = ( domain, authCode ) => {
 		const { selectedSite, translate } = this.props;
 
-		startInboundTransfer( selectedSite.ID, domain, ( error, result ) => {
+		startInboundTransfer( selectedSite.ID, domain, authCode, ( error, result ) => {
 			if ( result ) {
 				fetchDomains( domain );
 				page( domainManagementTransferIn( selectedSite.slug, domain ) );
@@ -238,7 +248,14 @@ class TransferDomainStep extends React.Component {
 	};
 
 	getTransferDomainPrecheck() {
-		const { domain, inboundTransferStatus, submittingWhois, searchQuery } = this.state;
+		const {
+			authCodeValid,
+			domain,
+			inboundTransferStatus,
+			submittingAuthCodeCheck,
+			submittingWhois,
+			searchQuery,
+		} = this.state;
 
 		const onSetValid = this.props.forcePrecheck
 			? this.startPendingInboundTransfer
@@ -246,12 +263,12 @@ class TransferDomainStep extends React.Component {
 
 		return (
 			<TransferDomainPrecheck
+				authCodeValid={ authCodeValid }
+				checkAuthCode={ this.getAuthCodeStatus }
 				domain={ domain || searchQuery }
-				email={ inboundTransferStatus.email }
-				loading={ submittingWhois }
+				loading={ submittingWhois || submittingAuthCodeCheck }
 				losingRegistrar={ inboundTransferStatus.losingRegistrar }
 				losingRegistrarIanaId={ inboundTransferStatus.losingRegistrarIanaId }
-				privacy={ inboundTransferStatus.privacy }
 				refreshStatus={ this.getInboundTransferStatus }
 				selectedSiteSlug={ get( this.props, 'selectedSite.slug', null ) }
 				setValid={ onSetValid }
@@ -429,12 +446,13 @@ class TransferDomainStep extends React.Component {
 							break;
 						case domainAvailability.MAPPABLE:
 						case domainAvailability.TLD_NOT_SUPPORTED:
+						case domainAvailability.TLD_NOT_SUPPORTED_TEMPORARILY:
 							const tld = getTld( domain );
 
 							this.setState( {
 								notice: this.props.translate(
-									"We don't support transfers for domains ending with {{strong}}.%(tld)s{{/strong}}, " +
-										'but you can {{a}}map it{{/a}} instead.',
+									'We are temporarily unable to support transfers for domains ending with {{strong}}.%(tld)s{{/strong}}. ' +
+										'Please try again later or {{a}}map it{{/a}} instead.',
 									{
 										args: { tld },
 										components: {
@@ -472,7 +490,11 @@ class TransferDomainStep extends React.Component {
 								site = get( this.props, 'selectedSite.slug', null );
 							}
 
-							const { message, severity } = getAvailabilityNotice( domain, status, site );
+							const maintenanceEndTime = get( result, 'maintenance_end_time', null );
+							const { message, severity } = getAvailabilityNotice( domain, status, {
+								site,
+								maintenanceEndTime,
+							} );
 							this.setState( { notice: message, noticeSeverity: severity } );
 					}
 
@@ -514,6 +536,26 @@ class TransferDomainStep extends React.Component {
 					resolve();
 				}
 			);
+		} );
+	};
+
+	getAuthCodeStatus = ( domain, authCode ) => {
+		this.setState( { submittingAuthCodeCheck: true } );
+
+		return new Promise( resolve => {
+			checkAuthCode( domain, authCode, ( error, result ) => {
+				this.setState( { submittingAuthCodeCheck: false } );
+
+				if ( ! isEmpty( error ) ) {
+					resolve();
+					return;
+				}
+
+				this.setState( {
+					authCodeValid: result.success,
+				} );
+				resolve();
+			} );
 		} );
 	};
 }

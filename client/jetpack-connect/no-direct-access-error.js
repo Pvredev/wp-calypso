@@ -23,22 +23,20 @@ class NoDirectAccessError extends PureComponent {
 		translate: PropTypes.func.isRequired,
 	};
 
-	handleClickHelp = () => this.props.recordTracksEvent( 'calypso_jpc_help_link_click' );
-
 	render() {
 		const { translate } = this.props;
 
 		return (
 			<Main className="jetpack-connect__main-error">
 				<EmptyContent
-					illustration="/calypso/images/illustrations/whoops.svg"
+					illustration="/calypso/images/illustrations/error.svg"
 					title={ translate( 'Oops, this URL should not be accessed directly' ) }
 					action={ translate( 'Get back to Jetpack Connect screen' ) }
 					actionURL="/jetpack/connect"
 				/>
 				<LoggedOutFormLinks>
 					<JetpackConnectHappychatButton eventName="calypso_jpc_noqueryarguments_chat_initiated">
-						<HelpButton onClick={ this.handleClickHelp } />
+						<HelpButton />
 					</JetpackConnectHappychatButton>
 				</LoggedOutFormLinks>
 			</Main>

@@ -19,6 +19,7 @@ export {
 	removeDomainFromCart,
 	removeItem,
 	removePrivacyFromAllDomains,
+	replaceItem,
 	showCartOnMobile,
 } from './cart';
 
@@ -55,6 +56,7 @@ export {
 	updateNameservers,
 	updateSiteRedirect,
 	updateWhois,
+	requestGdprConsentManagementLink,
 } from './domain-management';
 
 export { goToDomainCheckout } from './domain-search';

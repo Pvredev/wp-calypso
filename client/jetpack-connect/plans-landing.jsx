@@ -18,7 +18,7 @@ import LoggedOutFormLinks from 'components/logged-out-form/links';
 import Placeholder from './plans-placeholder';
 import PlansGrid from './plans-grid';
 import PlansExtendedInfo from './plans-extended-info';
-import PlansSkipButton from './plans-skip-button';
+import PlansSkipButton from 'components/plans/plans-skip-button';
 import QueryPlans from 'components/data/query-plans';
 import { getJetpackSiteByUrl } from 'state/jetpack-connect/selectors';
 import { getSite, isRequestingSites } from 'state/sites/selectors';
@@ -83,10 +83,6 @@ class PlansLanding extends Component {
 		this.storeSelectedPlan( null );
 	};
 
-	handleHelpButtonClick = () => {
-		this.props.recordTracksEvent( 'calypso_jpc_help_link_click' );
-	};
-
 	handleInfoButtonClick = info => () => {
 		this.props.recordTracksEvent( 'calypso_jpc_external_help_click', {
 			help_type: info,
@@ -118,7 +114,7 @@ class PlansLanding extends Component {
 					<PlansExtendedInfo recordTracks={ this.handleInfoButtonClick } />
 					<LoggedOutFormLinks>
 						<JetpackConnectHappychatButton eventName="calypso_jpc_planslanding_chat_initiated">
-							<HelpButton onClick={ this.handleHelpButtonClick } />
+							<HelpButton />
 						</JetpackConnectHappychatButton>
 					</LoggedOutFormLinks>
 				</PlansGrid>

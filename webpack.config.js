@@ -16,6 +16,7 @@ const AssetsWriter = require( './server/bundler/assets-writer' );
 const StatsWriter = require( './server/bundler/stats-writer' );
 const prism = require( 'prismjs' );
 const UglifyJsPlugin = require( 'uglifyjs-webpack-plugin' );
+const CircularDependencyPlugin = require( 'circular-dependency-plugin' );
 
 /**
  * Internal dependencies
@@ -31,6 +32,8 @@ const bundleEnv = config( 'env' );
 const isDevelopment = bundleEnv !== 'production';
 const shouldMinify = process.env.MINIFY_JS === 'true' || bundleEnv === 'production';
 const shouldEmitStats = process.env.EMIT_STATS === 'true';
+const shouldCheckForCycles = process.env.CHECK_CYCLES === 'true';
+const codeSplit = config.isEnabled( 'code-splitting' );
 
 /**
  * This function scans the /client/extensions directory in order to generate a map that looks like this:
@@ -81,12 +84,12 @@ const webpackConfig = {
 	},
 	optimization: {
 		splitChunks: {
-			chunks: 'all',
+			chunks: codeSplit ? 'all' : 'async',
 			name: isDevelopment || shouldEmitStats,
 			maxAsyncRequests: 20,
 			maxInitialRequests: 5,
 		},
-		runtimeChunk: { name: 'manifest' },
+		runtimeChunk: codeSplit ? { name: 'manifest' } : false,
 		namedModules: true,
 		namedChunks: isDevelopment,
 		minimize: shouldMinify,
@@ -186,6 +189,7 @@ const webpackConfig = {
 	},
 	node: false,
 	plugins: _.compact( [
+		! codeSplit && new webpack.optimize.LimitChunkCountPlugin( { maxChunks: 1 } ),
 		new webpack.DefinePlugin( {
 			'process.env.NODE_ENV': JSON.stringify( bundleEnv ),
 			PROJECT_NAME: JSON.stringify( config( 'project' ) ),
@@ -200,6 +204,13 @@ const webpackConfig = {
 			filename: 'assets.json',
 			path: path.join( __dirname, 'server', 'bundler' ),
 		} ),
+		shouldCheckForCycles &&
+			new CircularDependencyPlugin( {
+				exclude: /node_modules/,
+				failOnError: false,
+				allowAsyncCycles: false,
+				cwd: process.cwd(),
+			} ),
 		shouldEmitStats &&
 			new StatsWriter( {
 				filename: 'stats.json',
@@ -221,6 +232,7 @@ const webpackConfig = {
 if ( calypsoEnv === 'desktop' ) {
 	// no chunks or dll here, just one big file for the desktop app
 	webpackConfig.output.filename = '[name].js';
+	webpackConfig.output.chunkFilename = '[name].js';
 } else {
 	// jquery is only needed in the build for the desktop app
 	// see electron bug: https://github.com/atom/electron/issues/254

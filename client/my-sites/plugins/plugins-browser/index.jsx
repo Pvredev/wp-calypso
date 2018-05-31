@@ -6,6 +6,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 import { concat, find, flow, get, flatMap, includes } from 'lodash';
+import PropTypes from 'prop-types';
 
 /**
  * Internal dependencies
@@ -19,17 +20,16 @@ import NavTabs from 'components/section-nav/tabs';
 import NavItem from 'components/section-nav/item';
 import InfiniteScroll from 'components/infinite-scroll';
 import NoResults from 'my-sites/no-results';
+import PageViewTracker from 'lib/analytics/page-view-tracker';
 import PluginsBrowserList from 'my-sites/plugins/plugins-browser-list';
 import PluginsListStore from 'lib/plugins/wporg-data/list-store';
 import PluginsActions from 'lib/plugins/wporg-data/actions';
 import urlSearch from 'lib/url-search';
 import JetpackManageErrorPage from 'my-sites/jetpack-manage-error-page';
 import { recordTracksEvent, recordGoogleEvent } from 'state/analytics/actions';
-import {
-	canCurrentUser,
-	getSelectedOrAllSitesJetpackCanManage,
-	hasJetpackSites,
-} from 'state/selectors';
+import canCurrentUser from 'state/selectors/can-current-user';
+import getSelectedOrAllSitesJetpackCanManage from 'state/selectors/get-selected-or-all-sites-jetpack-can-manage';
+import hasJetpackSites from 'state/selectors/has-jetpack-sites';
 import { getSelectedSite, getSelectedSiteId, getSelectedSiteSlug } from 'state/ui/selectors';
 import {
 	getSitePlan,
@@ -55,6 +55,14 @@ const visibleCategories = [ 'new', 'popular', 'featured' ];
 
 export class PluginsBrowser extends Component {
 	static displayName = 'PluginsBrowser';
+
+	static propTypes = {
+		trackPageView: PropTypes.bool,
+	};
+
+	static defaultProps = {
+		trackPageViews: true,
+	};
 
 	state = this.getPluginsLists( this.props.search );
 
@@ -501,6 +509,23 @@ export class PluginsBrowser extends Component {
 		);
 	}
 
+	renderPageViewTracker() {
+		const { category, selectedSiteId, trackPageViews } = this.props;
+
+		const analyticsPageTitle = 'Plugin Browser' + category ? ` > ${ category }` : '';
+		let analyticsPath = category ? `/plugins/${ category }` : '/plugins';
+
+		if ( selectedSiteId ) {
+			analyticsPath += '/:site';
+		}
+
+		if ( trackPageViews ) {
+			return <PageViewTracker path={ analyticsPath } title={ analyticsPageTitle } />;
+		}
+
+		return null;
+	}
+
 	render() {
 		if ( ! this.props.isRequestingSites && this.props.noPermissionsError ) {
 			return (
@@ -516,6 +541,7 @@ export class PluginsBrowser extends Component {
 
 		return (
 			<MainComponent wideLayout>
+				{ this.renderPageViewTracker() }
 				<InfiniteScroll nextPageMethod={ this.fetchNextPagePlugins } />
 				<NonSupportedJetpackVersionNotice />
 				{ this.renderDocumentHead() }

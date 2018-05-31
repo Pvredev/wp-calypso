@@ -10,7 +10,7 @@ import i18n from 'i18n-calypso';
 /**
  * Internal dependencies
  */
-import { getDomainType, getTransferStatus } from './utils';
+import { getDomainType, getTransferStatus, getGdprConsentStatus } from './utils';
 
 export function createDomainObjects( dataTransferObject ) {
 	let domains = [];
@@ -29,6 +29,7 @@ export function createDomainObjects( dataTransferObject ) {
 			expirationMoment: domain.expiry && i18n.moment( domain.expiry ),
 			expired: domain.expired,
 			expirySoon: domain.expiry_soon,
+			gdprConsentStatus: getGdprConsentStatus( domain ),
 			googleAppsSubscription: assembleGoogleAppsSubscription( domain.google_apps_subscription ),
 			hasPrivacyProtection: domain.has_private_registration,
 			hasWpcomNameservers: domain.has_wpcom_nameservers,
@@ -38,7 +39,6 @@ export function createDomainObjects( dataTransferObject ) {
 			isPrimary: domain.primary_domain,
 			isPendingWhoisUpdate: domain.pending_whois_update,
 			manualTransferRequired: domain.manual_transfer_required,
-			manualWhois: domain.manual_whois,
 			name: domain.domain,
 			owner: domain.owner,
 			privacyAvailable: domain.privacy_available,
@@ -48,6 +48,7 @@ export function createDomainObjects( dataTransferObject ) {
 			registrar: domain.registrar,
 			registrationMoment: domain.registration_date && i18n.moment( domain.registration_date ),
 			subscriptionId: domain.subscription_id,
+			tldMaintenanceEndTime: domain.tld_maintenance_end_time,
 			transferLockOnWhoisUpdateOptional: domain.transfer_lock_on_whois_update_optional,
 			type: getDomainType( domain ),
 			transferStatus: getTransferStatus( domain ),

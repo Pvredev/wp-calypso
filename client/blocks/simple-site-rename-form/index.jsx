@@ -24,11 +24,9 @@ import {
 	requestSiteAddressAvailability,
 	clearValidationError,
 } from 'state/site-rename/actions';
-import {
-	isRequestingSiteRename,
-	getSiteAddressAvailabilityPending,
-	getSiteAddressValidationError,
-} from 'state/selectors';
+import getSiteAddressAvailabilityPending from 'state/selectors/get-site-address-availability-pending';
+import getSiteAddressValidationError from 'state/selectors/get-site-address-validation-error';
+import isRequestingSiteRename from 'state/selectors/is-requesting-site-rename';
 import { getSelectedSiteId } from 'state/ui/selectors';
 
 const SUBDOMAIN_LENGTH_MINIMUM = 4;
@@ -62,10 +60,8 @@ export class SimpleSiteRenameForm extends Component {
 
 	onConfirm = () => {
 		const { selectedSiteId } = this.props;
-		// @TODO: Give ability to chose whether or not to discard the original site address.
-		const discard = true;
 
-		this.props.requestSiteRename( selectedSiteId, this.state.domainFieldValue, discard );
+		this.props.requestSiteRename( selectedSiteId, this.state.domainFieldValue );
 	};
 
 	setValidationState = () => {
@@ -202,8 +198,10 @@ export class SimpleSiteRenameForm extends Component {
 			isAvailabilityPending,
 			isAvailable,
 			isSiteRenameRequesting,
+			siteId,
 			translate,
 		} = this.props;
+
 		const { domainFieldValue } = this.state;
 		const currentDomainName = get( currentDomain, 'name', '' );
 		const currentDomainPrefix = this.getCurrentDomainPrefix();
@@ -237,9 +235,13 @@ export class SimpleSiteRenameForm extends Component {
 					newDomainName={ domainFieldValue }
 					currentDomainName={ currentDomainPrefix }
 					onConfirm={ this.onConfirm }
+					siteId={ siteId }
 				/>
 				<form onSubmit={ this.onSubmit }>
-					<TrackComponentView eventName="calypso_siteaddresschange_form_view" />
+					<TrackComponentView
+						eventName="calypso_siteaddresschange_form_view"
+						eventProperties={ { blog_id: siteId } }
+					/>
 					<Card className="simple-site-rename-form__content">
 						<FormSectionHeading>{ translate( 'Change Site Address' ) }</FormSectionHeading>
 						<FormTextInputWithAffixes
@@ -250,10 +252,11 @@ export class SimpleSiteRenameForm extends Component {
 							placeholder={ currentDomainPrefix }
 							isError={ shouldShowValidationMessage && ! isAvailable }
 						/>
-						{ shouldShowValidationMessage &&
-							validationMessage && (
-								<FormInputValidation isError={ ! isAvailable } text={ validationMessage } />
-							) }
+						<FormInputValidation
+							isHidden={ ! shouldShowValidationMessage }
+							isError={ ! isAvailable }
+							text={ validationMessage || '\u00A0' }
+						/>
 						<div className="simple-site-rename-form__footer">
 							<div className="simple-site-rename-form__info">
 								<Gridicon icon="info-outline" size={ 18 } />

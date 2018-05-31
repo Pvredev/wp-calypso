@@ -1,3 +1,5 @@
+/** @format */
+
 /**
  * External dependencies
  */
@@ -7,11 +9,7 @@ import sinon from 'sinon';
 /**
  * Internal dependencies
  */
-import {
-	isActivityLogLoaded,
-	isActivityLogLoading,
-	getActivityLogEvents,
-} from '../selectors';
+import { isActivityLogLoaded, isActivityLogLoading, getActivityLogEvents } from '../selectors';
 import * as plugins from 'woocommerce/state/selectors/plugins';
 
 const getState = ( notesState, labelsState ) => ( {
@@ -218,6 +216,29 @@ const labelsErrorSubtree = {
 	error: true,
 };
 
+const anonymizedLabelsSubtree = {
+	isFetching: false,
+	loaded: true,
+	labels: [
+		{
+			label_id: 4,
+			refundable_amount: 10,
+			rate: 10,
+			status: 'ANONYMIZED',
+			currency: 'CAD',
+			created_date: 4000000,
+			used_date: null,
+			expiry_date: 4500000,
+			product_names: [ 'poutine' ],
+			package_name: 'box',
+			tracking: '12345',
+			carrier_id: 'canada_post',
+			service_name: 'Xpress',
+			main_receipt_id: 12345,
+		},
+	],
+};
+
 const notesAndLabelsLoadingState = getState( notesLoadingSubtree, labelsLoadingSubtree );
 const notesLoadingState = getState( notesLoadingSubtree, labelsLoadedSubtree );
 const labelsLoadingState = getState( notesLoadedSubtree, labelsLoadingSubtree );
@@ -267,17 +288,20 @@ describe( 'selectors', () => {
 		} );
 
 		it( 'should be true if labels fetch errors out, but notes were loaded', () => {
-			expect( isActivityLogLoaded( getState( notesLoadedSubtree, labelsErrorSubtree ), 45, 123 ) ).to.be.true;
+			expect( isActivityLogLoaded( getState( notesLoadedSubtree, labelsErrorSubtree ), 45, 123 ) )
+				.to.be.true;
 		} );
 
 		it( 'should be false if labels fetch errors out, and notes were not loaded', () => {
-			expect( isActivityLogLoaded( getState( notesLoadingSubtree, labelsErrorSubtree ), 45, 123 ) ).to.be.false;
+			expect( isActivityLogLoaded( getState( notesLoadingSubtree, labelsErrorSubtree ), 45, 123 ) )
+				.to.be.false;
 		} );
 
 		it( 'should be true if WCS is disabled, and notes were loaded', () => {
 			wcsEnabledStub.restore();
 			wcsEnabledStub = sinon.stub( plugins, 'isWcsEnabled' ).returns( false );
-			expect( isActivityLogLoaded( getState( notesLoadedSubtree, labelsLoadingState ), 45, 123 ) ).to.be.true;
+			expect( isActivityLogLoaded( getState( notesLoadedSubtree, labelsLoadingState ), 45, 123 ) )
+				.to.be.true;
 		} );
 	} );
 
@@ -314,22 +338,26 @@ describe( 'selectors', () => {
 		} );
 
 		it( 'should be false when notes are loaded and labels errored out', () => {
-			expect( isActivityLogLoading( getState( notesLoadedSubtree, labelsErrorSubtree ), 45, 123 ) ).to.be.false;
+			expect( isActivityLogLoading( getState( notesLoadedSubtree, labelsErrorSubtree ), 45, 123 ) )
+				.to.be.false;
 		} );
 
 		it( 'should be true when notes are loading and labels errored out', () => {
-			expect( isActivityLogLoading( getState( notesLoadingSubtree, labelsErrorSubtree ), 45, 123 ) ).to.be.true;
+			expect( isActivityLogLoading( getState( notesLoadingSubtree, labelsErrorSubtree ), 45, 123 ) )
+				.to.be.true;
 		} );
 	} );
 
 	describe( '#getActivityLogEvents', () => {
 		it( 'should be empty when notes are currently being fetched for this order.', () => {
 			expect( getActivityLogEvents( notesAndLabelsLoadingState, 45, 123 ) ).to.be.empty;
-			expect( getActivityLogEvents( getState( notesLoadingSubtree, emptyLabelsSubtree ), 45, 123 ) ).to.be.empty;
+			expect( getActivityLogEvents( getState( notesLoadingSubtree, emptyLabelsSubtree ), 45, 123 ) )
+				.to.be.empty;
 		} );
 
 		it( 'should be empty when notes are loaded but labels are not.', () => {
-			expect( getActivityLogEvents( getState( emptyNotesSubtree, labelsLoadingSubtree ), 45, 123 ) ).to.be.empty;
+			expect( getActivityLogEvents( getState( emptyNotesSubtree, labelsLoadingSubtree ), 45, 123 ) )
+				.to.be.empty;
 		} );
 
 		it( 'should return just the notes when notes are loaded and the Services extension is disabled.', () => {
@@ -390,6 +418,7 @@ describe( 'selectors', () => {
 					carrierId: 'canada_post',
 					serviceName: 'Xpress',
 					receiptId: 12345,
+					anonymized: false,
 				},
 				{
 					key: 3,
@@ -418,6 +447,7 @@ describe( 'selectors', () => {
 					carrierId: 'usps',
 					serviceName: 'First Class',
 					receiptId: 12345,
+					anonymized: false,
 				},
 				{
 					key: 2,
@@ -446,6 +476,7 @@ describe( 'selectors', () => {
 					carrierId: 'canada_post',
 					serviceName: 'Xpress',
 					receiptId: 67890,
+					anonymized: false,
 				},
 				{
 					key: 1,
@@ -466,6 +497,7 @@ describe( 'selectors', () => {
 					carrierId: 'usps',
 					serviceName: 'First Class',
 					receiptId: 654321,
+					anonymized: false,
 				},
 			] );
 		} );
@@ -480,6 +512,15 @@ describe( 'selectors', () => {
 
 		it( 'should get the siteId from the UI tree if not provided.', () => {
 			expect( getActivityLogEvents( loadedStateWithUi, 45 ) ).to.not.be.empty;
+		} );
+
+		it( 'should mark anonymized labels as not available for reprint', () => {
+			const result = getActivityLogEvents(
+				getState( emptyNotesSubtree, anonymizedLabelsSubtree ),
+				45,
+				123
+			);
+			expect( result[ 0 ].anonymized ).to.be.true;
 		} );
 	} );
 } );

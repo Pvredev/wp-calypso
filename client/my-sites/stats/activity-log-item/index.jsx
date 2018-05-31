@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 import scrollTo from 'lib/scroll-to';
 import { localize } from 'i18n-calypso';
-import { get, map, merge, forEach, every, includes, isEmpty } from 'lodash';
+import { get, map, forEach, every, includes, isEmpty } from 'lodash';
 
 /**
  * Internal dependencies
@@ -32,20 +32,17 @@ import {
 	rewindRestore,
 } from 'state/activity-log/actions';
 import { recordTracksEvent, withAnalytics } from 'state/analytics/actions';
-import {
-	getActivityLog,
-	getRequestedBackup,
-	getRequestedRewind,
-	getSiteGmtOffset,
-	getSiteTimezoneValue,
-	getRewindState,
-} from 'state/selectors';
+import getRequestedBackup from 'state/selectors/get-requested-backup';
+import getRequestedRewind from 'state/selectors/get-requested-rewind';
+import getRewindState from 'state/selectors/get-rewind-state';
+import getSiteGmtOffset from 'state/selectors/get-site-gmt-offset';
+import getSiteTimezoneValue from 'state/selectors/get-site-timezone-value';
 import { adjustMoment } from '../activity-log/utils';
 import { getSite } from 'state/sites/selectors';
 import { updatePlugin } from 'state/plugins/installed/actions';
 import { getPluginOnSite, getStatusForPlugin } from 'state/plugins/installed/selectors';
 import PluginNotices from 'lib/plugins/notices';
-import { errorNotice, infoNotice, successNotice, removeNotice } from 'state/notices/actions';
+import { errorNotice, infoNotice, successNotice } from 'state/notices/actions';
 
 class ActivityLogItem extends Component {
 	static propTypes = {
@@ -68,29 +65,20 @@ class ActivityLogItem extends Component {
 	confirmRewind = () => this.props.confirmRewind( this.props.activity.rewindId );
 
 	updatePlugins = ( singlePlugin = false ) => {
-		const { removeThisNotice, showInfoNotice, site, updateSinglePlugin } = this.props;
+		const { showInfoNotice, site, updateSinglePlugin } = this.props;
 		const noticesToShow = {};
 
 		forEach( singlePlugin.id ? [ singlePlugin ] : this.props.pluginsToUpdate, plugin => {
 			// Use id: "hello-dolly/hello", slug: "hello-dolly", name: "Hello Dolly", updateStatus: bool|object,
-			const updateNoticeId = get(
-				this.state.pluginUpdateNotice,
-				[ plugin.id, 'notice', 'noticeId' ],
-				null
-			);
-
-			if ( updateNoticeId ) {
-				removeThisNotice( updateNoticeId );
-			}
-
 			updateSinglePlugin( plugin );
 
-			noticesToShow[ plugin.id ] = showInfoNotice(
+			showInfoNotice(
 				PluginNotices.inProgressMessage( 'UPDATE_PLUGIN', '1 site 1 plugin', {
 					plugin: plugin.name,
 					site: site.name,
 				} ),
 				{
+					id: `alitemupdate-${ plugin.slug }`,
 					showDismiss: false,
 				}
 			);
@@ -98,15 +86,13 @@ class ActivityLogItem extends Component {
 
 		if ( ! isEmpty( noticesToShow ) ) {
 			this.setState( {
-				pluginUpdateNotice: merge( {}, this.state.pluginUpdateNotice, noticesToShow ),
+				pluginUpdateNotice: { ...this.state.pluginUpdateNotice, ...noticesToShow },
 			} );
 		}
 	};
 
-	componentWillReceiveProps( nextProps ) {
-		const noticesToShow = {};
-
-		forEach( nextProps.pluginsToUpdate, ( plugin, key ) => {
+	componentDidUpdate() {
+		forEach( this.props.pluginsToUpdate, ( plugin, key ) => {
 			if (
 				get( this.props.pluginsToUpdate, [ key, 'updateStatus', 'status' ], false ) ===
 					plugin.updateStatus.status ||
@@ -116,18 +102,8 @@ class ActivityLogItem extends Component {
 			}
 
 			const updateStatus = plugin.updateStatus;
-			const updateNoticeId = get(
-				this.state.pluginUpdateNotice,
-				[ plugin.id, 'notice', 'noticeId' ],
-				null
-			);
 
-			// If there is no notice displayed
-			if ( ! updateNoticeId ) {
-				return;
-			}
-
-			const { removeThisNotice, showErrorNotice, showSuccessNotice, site, translate } = nextProps;
+			const { showErrorNotice, showSuccessNotice, site, translate } = this.props;
 
 			// If it errored, clear and show error notice
 			const pluginData = {
@@ -137,31 +113,28 @@ class ActivityLogItem extends Component {
 
 			switch ( updateStatus.status ) {
 				case 'error':
-					removeThisNotice( updateNoticeId );
-					noticesToShow[ plugin.id ] = showErrorNotice(
+					showErrorNotice(
 						PluginNotices.singleErrorMessage( 'UPDATE_PLUGIN', pluginData, {
 							error: updateStatus,
 						} ),
 						{
+							id: `alitemupdate-${ plugin.slug }`,
 							button: translate( 'Try again' ),
 							onClick: () => this.updatePlugins( plugin ),
 						}
 					);
 					break;
 				case 'completed':
-					removeThisNotice( updateNoticeId );
-					noticesToShow[ plugin.id ] = showSuccessNotice(
-						PluginNotices.successMessage( 'UPDATE_PLUGIN', '1 site 1 plugin', pluginData )
+					showSuccessNotice(
+						PluginNotices.successMessage( 'UPDATE_PLUGIN', '1 site 1 plugin', pluginData ),
+						{
+							id: `alitemupdate-${ plugin.slug }`,
+							duration: 3000,
+						}
 					);
 					break;
 			}
 		} );
-
-		if ( ! isEmpty( noticesToShow ) ) {
-			this.setState( {
-				pluginUpdateNotice: merge( {}, this.state.pluginUpdateNotice, noticesToShow ),
-			} );
-		}
 	}
 
 	renderHeader() {
@@ -214,6 +187,7 @@ class ActivityLogItem extends Component {
 
 	renderItemAction() {
 		const {
+			enableClone,
 			hideRestore,
 			activity: { activityIsRewindable, activityName, activityMeta },
 			plugin,
@@ -256,7 +230,27 @@ class ActivityLogItem extends Component {
 		if ( ! hideRestore && activityIsRewindable ) {
 			return this.renderRewindAction();
 		}
+
+		if ( enableClone && activityIsRewindable ) {
+			return this.renderCloneAction();
+		}
 	}
+
+	renderCloneAction = () => {
+		const { translate } = this.props;
+
+		return (
+			<Button
+				className="activity-log-item__clone-action"
+				primary
+				onClick={ this.performCloneAction }
+			>
+				{ translate( 'Clone from here' ) }
+			</Button>
+		);
+	};
+
+	performCloneAction = () => this.props.cloneOnClick( this.props.activity.activityTs );
 
 	renderRewindAction() {
 		const { createBackup, createRewind, disableRestore, disableBackup, translate } = this.props;
@@ -424,47 +418,42 @@ class ActivityLogItem extends Component {
  * 		pluginSlug string       Plugin directory
  * 		status     object|false Current update status
  * }
- * @param {array}  pluginList List of plugins that will be updated
- * @param {object} state      Progress of plugin update as found in status.plugins.installed.state.
- * @param {number} siteId     ID of the site where the plugin is installed
+ * @param {array}  plugins List of plugins that will be updated
+ * @param {object} state   Progress of plugin update as found in status.plugins.installed.state.
+ * @param {number} siteId  ID of the site where the plugin is installed
  *
  * @returns {array} List of plugins to update with their status.
  */
-const makeListPluginsToUpdate = ( pluginList, state, siteId ) =>
-	map( pluginList, plugin =>
-		merge(
-			{ updateStatus: getStatusForPlugin( state, siteId, plugin.pluginId ) },
-			getPluginOnSite( state, siteId, plugin.pluginSlug )
-		)
-	);
+const makeListPluginsToUpdate = ( plugins, state, siteId ) =>
+	plugins.map( plugin => ( {
+		updateStatus: getStatusForPlugin( state, siteId, plugin.pluginId ),
+		...getPluginOnSite( state, siteId, plugin.pluginSlug ),
+	} ) );
 
-const mapStateToProps = ( state, { activityId, siteId } ) => {
+const mapStateToProps = ( state, { activity, siteId } ) => {
 	const rewindState = getRewindState( state, siteId );
-	const activity = getActivityLog( state, siteId, activityId );
-	const pluginSlug = get( activity.activityMeta, 'pluginSlug', {} );
-	const pluginId = get( activity.activityMeta, 'pluginId', {} );
+	const pluginSlug = activity.activityMeta.pluginSlug;
+	const pluginId = activity.activityMeta.pluginId;
+	const plugins = activity.activityMeta.pluginsToUpdate;
 	const site = getSite( state, siteId );
+
 	return {
 		activity,
 		gmtOffset: getSiteGmtOffset( state, siteId ),
-		mightBackup: activityId && activityId === getRequestedBackup( state, siteId ),
-		mightRewind: activityId && activityId === getRequestedRewind( state, siteId ),
+		mightBackup: activity && activity.activityId === getRequestedBackup( state, siteId ),
+		mightRewind: activity && activity.activityId === getRequestedRewind( state, siteId ),
 		timezone: getSiteTimezoneValue( state, siteId ),
 		siteSlug: site.slug,
 		rewindIsActive: 'active' === rewindState.state || 'provisioning' === rewindState.state,
 		canAutoconfigure: rewindState.canAutoconfigure,
 		site,
-		plugin: getPluginOnSite( state, siteId, pluginSlug ),
-		pluginStatus: getStatusForPlugin( state, siteId, pluginId ),
-		pluginsToUpdate: makeListPluginsToUpdate(
-			get( activity.activityMeta, 'pluginsToUpdate', [] ),
-			state,
-			siteId
-		),
+		plugin: pluginSlug && getPluginOnSite( state, siteId, pluginSlug ),
+		pluginStatus: pluginId && getStatusForPlugin( state, siteId, pluginId ),
+		pluginsToUpdate: plugins && makeListPluginsToUpdate( plugins, state, siteId ),
 	};
 };
 
-const mapDispatchToProps = ( dispatch, { activityId, siteId } ) => ( {
+const mapDispatchToProps = ( dispatch, { activity: { activityId }, siteId } ) => ( {
 	createBackup: () =>
 		dispatch(
 			withAnalytics(
@@ -520,7 +509,6 @@ const mapDispatchToProps = ( dispatch, { activityId, siteId } ) => ( {
 	showErrorNotice: ( error, options ) => dispatch( errorNotice( error, options ) ),
 	showInfoNotice: ( info, options ) => dispatch( infoNotice( info, options ) ),
 	showSuccessNotice: ( success, options ) => dispatch( successNotice( success, options ) ),
-	removeThisNotice: noticeId => dispatch( removeNotice( noticeId ) ),
 } );
 
 export default connect( mapStateToProps, mapDispatchToProps )( localize( ActivityLogItem ) );

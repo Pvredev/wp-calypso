@@ -7,8 +7,10 @@ import i18n from 'i18n-calypso';
 export {
 	addLocaleToPath,
 	addLocaleToWpcomUrl,
+	getForumUrl,
 	getLanguage,
 	getLocaleFromPath,
+	getSupportSiteLocale,
 	isDefaultLocale,
 	isLocaleVariant,
 	canBeTranslated,

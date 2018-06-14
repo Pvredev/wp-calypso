@@ -5150,9 +5150,9 @@
       }
     },
     "d3-array": {
-      "version": "1.2.0",
-      "resolved": "https://registry.npmjs.org/d3-array/-/d3-array-1.2.0.tgz",
-      "integrity": "sha1-FH0mlyDhdMQFen9CvosPPyulMQg="
+      "version": "1.2.1",
+      "resolved": "https://registry.npmjs.org/d3-array/-/d3-array-1.2.1.tgz",
+      "integrity": "sha512-CyINJQ0SOUHojDdFDH4JEM0552vCR1utGyLHegJHyYH0JyCpSeTPxi4OBqHMA2jJZq4NH782LtaJWBImqI/HBw=="
     },
     "d3-axis": {
       "version": "1.0.8",
@@ -5188,9 +5188,9 @@
       "integrity": "sha1-JB6xhJvZ6egCHA0KeZ+KDo5EF2Q="
     },
     "d3-scale": {
-      "version": "1.0.6",
-      "resolved": "https://registry.npmjs.org/d3-scale/-/d3-scale-1.0.6.tgz",
-      "integrity": "sha1-vOGdqA06DPQiyVQ64zIghiILNO0=",
+      "version": "1.0.7",
+      "resolved": "https://registry.npmjs.org/d3-scale/-/d3-scale-1.0.7.tgz",
+      "integrity": "sha512-KvU92czp2/qse5tUfGms6Kjig0AhHOwkzXG0+PqIJB3ke0WUv088AHMZI0OssO9NCkXt4RP8yju9rpH8aGB7Lw==",
       "requires": {
         "d3-array": "^1.2.0",
         "d3-collection": "1",
@@ -6778,21 +6778,21 @@
       }
     },
     "eslint-plugin-import": {
-      "version": "2.9.0",
-      "resolved": "https://registry.npmjs.org/eslint-plugin-import/-/eslint-plugin-import-2.9.0.tgz",
-      "integrity": "sha1-JgAu+/ylmJtyiKwEdQi9JPIXsWk=",
+      "version": "2.12.0",
+      "resolved": "https://registry.npmjs.org/eslint-plugin-import/-/eslint-plugin-import-2.12.0.tgz",
+      "integrity": "sha1-2tMXgSktZmSyUxf9BJ0uKy8CIF0=",
       "dev": true,
       "requires": {
-        "builtin-modules": "^1.1.1",
         "contains-path": "^0.1.0",
         "debug": "^2.6.8",
         "doctrine": "1.5.0",
         "eslint-import-resolver-node": "^0.3.1",
-        "eslint-module-utils": "^2.1.1",
+        "eslint-module-utils": "^2.2.0",
         "has": "^1.0.1",
         "lodash": "^4.17.4",
         "minimatch": "^3.0.3",
-        "read-pkg-up": "^2.0.0"
+        "read-pkg-up": "^2.0.0",
+        "resolve": "^1.6.0"
       },
       "dependencies": {
         "debug": {
@@ -8194,7 +8194,8 @@
         },
         "ansi-regex": {
           "version": "2.1.1",
-          "bundled": true
+          "bundled": true,
+          "optional": true
         },
         "aproba": {
           "version": "1.2.0",
@@ -8559,7 +8560,8 @@
         },
         "safe-buffer": {
           "version": "5.1.1",
-          "bundled": true
+          "bundled": true,
+          "optional": true
         },
         "safer-buffer": {
           "version": "2.1.2",
@@ -8607,6 +8609,7 @@
         "strip-ansi": {
           "version": "3.0.1",
           "bundled": true,
+          "optional": true,
           "requires": {
             "ansi-regex": "^2.0.0"
           }
@@ -8645,11 +8648,13 @@
         },
         "wrappy": {
           "version": "1.0.2",
-          "bundled": true
+          "bundled": true,
+          "optional": true
         },
         "yallist": {
           "version": "3.0.2",
-          "bundled": true
+          "bundled": true,
+          "optional": true
         }
       }
     },

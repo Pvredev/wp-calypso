@@ -36,6 +36,7 @@ class AuthorSwitcherShell extends React.Component {
 		allowSingleUser: PropTypes.bool,
 		popoverPosition: PropTypes.string,
 		ignoreContext: PropTypes.shape( { getDOMNode: PropTypes.func } ),
+		transformAuthor: PropTypes.func,
 	};
 
 	state = {
@@ -178,8 +179,11 @@ class AuthorSwitcherShell extends React.Component {
 		this.props.updateSearch( false );
 	};
 
-	renderAuthor = author => {
+	renderAuthor = rawAuthor => {
+		const { transformAuthor } = this.props;
+		const author = transformAuthor ? transformAuthor( rawAuthor ) : rawAuthor;
 		const authorGUID = this.getAuthorItemGUID( author );
+
 		return (
 			<PopoverMenuItem
 				className="author-selector__menu-item"

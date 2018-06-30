@@ -9,6 +9,7 @@ import { localize } from 'i18n-calypso';
 import React from 'react';
 import { flowRight, includes } from 'lodash';
 import SocialLogo from 'social-logos';
+import { connect } from 'react-redux';
 
 /**
  * Internal dependencies
@@ -17,7 +18,8 @@ import Button from 'components/forms/form-button';
 import { appStates } from 'state/imports/constants';
 import { cancelImport, resetImport, startImport } from 'lib/importer/actions';
 import { connectDispatcher } from './dispatcher-converter';
-import SiteImporterPlaceholderLogo from './site-importer/placeholder-logo';
+import SiteImporterLogo from './site-importer/logo';
+import { recordTracksEvent } from 'state/analytics/actions';
 
 /**
  * Module variables
@@ -56,10 +58,25 @@ class ImporterHeader extends React.PureComponent {
 
 		if ( includes( [ ...cancelStates, ...stopStates ], importerState ) ) {
 			cancelImport( siteId, importerId );
+
+			this.props.recordTracksEvent( 'calypso_importer_main_cancel_import', {
+				blog_id: siteId,
+				importer_id: type,
+			} );
 		} else if ( includes( startStates, importerState ) ) {
 			startImport( siteId, type );
+
+			this.props.recordTracksEvent( 'calypso_importer_main_start_import', {
+				blog_id: siteId,
+				importer_id: type,
+			} );
 		} else if ( includes( doneStates, importerState ) ) {
 			resetImport( siteId, importerId );
+
+			this.props.recordTracksEvent( 'calypso_importer_main_done_import', {
+				blog_id: siteId,
+				importer_id: type,
+			} );
 		}
 	};
 
@@ -89,7 +106,7 @@ class ImporterHeader extends React.PureComponent {
 		}
 
 		if ( includes( [ 'site-importer' ], icon ) ) {
-			return <SiteImporterPlaceholderLogo />;
+			return <SiteImporterLogo />;
 		}
 		return (
 			<svg
@@ -140,4 +157,7 @@ const mapDispatchToProps = dispatch => ( {
 	),
 } );
 
-export default connectDispatcher( null, mapDispatchToProps )( localize( ImporterHeader ) );
+export default connect(
+	null,
+	{ recordTracksEvent }
+)( connectDispatcher( null, mapDispatchToProps )( localize( ImporterHeader ) ) );

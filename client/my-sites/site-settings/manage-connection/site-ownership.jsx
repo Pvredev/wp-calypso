@@ -14,6 +14,7 @@ import { includes } from 'lodash';
  */
 import accept from 'lib/accept';
 import AuthorSelector from 'blocks/author-selector';
+import canCurrentUser from 'state/selectors/can-current-user';
 import Card from 'components/card';
 import config from 'config';
 import FormFieldset from 'components/forms/form-fieldset';
@@ -59,13 +60,26 @@ class SiteOwnership extends Component {
 
 	onSelectConnectionOwner = user => {
 		const { translate } = this.props;
+		const message = (
+			<Fragment>
+				<p>
+					{ translate( 'Are you sure you want to transfer site ownership to {{user /}}?', {
+						components: {
+							user: <strong>{ user.display_name || user.name }</strong>,
+						},
+					} ) }
+				</p>
+				<p>
+					{ translate(
+						'Note: you cannot undo this action. ' +
+							'Going forward, only the new Site Owner can initiate a transfer.'
+					) }
+				</p>
+			</Fragment>
+		);
 
 		accept(
-			translate( 'Are you sure you want to transfer site ownership to {{user /}}?', {
-				components: {
-					user: <strong>{ user.display_name || user.name }</strong>,
-				},
-			} ),
+			message,
 			accepted => {
 				if ( accepted ) {
 					this.props.changeOwner( this.props.siteId, user.ID, user.name );
@@ -80,16 +94,26 @@ class SiteOwnership extends Component {
 
 	onSelectPlanOwner = user => {
 		const { translate } = this.props;
+		const message = (
+			<Fragment>
+				<p>
+					{ translate( 'Are you sure you want to change the Plan Purchaser to {{user /}}?', {
+						components: {
+							user: <strong>{ user.display_name || user.name }</strong>,
+						},
+					} ) }
+				</p>
+				<p>
+					{ translate(
+						'Note: you cannot undo this action. ' +
+							'Going forward, only the new Plan Purchaser can initiate a change.'
+					) }
+				</p>
+			</Fragment>
+		);
 
 		accept(
-			translate(
-				'Are you absolutely sure you want to change the plan purchaser for this site to {{user /}}?',
-				{
-					components: {
-						user: <strong>{ user.display_name || user.name }</strong>,
-					},
-				}
-			),
+			message,
 			accepted => {
 				if ( accepted ) {
 					this.props.transferPlanOwnership( this.props.siteId, user.linked_user_ID );
@@ -227,7 +251,15 @@ class SiteOwnership extends Component {
 	}
 
 	render() {
-		const { siteId, siteIsConnected, siteIsJetpack, translate } = this.props;
+		const { canManageOptions, siteId, siteIsConnected, siteIsJetpack, translate } = this.props;
+
+		if ( ! siteId ) {
+			return this.renderPlaceholder();
+		}
+
+		if ( ! canManageOptions ) {
+			return null;
+		}
 
 		return (
 			<Fragment>
@@ -249,6 +281,7 @@ export default connect(
 		const isCurrentPlanOwner = isPaidPlan && isCurrentUserCurrentPlanOwner( state, siteId );
 
 		return {
+			canManageOptions: canCurrentUser( state, siteId, 'manage_options' ),
 			currentUser: getCurrentUser( state ),
 			isConnectionTransferSupported: isJetpackMinimumVersion( state, siteId, '6.2' ),
 			isCurrentPlanOwner,

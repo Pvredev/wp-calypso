@@ -4,8 +4,8 @@ export default {
 		datestamp: '20180711',
 		variations: {
 			sidebarUpsells: 20,
-			themesUpsells: 20,
-			pluginUpsells: 20,
+			themesNudgesUpdates: 20,
+			customPluginAndThemeLandingPages: 20,
 			plansBannerUpsells: 20,
 			control: 40,
 		},
@@ -113,5 +113,13 @@ export default {
 			enhancedSort: 50,
 		},
 		defaultVariation: 'control',
+	},
+	includeDotBlogSubdomain: {
+		datestamp: '20180723',
+		variations: {
+			yes: 50,
+			no: 50,
+		},
+		defaultVariation: 'no',
 	},
 };

@@ -23,6 +23,7 @@
 		"ad-tracking": false,
 		"apple-pay": true,
 		"automated-transfer": true,
+		"calypsoify/plugins": true,
 		"catch-js-errors": true,
 		"code-splitting": true,
 		"desktop-promo": true,
@@ -109,7 +110,6 @@
 		"reader/following-intro": true,
 		"reader/full-errors": false,
 		"reader/likes-hover": true,
-		"reader/nesting-arrow": true,
 		"reader/paste-to-link": true,
 		"reader/recommendations/posts": true,
 		"reader/related-posts": true,
@@ -158,6 +158,7 @@
 		"woocommerce/extension-settings-stripe-connect-flows": true,
 		"woocommerce/extension-settings-tax": true,
 		"woocommerce/extension-wcservices": true,
+		"woocommerce/extension-wcservices/international-labels": true,
 		"woocommerce/store-on-non-atomic-sites": true,
 		"wpcom-user-bootstrap": true
 	},

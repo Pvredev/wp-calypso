@@ -9,6 +9,9 @@
     "url": "https://github.com/Automattic/wp-calypso.git"
   },
   "main": "index.js",
+  "bin": {
+    "calypso-gutenberg-sdk": "./bin/sdk-cli.js"
+  },
   "browserslist": [
     "last 2 versions",
     "Safari >= 10",
@@ -104,7 +107,7 @@
     "localforage": "1.7.2",
     "lodash": "4.17.10",
     "lru": "3.1.0",
-    "lunr": "2.3.0",
+    "lunr": "2.3.1",
     "markdown-loader": "3.0.0",
     "marked": "0.4.0",
     "mkdirp": "0.5.1",
@@ -152,7 +155,7 @@
     "tinymce": "4.8.0",
     "to-title-case": "1.0.0",
     "tracekit": "0.4.5",
-    "twemoji": "2.3.0",
+    "twemoji": "11.0.0",
     "uglifyjs-webpack-plugin": "1.2.7",
     "url": "0.11.0",
     "uuid": "3.3.2",

@@ -1,13 +1,13 @@
 /** @format */
 export default {
 	nudgeAPalooza: {
-		datestamp: '20180711',
+		datestamp: '20180726',
 		variations: {
 			sidebarUpsells: 20,
 			themesNudgesUpdates: 20,
 			customPluginAndThemeLandingPages: 20,
 			plansBannerUpsells: 20,
-			control: 40,
+			control: 20,
 		},
 		defaultVariation: 'control',
 		allowExistingUsers: true,
@@ -93,16 +93,16 @@ export default {
 		},
 		defaultVariation: 'original',
 	},
-	domainSuggestionKrakenV322: {
-		datestamp: '20180709',
+	domainSuggestionKrakenV323: {
+		datestamp: '20180726',
 		variations: {
 			domainsbot: 0,
-			group_1: 27200,
-			group_3: 27200,
-			group_4: 27200,
-			group_6: 1000,
-			group_7: 1000,
-			group_8: 27200,
+			group_1: 22700,
+			group_3: 22700,
+			group_4: 22700,
+			group_6: 10000,
+			group_7: 10000,
+			group_8: 22700,
 		},
 		defaultVariation: 'domainsbot',
 	},

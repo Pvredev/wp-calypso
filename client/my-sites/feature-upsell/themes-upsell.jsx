@@ -43,8 +43,8 @@ class ThemesUpsellComponent extends Component {
 	handleUpgradeButtonClick = () => {
 		const { trackTracksEvent, selectedSiteSlug } = this.props;
 
-		trackTracksEvent( 'calypso_upsell_landing_page_cta_click', {
-			cta_name: 'themes-upsell',
+		trackTracksEvent( 'calypso_banner_cta_click', {
+			cta_name: 'upsell-page-themes',
 		} );
 
 		page( `/checkout/${ selectedSiteSlug }/${ getPlanPath( PLAN_BUSINESS ) || '' }` );
@@ -81,8 +81,8 @@ class ThemesUpsellComponent extends Component {
 					</React.Fragment>
 				) }
 
-				<PageViewTracker path={ '/feature/plugins/:site' } title="PluginsUpsell" />
-				<DocumentHead title={ 'Plugins' } />
+				<PageViewTracker path={ '/feature/themes/:site' } title="ThemesUpsell" />
+				<DocumentHead title={ 'Themes' } />
 
 				<div className="feature-upsell__card">
 					<h1 className="feature-upsell__card-header is-capital is-main">
@@ -280,8 +280,14 @@ const mapStateToProps = state => {
 		currencyCode: getCurrentUserCurrencyCode( state ),
 		price,
 		selectedSiteSlug: getSiteSlug( state, selectedSiteId ),
-		trackTracksEvent: recordTracksEvent,
 	};
 };
 
-export default connect( mapStateToProps )( localize( ThemesUpsellComponent ) );
+const mapDispatchToProps = dispatch => ( {
+	trackTracksEvent: ( name, props ) => dispatch( recordTracksEvent( name, props ) ),
+} );
+
+export default connect(
+	mapStateToProps,
+	mapDispatchToProps
+)( localize( ThemesUpsellComponent ) );

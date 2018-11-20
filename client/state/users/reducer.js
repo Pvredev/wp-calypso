@@ -1,6 +1,10 @@
 /** @format */
 
 /**
+ * External dependencies
+ */
+
+/**
  * Internal dependencies
  */
 
@@ -9,7 +13,7 @@ import { combineReducers } from 'state/utils';
 import { USER_RECEIVE } from 'state/action-types';
 
 /**
- * Tracks all known user objects, indexed by user ID.
+ * Tracks user objects, indexed by user ID.
  *
  * @param  {Object} state  Current state
  * @param  {Object} action Action payload

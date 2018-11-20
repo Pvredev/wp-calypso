@@ -44,7 +44,7 @@ describe( 'SubscriptionLengthPicker basic tests', () => {
 				translate={ translate }
 			/>
 		);
-		expect( picker.find( '.subscription-length-picker' ).length ).toBe( 1 );
+		expect( picker.find( '.subscription-length-picker' ) ).toHaveLength( 1 );
 	} );
 
 	test( 'should contain as many <SubscriptionLengthOption/> as products passed', () => {
@@ -55,7 +55,7 @@ describe( 'SubscriptionLengthPicker basic tests', () => {
 				translate={ translate }
 			/>
 		);
-		expect( picker.find( 'SubscriptionLengthOption' ).length ).toBe( 2 );
+		expect( picker.find( 'SubscriptionLengthOption' ) ).toHaveLength( 2 );
 	} );
 
 	test( 'should mark appropriate SubscriptionLengthOption as checked', () => {
@@ -79,6 +79,12 @@ describe( 'SubscriptionLengthPicker basic tests', () => {
 } );
 
 describe( 'myFormatCurrency', () => {
+	test( 'Should pass through additional options', () => {
+		expect( myFormatCurrency( 1, 'USD' ) ).toBe( '$1' );
+		expect( myFormatCurrency( 1, 'USD', { symbol: '' } ) ).toBe( '1' );
+		expect( myFormatCurrency( 1, 'USD', { symbol: '?' } ) ).toBe( '?1' );
+	} );
+
 	describe( 'USD - precision 2', () => {
 		const code = 'USD';
 		const symbol = '$';

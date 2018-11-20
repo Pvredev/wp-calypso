@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { getLocaleSlug } from 'i18n-calypso';
+import startsWith from 'lodash/startsWith';
 
 /**
  * Internal dependencies
@@ -16,7 +17,7 @@ import LocaleSuggestionsListItem from './list-item';
 import QueryLocaleSuggestions from 'components/data/query-locale-suggestions';
 import Notice from 'components/notice';
 import getLocaleSuggestions from 'state/selectors/get-locale-suggestions';
-import switchLocale from 'lib/i18n-utils/switch-locale';
+import { setLocale } from 'state/ui/language/actions';
 
 export class LocaleSuggestions extends Component {
 	static propTypes = {
@@ -34,7 +35,7 @@ export class LocaleSuggestions extends Component {
 		dismissed: false,
 	};
 
-	componentWillMount() {
+	UNSAFE_componentWillMount() {
 		let { locale } = this.props;
 
 		if ( ! locale && typeof navigator === 'object' && 'languages' in navigator ) {
@@ -47,12 +48,12 @@ export class LocaleSuggestions extends Component {
 			}
 		}
 
-		switchLocale( locale );
+		this.props.setLocale( locale );
 	}
 
-	componentWillReceiveProps( nextProps ) {
+	UNSAFE_componentWillReceiveProps( nextProps ) {
 		if ( this.props.locale !== nextProps.locale ) {
-			switchLocale( nextProps.locale );
+			this.props.setLocale( nextProps.locale );
 		}
 	}
 
@@ -72,7 +73,7 @@ export class LocaleSuggestions extends Component {
 		}
 
 		const usersOtherLocales = localeSuggestions.filter( function( locale ) {
-			return locale.locale !== getLocaleSlug();
+			return ! startsWith( getLocaleSlug(), locale.locale );
 		} );
 
 		if ( usersOtherLocales.length === 0 ) {
@@ -100,6 +101,9 @@ export class LocaleSuggestions extends Component {
 	}
 }
 
-export default connect( state => ( {
-	localeSuggestions: getLocaleSuggestions( state ),
-} ) )( LocaleSuggestions );
+export default connect(
+	state => ( {
+		localeSuggestions: getLocaleSuggestions( state ),
+	} ),
+	{ setLocale }
+)( LocaleSuggestions );

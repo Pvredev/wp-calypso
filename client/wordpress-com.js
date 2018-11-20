@@ -41,11 +41,19 @@ const sections = [
 		secondary: true,
 	},
 	{
+		name: 'activity',
+		paths: [ '/activity-log' ],
+		module: 'my-sites/activity',
+		secondary: true,
+		group: 'sites',
+	},
+	{
 		name: 'security',
 		paths: [ '/me/security' ],
 		module: 'me/security',
 		group: 'me',
 		secondary: true,
+		enableLoggedOut: true,
 	},
 	{
 		name: 'privacy',
@@ -66,6 +74,13 @@ const sections = [
 		name: 'notification-settings',
 		paths: [ '/me/notifications' ],
 		module: 'me/notification-settings',
+		group: 'me',
+		secondary: true,
+	},
+	{
+		name: 'site-blocks',
+		paths: [ '/me/site-blocks' ],
+		module: 'me/site-blocks',
 		group: 'me',
 		secondary: true,
 	},
@@ -320,7 +335,6 @@ sections.push( {
 	module: 'reader/full-post',
 	secondary: false,
 	group: 'reader',
-	css: 'reader-full-post',
 	enableLoggedOut: true,
 } );
 
@@ -403,7 +417,6 @@ sections.push( {
 	enableLoggedOut: true,
 	secondary: false,
 	isomorphic: true,
-	css: 'login',
 } );
 
 sections.push( {
@@ -436,7 +449,6 @@ sections.push( {
 	module: 'my-sites/comments',
 	group: 'sites',
 	secondary: true,
-	css: 'comments',
 } );
 
 sections.push( {
@@ -460,9 +472,9 @@ sections.push( {
 	name: 'gutenberg-editor',
 	paths: [ '/gutenberg' ],
 	module: 'gutenberg/editor',
-	group: 'editor',
+	group: 'gutenberg',
 	css: 'gutenberg-editor',
-	secondary: true,
+	secondary: false,
 } );
 
 module.exports = sections;

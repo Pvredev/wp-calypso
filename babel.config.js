@@ -3,11 +3,14 @@ const _ = require( 'lodash' );
 const path = require( 'path' );
 
 const isCalypsoClient = process.env.CALYPSO_CLIENT === 'true';
-const isCalypsoServer = process.env.CALYPSO_SERVER === 'true';
-const isCalypso = isCalypsoClient || isCalypsoServer;
+const isBrowser = isCalypsoClient || 'true' === process.env.TARGET_BROWSER;
 
-const modules = isCalypsoClient ? false : 'commonjs'; // only calypso should keep es6 modules
+const modules = isBrowser ? false : 'commonjs'; // Use commonjs for Node
 const codeSplit = require( './server/config' ).isEnabled( 'code-splitting' );
+
+const targets = isBrowser
+	? { browsers: [ 'last 2 versions', 'Safari >= 10', 'iOS >= 10', 'ie >= 11' ] }
+	: { node: 'current' };
 
 const config = {
 	presets: [
@@ -15,10 +18,7 @@ const config = {
 			'@babel/env',
 			{
 				modules,
-				targets: {
-					browsers: [ 'last 2 versions', 'Safari >= 10', 'iOS >= 10', 'ie >= 11' ],
-				},
-				exclude: [ 'transform-classes', 'transform-template-literals' ], // transform-classes is added manually later.
+				targets,
 				useBuiltIns: 'entry',
 				shippedProposals: true, // allows es7 features like Promise.prototype.finally
 			},
@@ -26,13 +26,7 @@ const config = {
 		'@babel/react',
 	],
 	plugins: _.compact( [
-		// the two class transforms are to emulate exactly how babel 6 handled classes.
-		// it very slightly diverges from spec but also is more concise.
-		// see: http://new.babeljs.io/docs/en/next/v7-migration.html#babel-plugin-proposal-class-properties
-		[ '@babel/plugin-proposal-class-properties', { loose: true } ],
-		[ '@babel/plugin-transform-classes', { loose: false } ],
-		[ '@babel/plugin-transform-template-literals', { loose: true } ],
-		isCalypso && [
+		[
 			path.join(
 				__dirname,
 				'server',
@@ -42,15 +36,17 @@ const config = {
 			),
 			{ async: isCalypsoClient && codeSplit },
 		],
+		'@babel/plugin-proposal-class-properties',
 		'@babel/plugin-proposal-export-default-from',
 		'@babel/plugin-proposal-export-namespace-from',
 		'@babel/plugin-syntax-dynamic-import',
 		[
 			'@babel/transform-runtime',
 			{
+				corejs: false, // we polyfill so we don't need core-js
 				helpers: true,
-				polyfill: false,
 				regenerator: false,
+				useESModules: false,
 			},
 		],
 		isCalypsoClient && './inline-imports.js',
@@ -58,7 +54,11 @@ const config = {
 	env: {
 		test: {
 			presets: [ [ '@babel/env', { targets: { node: 'current' } } ] ],
-			plugins: [ 'add-module-exports', './server/bundler/babel/babel-lodash-es' ],
+			plugins: [
+				'add-module-exports',
+				'babel-plugin-dynamic-import-node',
+				'./server/bundler/babel/babel-lodash-es',
+			],
 		},
 	},
 };

@@ -493,3 +493,21 @@ button.site-settings__general-settings-set-guessed-timezone.button.is-borderless
 		margin-left: 36px;
 	}
 }
+
+.site-settings__search-block {
+		margin-bottom: 16px;
+}
+
+.site-settings__general-settings-launch-site {
+	display: flex;
+	justify-content: space-between;
+}
+
+.site-settings__general-settings-launch-site-text {
+	flex-grow: 2;
+}
+
+.site-settings__general-settings-launch-site-button {
+	margin-left: 20px;
+	white-space: nowrap;
+}

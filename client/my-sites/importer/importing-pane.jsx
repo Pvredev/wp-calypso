@@ -5,19 +5,20 @@
  */
 import PropTypes from 'prop-types';
 import React from 'react';
+import { connect } from 'react-redux';
 import classNames from 'classnames';
-import { numberFormat, translate, localize } from 'i18n-calypso';
-import { has, omit } from 'lodash';
+import { numberFormat, localize } from 'i18n-calypso';
+import { get, has, omit } from 'lodash';
 
 /**
  * Internal dependencies
  */
 import { mapAuthor, startImporting } from 'lib/importer/actions';
 import { appStates } from 'state/imports/constants';
-import { connectDispatcher } from './dispatcher-converter';
 import ProgressBar from 'components/progress-bar';
-import MappingPane from './author-mapping-pane';
+import AuthorMappingPane from './author-mapping-pane';
 import Spinner from 'components/spinner';
+import { loadTrackingTool } from 'state/analytics/actions';
 
 const sum = ( a, b ) => a + b;
 
@@ -90,10 +91,6 @@ class ImportingPane extends React.PureComponent {
 				pages: PropTypes.number,
 				posts: PropTypes.number,
 			} ),
-			errorData: PropTypes.shape( {
-				description: PropTypes.string.isRequired,
-				type: PropTypes.string.isRequired,
-			} ),
 			importerState: PropTypes.string.isRequired,
 			percentComplete: PropTypes.number,
 			site: PropTypes.shape( {
@@ -110,17 +107,21 @@ class ImportingPane extends React.PureComponent {
 
 	getErrorMessage = ( { description } ) => {
 		if ( ! description ) {
-			return translate( 'An unspecified error occured during the import.' );
+			return this.props.translate( 'An unspecified error occured during the import.' );
 		}
 
 		return description;
 	};
 
 	getHeadingText = () => {
-		return translate(
+		return this.props.translate(
 			'Importing may take a while if your site has a lot of media, but ' +
 				"you can safely navigate away from this page if you need to: we'll send you a notification when it's done."
 		);
+	};
+
+	getHeadingTextProcessing = () => {
+		return this.props.translate( 'Processing your file. Please wait a few moments.' );
 	};
 
 	getSuccessText = () => {
@@ -129,9 +130,9 @@ class ImportingPane extends React.PureComponent {
 				progress: { page, post },
 			} = this.props.importerStatus,
 			pageLink = <a href={ '/pages/' + slug } />,
-			pageText = translate( 'Pages', { context: 'noun' } ),
+			pageText = this.props.translate( 'Pages', { context: 'noun' } ),
 			postLink = <a href={ '/posts/' + slug } />,
-			postText = translate( 'Posts', { context: 'noun' } );
+			postText = this.props.translate( 'Posts', { context: 'noun' } );
 
 		const pageCount = page.total;
 		const postCount = post.total;
@@ -159,15 +160,15 @@ class ImportingPane extends React.PureComponent {
 			);
 		}
 
-		return translate( 'Import complete!' );
+		return this.props.translate( 'Import complete!' );
 	};
 
 	getImportMessage = numResources => {
 		if ( 0 === numResources ) {
-			return translate( 'Finishing up the import' );
+			return this.props.translate( 'Finishing up the import' );
 		}
 
-		return translate(
+		return this.props.translate(
 			'Waiting on %(numResources)s resource to import',
 			'Waiting on %(numResources)s resources to import',
 			{
@@ -189,6 +190,10 @@ class ImportingPane extends React.PureComponent {
 		return this.isInState( appStates.IMPORTING );
 	};
 
+	isProcessing = () => {
+		return this.isInState( appStates.UPLOAD_PROCESSING );
+	};
+
 	isInState = state => {
 		return state === this.props.importerStatus.importerState;
 	};
@@ -197,10 +202,30 @@ class ImportingPane extends React.PureComponent {
 		return this.isInState( appStates.MAP_AUTHORS );
 	};
 
+	maybeLoadHotJar = () => {
+		if ( this.hjLoaded || ! this.isImporting() ) {
+			return;
+		}
+
+		this.hjLoaded = true;
+
+		this.props.loadTrackingTool( 'HotJar' );
+	};
+
+	componentDidMount() {
+		this.maybeLoadHotJar();
+	}
+
+	componentDidUpdate() {
+		this.maybeLoadHotJar();
+	}
+
+	handleOnMap = ( source, target ) =>
+		mapAuthor( get( this.props, 'importerStatus.importerId' ), source, target );
+
 	render() {
 		const {
-			importerStatus: { importerId, errorData = {}, customData },
-			mapAuthorFor,
+			importerStatus: { customData },
 			site: { ID: siteId, name: siteName, single_user_site: hasSingleAuthor },
 			sourceType,
 		} = this.props;
@@ -209,11 +234,16 @@ class ImportingPane extends React.PureComponent {
 			'is-complete': this.isFinished(),
 		} );
 
-		let { percentComplete, progress, statusMessage } = this.props.importerStatus;
+		let { percentComplete, statusMessage } = this.props.importerStatus;
+		const { progress } = this.props.importerStatus;
 		let blockingMessage;
 
 		if ( this.isError() ) {
-			statusMessage = this.getErrorMessage( errorData );
+			/**
+			 * TODO: This is for the status message that appears at the bottom
+			 * of the import section. This shouldn't be used for Error reporting.
+			 */
+			statusMessage = '';
 		}
 
 		if ( this.isFinished() ) {
@@ -230,18 +260,20 @@ class ImportingPane extends React.PureComponent {
 		return (
 			<div className="importer__importing-pane">
 				{ this.isImporting() && <p>{ this.getHeadingText() }</p> }
+				{ this.isProcessing() && <p>{ this.getHeadingTextProcessing() }</p> }
 				{ this.isMapping() && (
-					<MappingPane
+					<AuthorMappingPane
 						hasSingleAuthor={ hasSingleAuthor }
-						onMap={ mapAuthorFor( importerId ) }
+						onMap={ this.handleOnMap }
 						onStartImport={ () => startImporting( this.props.importerStatus ) }
-						{ ...{ siteId, sourceType } }
+						siteId={ siteId }
+						sourceType={ sourceType }
 						sourceAuthors={ customData.sourceAuthors }
-						sourceTitle={ customData.siteTitle || translate( 'Original Site' ) }
+						sourceTitle={ customData.siteTitle || this.props.translate( 'Original Site' ) }
 						targetTitle={ siteName }
 					/>
 				) }
-				{ this.isImporting() &&
+				{ ( this.isImporting() || this.isProcessing() ) &&
 					( percentComplete >= 0 ? (
 						<ProgressBar className={ progressClasses } value={ percentComplete } />
 					) : (
@@ -259,11 +291,7 @@ class ImportingPane extends React.PureComponent {
 	}
 }
 
-const mapDispatchToProps = dispatch => ( {
-	mapAuthorFor: importerId => ( source, target ) =>
-		setTimeout( () => {
-			dispatch( mapAuthor( importerId, source, target ) );
-		}, 0 ),
-} );
-
-export default connectDispatcher( null, mapDispatchToProps )( localize( ImportingPane ) );
+export default connect(
+	null,
+	{ loadTrackingTool }
+)( localize( ImportingPane ) );

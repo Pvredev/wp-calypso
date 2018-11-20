@@ -3,85 +3,111 @@
 /**
  * External dependencies
  */
-const chalk = require( 'chalk' );
+const fs = require( 'fs' );
 const path = require( 'path' );
-const webpack = require( 'webpack' );
-const { isEmpty, omitBy } = require( 'lodash' );
+const GenerateJsonFile = require( 'generate-json-file-webpack-plugin' );
 
-const __rootDir = path.resolve( __dirname, '../../' );
-const CopyWebpackPlugin = require( path.resolve(
-	__rootDir,
-	'server/bundler/copy-webpack-plugin'
-) );
-const getBaseConfig = require( path.join( __rootDir, 'webpack.config.js' ) );
+const DIRECTORY_DEPTH = '../../'; // Relative path of the extensions to preset directory
 
-const omitPlugins = [
-	CopyWebpackPlugin,
-	webpack.HotModuleReplacementPlugin,
-];
+function sharedScripts( folderName, inputDir ) {
+	const sharedPath = path.join( inputDir, folderName );
+	return fs
+		.readdirSync( sharedPath )
+		.map( file => path.join( sharedPath, file ) )
+		.filter( fullPathToFile => fullPathToFile.endsWith( '.js' ) );
+}
 
-const outputHandler = ( error, stats ) => {
-	if ( error ) {
-		console.error( error );
-		console.log( chalk.red( 'Failed to build Gutenberg extension' ) );
-		process.exit( 1 );
-	}
+function blockScripts( type, inputDir, presetBlocks ) {
+	return presetBlocks
+		.map( block => path.join( inputDir, `${ DIRECTORY_DEPTH }${ block }/${ type }.js` ) )
+		.filter( fs.existsSync );
+}
 
-	console.log( stats.toString() );
+exports.config = ( { argv: { inputDir, outputDir }, getBaseConfig } ) => {
+	const baseConfig = getBaseConfig( {
+		cssFilename: '[name].css',
+		externalizeWordPressPackages: true,
+	} );
 
-	if ( stats.hasErrors() ) {
-		console.log( chalk.red( 'Finished building Gutenberg extension but with errors.' ) );
-	} else if ( stats.hasWarnings() ) {
-		console.log( chalk.yellow( 'Successfully built Gutenberg extension but with warnings.' ) );
+	const presetPath = path.join( inputDir, 'index.json' );
+	const presetBetaPath = path.join( inputDir, 'index-beta.json' ); // beta blocks live here
+
+	let editorScript;
+	let editorBetaScript;
+	let viewBlocksScripts;
+	let viewScriptEntry;
+	let presetBlocks;
+	let presetBetaBlocks;
+
+	if ( fs.existsSync( presetPath ) ) {
+		presetBlocks = require( presetPath );
+		presetBetaBlocks = fs.existsSync( presetBetaPath ) ? require( presetBetaPath ) : [];
+		const allPresetBlocks = [ ...presetBlocks, ...presetBetaBlocks ];
+
+		// Find all the shared scripts
+		const sharedUtilsScripts = sharedScripts( 'shared', inputDir );
+
+		// Helps split up each block into its own folder view script
+		viewBlocksScripts = allPresetBlocks.reduce( ( viewBlocks, block ) => {
+			const viewScriptPath = path.join( inputDir, `${ DIRECTORY_DEPTH }${ block }/view.js` );
+			if ( fs.existsSync( viewScriptPath ) ) {
+				viewBlocks[ block + '/view' ] = [ ...sharedUtilsScripts, ...[ viewScriptPath ] ];
+			}
+			return viewBlocks;
+		}, {} );
+
+		// Find all the editor shared scripts
+		const sharedEditorUtilsScripts = sharedScripts( 'editor-shared', inputDir );
+
+		// Combines all the different blocks into one editor.js script
+		editorScript = [
+			...sharedUtilsScripts,
+			...sharedEditorUtilsScripts,
+			...blockScripts( 'editor', inputDir, presetBlocks ),
+			...blockScripts( 'view', inputDir, presetBlocks ),
+		];
+
+		// Combines all the different blocks into one editor-beta.js script
+		editorBetaScript = [
+			...sharedUtilsScripts,
+			...sharedEditorUtilsScripts,
+			...blockScripts( 'editor', inputDir, allPresetBlocks ),
+			...blockScripts( 'view', inputDir, allPresetBlocks ),
+		];
+
+		// We explicitly don't create a view.js bundle since all the views are
+		// bundled into the editor and also available via the individual folders.
+		viewScriptEntry = null;
 	} else {
-		console.log( chalk.green( 'Successfully built Gutenberg extension' ) );
+		editorScript = path.join( inputDir, 'editor.js' );
+		const viewScript = path.join( inputDir, 'view.js' );
+		viewScriptEntry = fs.existsSync( viewScript ) ? { view: viewScript } : {};
 	}
-};
 
-exports.compile = args => {
-	const options = {
-		outputDir: path.join( path.dirname( args.editorScript ), 'build' ),
-		...args,
-	};
-
-	const name = path.basename( path.dirname( options.editorScript ).replace( /\/$/, '' ) );
-	const baseConfig = getBaseConfig( { extensionName: name } );
-
-	const config = {
+	return {
 		...baseConfig,
-		...{
-			context: __rootDir,
-			mode: options.mode,
-			entry: omitBy(
-				{
-					[ options.outputEditorFile || `${ name }-editor` ]: options.editorScript,
-					[ options.outputViewFile || `${ name }-view` ]: options.viewScript,
-				},
-				isEmpty
-			),
-			externals: {
-				...baseConfig.externals,
-				wp: 'wp',
-			},
-			optimization: {
-				splitChunks: false,
-			},
-			output: {
-				path: options.outputDir,
-				filename: '[name].js',
-				libraryTarget: 'window',
-			},
-			plugins: [
-				...baseConfig.plugins.filter( plugin => omitPlugins.indexOf( plugin.constructor ) < 0 ),
-			],
+		plugins: [
+			...baseConfig.plugins,
+			fs.existsSync( presetPath ) &&
+				new GenerateJsonFile( {
+					filename: 'block-manifest.json',
+					value: {
+						blocks: presetBlocks,
+						betaBlocks: presetBetaBlocks,
+					},
+				} ),
+		],
+		entry: {
+			editor: editorScript,
+			'editor-beta': editorBetaScript,
+			...viewScriptEntry,
+			...viewBlocksScripts,
 		},
+		output: {
+			path: outputDir || path.join( inputDir, 'build' ),
+			filename: '[name].js',
+			libraryTarget: 'window',
+		},
+		externals: [ ...baseConfig.externals, 'lodash' ],
 	};
-
-	const compiler = webpack( config );
-
-	if ( options.watch ) {
-		compiler.watch( {}, outputHandler );
-	} else {
-		compiler.run( outputHandler );
-	}
 };

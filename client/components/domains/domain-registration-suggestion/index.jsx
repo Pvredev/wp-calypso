@@ -1,16 +1,15 @@
 /** @format */
-
 /**
  * External dependencies
  */
-
 import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
-import { isNumber } from 'lodash';
+import { isNumber, includes } from 'lodash';
 import { localize } from 'i18n-calypso';
 import Gridicon from 'gridicons';
 import classNames from 'classnames';
+import page from 'page';
 
 /**
  * Internal dependencies
@@ -32,6 +31,7 @@ const NOTICE_GREEN = '#4ab866';
 
 class DomainRegistrationSuggestion extends React.Component {
 	static propTypes = {
+		isDomainOnly: PropTypes.bool,
 		isSignupStep: PropTypes.bool,
 		isFeatured: PropTypes.bool,
 		cart: PropTypes.object,
@@ -52,6 +52,19 @@ class DomainRegistrationSuggestion extends React.Component {
 	};
 
 	componentDidMount() {
+		this.recordRender();
+	}
+
+	componentDidUpdate( prevProps ) {
+		if (
+			prevProps.railcarId !== this.props.railcarId ||
+			prevProps.uiPosition !== this.props.uiPosition
+		) {
+			this.recordRender();
+		}
+	}
+
+	recordRender() {
 		if ( this.props.railcarId && isNumber( this.props.uiPosition ) ) {
 			let resultSuffix = '';
 			if ( this.props.suggestion.isRecommended ) {
@@ -63,7 +76,7 @@ class DomainRegistrationSuggestion extends React.Component {
 			this.props.recordTracksEvent( 'calypso_traintracks_render', {
 				railcar: this.props.railcarId,
 				ui_position: this.props.uiPosition,
-				fetch_algo: this.props.fetchAlgo,
+				fetch_algo: `${ this.props.fetchAlgo }/${ this.props.suggestion.vendor }`,
 				rec_result: `${ this.props.suggestion.domain_name }${ resultSuffix }`,
 				fetch_query: this.props.query,
 			} );
@@ -112,15 +125,26 @@ class DomainRegistrationSuggestion extends React.Component {
 	}
 
 	getPriceRule() {
-		const { cart, domainsWithPlansOnly, selectedSite, suggestion } = this.props;
-		return getDomainPriceRule( domainsWithPlansOnly, selectedSite, cart, suggestion );
+		const { cart, isDomainOnly, domainsWithPlansOnly, selectedSite, suggestion } = this.props;
+		return getDomainPriceRule( domainsWithPlansOnly, selectedSite, cart, suggestion, isDomainOnly );
 	}
 
 	renderDomain() {
 		const {
 			suggestion: { domain_name: domain },
+			translate,
 		} = this.props;
-		return <h3 className="domain-registration-suggestion__title">{ domain }</h3>;
+
+		let isAvailable = false;
+
+		//If we're on the Mapping or Transfer pages, add a note about availability
+		if ( includes( page.current, '/mapping' ) || includes( page.current, '/transfer' ) ) {
+			isAvailable = true;
+		}
+
+		const title = isAvailable ? translate( '%s is available!', { args: domain } ) : domain;
+
+		return <h3 className="domain-registration-suggestion__title">{ title }</h3>;
 	}
 
 	renderProgressBar() {

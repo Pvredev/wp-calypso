@@ -3,12 +3,13 @@
 /**
  * External dependencies
  */
+import { first, last } from 'lodash';
 
 /**
  * Internal dependencies
  */
 import { createPathWithoutImmediateLoginInformation, createImmediateLoginMessage } from '../utils';
-import { REASON_MANUAL_RENEWAL } from '../constants';
+import { REASONS_FOR_MANUAL_RENEWAL } from '../constants';
 
 describe( 'immediate-login/utils', () => {
 	describe( 'createPathWithoutImmediateLoginInformation', () => {
@@ -49,7 +50,7 @@ describe( 'immediate-login/utils', () => {
 		test( 'should remove immediate-login-related query params [1]', () => {
 			expect(
 				createPathWithoutImmediateLoginInformation( '/test/another_segment/', {
-					logged_via_immediate_link: 'true',
+					immediate_login_attempt: 'true',
 				} )
 			).toBe( '/test/another_segment/' );
 		} );
@@ -65,7 +66,7 @@ describe( 'immediate-login/utils', () => {
 		test( 'should remove immediate-login-related query params [3]', () => {
 			expect(
 				createPathWithoutImmediateLoginInformation( '/test/another_segment/', {
-					logged_via_immediate_link: 'true',
+					immediate_login_attempt: 'true',
 					login_reason: 'some reason',
 				} )
 			).toBe( '/test/another_segment/' );
@@ -74,10 +75,36 @@ describe( 'immediate-login/utils', () => {
 		test( 'should remove immediate-login-related query params [4]', () => {
 			expect(
 				createPathWithoutImmediateLoginInformation( '/test/another_segment/', {
-					logged_via_immediate_link: 'true',
+					immediate_login_attempt: 'true',
+					immediate_login_success: 'true',
+					login_reason: 'some reason',
+					login_email: 'test@example.com',
+					login_locale: 'fr',
+				} )
+			).toBe( '/test/another_segment/' );
+		} );
+
+		test( 'should remove immediate-login-related query params [5]', () => {
+			expect(
+				createPathWithoutImmediateLoginInformation( '/test/another_segment/', {
+					immediate_login_attempt: 'true',
 					login_reason: 'some reason',
 					unrelated: 'value1',
 					unrelated2: 'value2',
+				} )
+			).toBe( '/test/another_segment/?unrelated=value1&unrelated2=value2' );
+		} );
+
+		test( 'should remove immediate-login-related query params [6]', () => {
+			expect(
+				createPathWithoutImmediateLoginInformation( '/test/another_segment/', {
+					immediate_login_attempt: 'true',
+					immediate_login_success: 'true',
+					unrelated: 'value1',
+					unrelated2: 'value2',
+					login_reason: 'some reason',
+					login_email: 'test@example.com',
+					login_locale: 'fr',
 				} )
 			).toBe( '/test/another_segment/?unrelated=value1&unrelated2=value2' );
 		} );
@@ -93,16 +120,9 @@ describe( 'immediate-login/utils', () => {
 
 		const messages = [
 			createImmediateLoginMessage( '', 'test@wordpress.com' ),
-			createImmediateLoginMessage( REASON_MANUAL_RENEWAL, 'test@wordpress.com' ),
+			createImmediateLoginMessage( first( REASONS_FOR_MANUAL_RENEWAL ), 'test@wordpress.com' ),
+			createImmediateLoginMessage( last( REASONS_FOR_MANUAL_RENEWAL ), 'test@wordpress.com' ),
 		];
-		test( 'should return a different message per reason', () => {
-			let previous = messages[ messages.length - 1 ];
-			for ( const m of messages ) {
-				expect( typeof m ).toBe( 'string' );
-				expect( m ).not.toBe( previous );
-				previous = m;
-			}
-		} );
 		test( 'should put an email in every message', () => {
 			for ( const m of messages ) {
 				expect( m.indexOf( 'test@wordpress.com' ) ).not.toBe( -1 );

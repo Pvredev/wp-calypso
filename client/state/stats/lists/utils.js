@@ -178,7 +178,7 @@ export function parseOrderDeltas( payload ) {
  * @param {string} unit - day, week, month, year
  * @param {object} date - moment object
  * @param {object} localizedDate - moment object
- * @return {object}
+ * @return {object} chart labels
  */
 export function getChartLabels( unit, date, localizedDate ) {
 	const validDate = moment.isMoment( date ) && date.isValid();
@@ -251,7 +251,7 @@ export function parseOrdersChartData( payload ) {
  * a null value
  * @return {array} - Array of data objects
  */
-function parseChartData( payload, nullAttributes = [] ) {
+export function parseChartData( payload, nullAttributes = [] ) {
 	if ( ! payload || ! payload.data ) {
 		return [];
 	}
@@ -464,7 +464,6 @@ export const normalizers = {
 
 		return map( countryData, viewData => {
 			const country = countryInfo[ viewData.country_code ];
-			const icon = `/calypso/images/flags/${ viewData.country_code.toLowerCase() }.svg`;
 
 			// ’ in country names causes google's geo viz to break
 			return {
@@ -472,7 +471,6 @@ export const normalizers = {
 				countryCode: viewData.country_code,
 				value: viewData.views,
 				region: country.map_region,
-				backgroundImage: icon,
 			};
 		} );
 	},

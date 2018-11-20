@@ -14,7 +14,6 @@ import page from 'page';
 /**
  * Internal dependencies
  */
-import { abtest } from 'lib/abtest';
 import Button from 'components/button';
 import { isEnabled } from 'config';
 import CurrentSite from 'my-sites/current-site';
@@ -27,9 +26,8 @@ import SidebarItem from 'layout/sidebar/item';
 import SidebarMenu from 'layout/sidebar/menu';
 import SidebarRegion from 'layout/sidebar/region';
 import StatsSparkline from 'blocks/stats-sparkline';
-import TrackComponentView from 'lib/analytics/track-component-view';
 import JetpackLogo from 'components/jetpack-logo';
-import { isFreeTrial, isPersonal, isPremium, isBusiness } from 'lib/products-values';
+import { isFreeTrial, isPersonal, isPremium, isBusiness, isEcommerce } from 'lib/products-values';
 import { getCurrentUser } from 'state/current-user/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import { setNextLayoutFocus, setLayoutFocus } from 'state/ui/layout-focus/actions';
@@ -127,6 +125,7 @@ export class MySitesSidebar extends Component {
 		}
 
 		const statsLink = getStatsPathForTab( 'day', siteId );
+		/* eslint-disable wpcalypso/jsx-classname-namespace */
 		return (
 			<SidebarItem
 				tipTarget="menus"
@@ -144,6 +143,36 @@ export class MySitesSidebar extends Component {
 					<StatsSparkline className="sidebar__sparkline" siteId={ siteId } />
 				</a>
 			</SidebarItem>
+		);
+		/* eslint-enable wpcalypso/jsx-classname-namespace */
+	}
+
+	trackActivityClick = () => {
+		this.trackMenuItemClick( 'activity' );
+		this.onNavigate();
+	};
+
+	activity() {
+		const { siteId, canUserViewActivity, path, translate, siteSuffix } = this.props;
+
+		if ( ! siteId ) {
+			return null;
+		}
+
+		if ( ! canUserViewActivity ) {
+			return null;
+		}
+
+		const activityLink = '/activity-log' + siteSuffix;
+		return (
+			<SidebarItem
+				tipTarget="activity"
+				label={ translate( 'Activity' ) }
+				selected={ itemLinkMatches( [ '/activity-log' ], path ) }
+				link={ activityLink }
+				onNavigate={ this.trackActivityClick }
+				icon="history"
+			/>
 		);
 	}
 
@@ -175,16 +204,8 @@ export class MySitesSidebar extends Component {
 		this.onNavigate();
 	};
 
-	trackAdsUpsellClick = () => {
-		this.trackMenuItemClick( 'ads' );
-		this.props.recordTracksEvent( 'calypso_upgrade_nudge_cta_click', {
-			cta_name: 'store_ads',
-		} );
-		this.onNavigate();
-	};
-
 	ads() {
-		const { path, canUserUpgradeSite, canUserUseAds, isJetpack } = this.props;
+		const { path, canUserUseAds } = this.props;
 
 		if ( canUserUseAds ) {
 			return (
@@ -193,24 +214,6 @@ export class MySitesSidebar extends Component {
 					selected={ itemLinkMatches( '/ads', path ) }
 					link={ '/ads/earnings' + this.props.siteSuffix }
 					onNavigate={ this.trackAdsClick }
-					icon="speaker"
-					tipTarget="wordads"
-				/>
-			);
-		}
-
-		if (
-			! isJetpack &&
-			isEnabled( 'upsell/nudge-a-palooza' ) &&
-			canUserUpgradeSite &&
-			abtest( 'nudgeAPalooza' ) === 'sidebarUpsells'
-		) {
-			return (
-				<SidebarItem
-					label={ 'WordAds' }
-					selected={ itemLinkMatches( '/feature/ads', path ) }
-					link={ '/feature/ads' + this.props.siteSuffix }
-					onNavigate={ this.trackAdsUpsellClick }
 					icon="speaker"
 					tipTarget="wordads"
 				/>
@@ -381,7 +384,12 @@ export class MySitesSidebar extends Component {
 		let planLink = '/plans' + this.props.siteSuffix;
 
 		// Show plan details for upgraded sites
-		if ( isPersonal( site.plan ) || isPremium( site.plan ) || isBusiness( site.plan ) ) {
+		if (
+			isPersonal( site.plan ) ||
+			isPremium( site.plan ) ||
+			isBusiness( site.plan ) ||
+			isEcommerce( site.plan )
+		) {
 			planLink = '/plans/my-plan' + this.props.siteSuffix;
 		}
 
@@ -399,15 +407,19 @@ export class MySitesSidebar extends Component {
 			} );
 		}
 
+		/* eslint-disable wpcalypso/jsx-classname-namespace */
 		return (
 			<li className={ linkClass } data-tip-target={ tipTarget }>
 				<a onClick={ this.trackPlanClick } href={ planLink }>
 					<JetpackLogo size={ 24 } />
-					<span className="menu-link-text">{ translate( 'Plan', { context: 'noun' } ) }</span>
+					<span className="menu-link-text" data-e2e-sidebar={ 'Plan' }>
+						{ translate( 'Plan', { context: 'noun' } ) }
+					</span>
 					<span className="sidebar__menu-link-secondary-text">{ planName }</span>
 				</a>
 			</li>
 		);
+		/* eslint-enable wpcalypso/jsx-classname-namespace */
 	}
 
 	trackStoreClick = () => {
@@ -416,69 +428,34 @@ export class MySitesSidebar extends Component {
 		this.onNavigate();
 	};
 
-	trackStoreUpsellClick = () => {
-		this.trackMenuItemClick( 'store' );
-		this.props.recordTracksEvent( 'calypso_upgrade_nudge_cta_click', {
-			cta_name: 'store_sidebar',
-		} );
-		this.onNavigate();
-	};
-
 	store() {
-		const { canUserUpgradeSite, site, canUserUseStore, isJetpack } = this.props;
+		const { translate, site, siteSuffix, canUserUseStore } = this.props;
 
 		if ( ! isEnabled( 'woocommerce/extension-dashboard' ) || ! site ) {
 			return null;
 		}
 
 		if ( ! canUserUseStore ) {
-			if (
-				! isJetpack &&
-				isEnabled( 'upsell/nudge-a-palooza' ) &&
-				canUserUpgradeSite &&
-				abtest( 'nudgeAPalooza' ) === 'sidebarUpsells'
-			) {
-				return this.storeUpsellSidebarItem();
-			}
-
 			return null;
 		}
 
-		return this.storeSidebarItem();
-	}
+		if ( ! isEnabled( 'woocommerce/extension-dashboard' ) || ! site ) {
+			return null;
+		}
 
-	storeSidebarItem() {
-		const { siteSuffix, translate } = this.props;
+		let storeLink = '/store' + siteSuffix;
+		if ( isEcommerce( site.plan ) ) {
+			storeLink = site.options.admin_url + 'edit.php?post_type=shop_order&calypsoify=1';
+		}
+
 		return (
 			<SidebarItem
 				label={ translate( 'Store' ) }
-				link={ '/store' + siteSuffix }
+				link={ storeLink }
 				onNavigate={ this.trackStoreClick }
 				icon="cart"
+				forceInternalLink
 			>
-				<div className="sidebar__chevron-right">
-					<Gridicon icon="chevron-right" />
-				</div>
-			</SidebarItem>
-		);
-	}
-
-	storeUpsellSidebarItem() {
-		const { siteSuffix, translate, path } = this.props;
-		return (
-			<SidebarItem
-				label={ translate( 'Store' ) }
-				link={ '/feature/store' + siteSuffix }
-				selected={ itemLinkMatches( '/feature/store', path ) }
-				onNavigate={ this.trackStoreUpsellClick }
-				icon="cart"
-			>
-				<TrackComponentView
-					eventName="calypso_upgrade_nudge_impression"
-					eventProperties={ {
-						cta_name: 'store_upsell',
-					} }
-				/>
 				<div className="sidebar__chevron-right">
 					<Gridicon icon="chevron-right" />
 				</div>
@@ -611,6 +588,7 @@ export class MySitesSidebar extends Component {
 			return null;
 		}
 
+		/* eslint-disable wpcalypso/jsx-classname-namespace*/
 		return (
 			<li className="wp-admin">
 				<a
@@ -625,6 +603,7 @@ export class MySitesSidebar extends Component {
 				</a>
 			</li>
 		);
+		/* eslint-enable wpcalypso/jsx-classname-namespace*/
 	}
 
 	// Check for cases where WP Admin links should appear, where we need support for legacy reasons (VIP, older users, testing).
@@ -665,6 +644,7 @@ export class MySitesSidebar extends Component {
 			return null;
 		}
 
+		/* eslint-disable wpcalypso/jsx-classname-namespace */
 		return (
 			<Button
 				borderless
@@ -675,6 +655,7 @@ export class MySitesSidebar extends Component {
 				<Gridicon icon="add-outline" /> { this.props.translate( 'Add New Site' ) }
 			</Button>
 		);
+		/* eslint-enable wpcalypso/jsx-classname-namespace */
 	}
 
 	trackDomainSettingsClick = () => {
@@ -700,13 +681,6 @@ export class MySitesSidebar extends Component {
 			);
 		}
 
-		// For the duration of nudgeAPalooza test we need to allocate all users who visit calypso.
-		// Having it here is an easy solution that makes it possible to avoid touching redux store
-		// middleware structure
-		if ( isEnabled( 'upsell/nudge-a-palooza' ) ) {
-			abtest( 'nudgeAPalooza' );
-		}
-
 		const manage = !! this.manage(),
 			configuration =
 				!! this.sharing() ||
@@ -721,6 +695,7 @@ export class MySitesSidebar extends Component {
 					<ul>
 						{ this.preview() }
 						{ this.stats() }
+						{ this.activity() }
 						{ this.plan() }
 						{ this.store() }
 					</ul>
@@ -792,6 +767,7 @@ function mapStateToProps( state ) {
 		canManagePlugins: canCurrentUserManagePlugins( state ),
 		canUserEditThemeOptions: canCurrentUser( state, siteId, 'edit_theme_options' ),
 		canUserListUsers: canCurrentUser( state, siteId, 'list_users' ),
+		canUserViewActivity: canCurrentUser( state, siteId, 'manage_options' ),
 		canUserManageOptions: canCurrentUser( state, siteId, 'manage_options' ),
 		canUserPublishPosts: canCurrentUser( state, siteId, 'publish_posts' ),
 		canUserViewStats: canCurrentUser( state, siteId, 'view_stats' ),

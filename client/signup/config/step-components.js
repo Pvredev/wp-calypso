@@ -16,6 +16,7 @@ import CredsPermissionComponent from 'signup/steps/creds-permission';
 import DesignTypeComponent from 'signup/steps/design-type';
 import DesignTypeWithAtomicStoreComponent from 'signup/steps/design-type-with-atomic-store';
 import DomainsStepComponent from 'signup/steps/domains';
+import ImportURLStepComponent from 'signup/steps/import-url';
 import PlansStepComponent from 'signup/steps/plans';
 import SiteComponent from 'signup/steps/site';
 import RebrandCitiesWelcomeComponent from 'signup/steps/rebrand-cities-welcome';
@@ -26,11 +27,14 @@ import RewindFormCreds from 'signup/steps/rewind-form-creds';
 import SiteOrDomainComponent from 'signup/steps/site-or-domain';
 import SitePicker from 'signup/steps/site-picker';
 import SiteTitleComponent from 'signup/steps/site-title';
+import SiteTopicComponent from 'signup/steps/site-topic';
+import SiteTypeComponent from 'signup/steps/site-type';
 import SurveyStepComponent from 'signup/steps/survey';
 import ThemeSelectionComponent from 'signup/steps/theme-selection';
 import UserSignupComponent from 'signup/steps/user';
 import PlansStepWithoutFreePlan from 'signup/steps/plans-without-free';
 import PlansAtomicStoreComponent from 'signup/steps/plans-atomic-store';
+import ReaderLandingStepComponent from 'signup/steps/reader-landing';
 
 export default {
 	about: AboutStepComponent,
@@ -50,6 +54,7 @@ export default {
 	'domains-store': DomainsStepComponent,
 	'domain-only': DomainsStepComponent,
 	'domains-theme-preselected': DomainsStepComponent,
+	'from-url': ImportURLStepComponent,
 	plans: PlansStepComponent,
 	'plans-store-nux': PlansAtomicStoreComponent,
 	'plans-site-selected': PlansStepWithoutFreePlan,
@@ -62,6 +67,8 @@ export default {
 	'site-or-domain': SiteOrDomainComponent,
 	'site-picker': SitePicker,
 	'site-title': SiteTitleComponent,
+	'site-topic': SiteTopicComponent,
+	'site-type': SiteTypeComponent,
 	survey: SurveyStepComponent,
 	'survey-user': UserSignupComponent,
 	test:
@@ -74,4 +81,6 @@ export default {
 	'themes-site-selected': ThemeSelectionComponent,
 	user: UserSignupComponent,
 	'oauth2-user': UserSignupComponent,
+	'oauth2-name': UserSignupComponent,
+	'reader-landing': ReaderLandingStepComponent,
 };

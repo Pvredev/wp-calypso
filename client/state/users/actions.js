@@ -4,7 +4,9 @@
  * Internal dependencies
  */
 
-import { USER_RECEIVE, USERS_REQUEST } from 'state/action-types';
+import { USER_RECEIVE } from 'state/action-types';
+
+import 'state/data-layer/wpcom/sites/users';
 
 /**
  * Returns an action object to be used in signalling that a user object has
@@ -19,16 +21,3 @@ export function receiveUser( user ) {
 		user,
 	};
 }
-
-/**
- * Action creator function: USERS_REQUEST
- *
- * @param {String} siteId of the users
- * @param {Array}  ids of the users (array of integers)
- * @return {Object} action object
- */
-export const requestUsers = ( siteId, ids ) => ( {
-	type: USERS_REQUEST,
-	ids,
-	siteId,
-} );

@@ -33,6 +33,11 @@ export class Sites extends Component {
 			return ! site.jetpack || site.isSiteUpgradeable;
 		}
 
+		// No support for VIP Gutenberg sites yet
+		if ( /^\/gutenberg/.test( path ) ) {
+			return ! site.is_vip;
+		}
+
 		return site;
 	};
 
@@ -47,11 +52,11 @@ export class Sites extends Component {
 		}
 
 		switch ( path ) {
+			case 'activity-log':
+				path = i18n.translate( 'Activity' );
+				break;
 			case 'stats':
 				path = i18n.translate( 'Insights' );
-				if ( '/stats/activity' === this.props.siteBasePath ) {
-					path = i18n.translate( 'Activity' );
-				}
 				break;
 			case 'plans':
 				path = i18n.translate( 'Plans' );

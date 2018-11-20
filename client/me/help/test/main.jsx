@@ -4,14 +4,23 @@
  * External dependencies
  */
 import React from 'react';
+
+/**
+ * Internal dependencies
+ */
 import {
 	PLAN_FREE,
+	PLAN_ECOMMERCE,
+	PLAN_ECOMMERCE_2_YEARS,
+	PLAN_BUSINESS_MONTHLY,
 	PLAN_BUSINESS,
 	PLAN_BUSINESS_2_YEARS,
 	PLAN_PREMIUM,
 	PLAN_PREMIUM_2_YEARS,
 	PLAN_PERSONAL,
 	PLAN_PERSONAL_2_YEARS,
+	PLAN_BLOGGER,
+	PLAN_BLOGGER_2_YEARS,
 	PLAN_JETPACK_FREE,
 	PLAN_JETPACK_PERSONAL,
 	PLAN_JETPACK_PERSONAL_MONTHLY,
@@ -20,10 +29,6 @@ import {
 	PLAN_JETPACK_BUSINESS,
 	PLAN_JETPACK_BUSINESS_MONTHLY,
 } from 'lib/plans/constants';
-
-/**
- * Internal dependencies
- */
 import { mapStateToProps } from '../main';
 
 jest.mock( 'lib/analytics', () => ( {} ) );
@@ -62,6 +67,8 @@ import purchasesSelectors from 'state/purchases/selectors';
 describe( 'mapStateToProps should return correct value for isBusinessPlanUser', () => {
 	[
 		PLAN_FREE,
+		PLAN_BLOGGER,
+		PLAN_BLOGGER_2_YEARS,
 		PLAN_PERSONAL,
 		PLAN_PERSONAL_2_YEARS,
 		PLAN_PREMIUM,
@@ -81,12 +88,20 @@ describe( 'mapStateToProps should return correct value for isBusinessPlanUser', 
 		} );
 	} );
 
-	[ PLAN_BUSINESS, PLAN_BUSINESS_2_YEARS ].forEach( productSlug => {
-		test( `True for plan ${ JSON.stringify( productSlug ) }`, () => {
-			purchasesSelectors.getUserPurchases.mockImplementation( () => [ { productSlug } ] );
-			expect( mapStateToProps( {}, {} ).isBusinessPlanUser ).toBe( true );
-		} );
-	} );
+	[
+		PLAN_BUSINESS_MONTHLY,
+		PLAN_BUSINESS,
+		PLAN_BUSINESS_2_YEARS,
+		PLAN_ECOMMERCE,
+		PLAN_ECOMMERCE_2_YEARS,
+	].forEach(
+		productSlug => {
+			test( `True for plan ${ JSON.stringify( productSlug ) }`, () => {
+				purchasesSelectors.getUserPurchases.mockImplementation( () => [ { productSlug } ] );
+				expect( mapStateToProps( {}, {} ).isBusinessPlanUser ).toBe( true );
+			} );
+		}
+	);
 
 	test( 'Should be false for purchases not loaded', () => {
 		purchasesSelectors.getUserPurchases.mockImplementation( () => null );

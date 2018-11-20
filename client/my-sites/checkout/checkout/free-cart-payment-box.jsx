@@ -31,6 +31,8 @@ class FreeCartPaymentBox extends React.Component {
 					{ /* eslint-disable-next-line wpcalypso/jsx-classname-namespace */ }
 					<div className="payment-box-section">
 						<div className="checkout__payment-box-section-content">
+							{ this.getDomainCreditIllustration() }
+
 							<h6>
 								{ cart.has_bundle_credit
 									? this.props.translate( 'You have a free domain credit!' )
@@ -40,7 +42,7 @@ class FreeCartPaymentBox extends React.Component {
 							<span>
 								{ cart.has_bundle_credit
 									? this.props.translate(
-											'You get one free domain with your subscription to %(productName)s. Time to celebrate!',
+											'You get a free domain for one year with your subscription to %(productName)s. Time to celebrate!',
 											{ args: { productName: this.getProductName() } }
 									  )
 									: this.props.translate(
@@ -68,17 +70,28 @@ class FreeCartPaymentBox extends React.Component {
 	};
 
 	getProductName = () => {
-		let cart = this.props.cart,
-			product;
+		const cart = this.props.cart;
+		let product;
 
 		if ( cart.has_bundle_credit && this.props.selectedSite.plan ) {
 			product = this.props.products[ this.props.selectedSite.plan.product_slug ];
 		}
 
-		if ( product ) {
-			return product.product_name;
+		return product ? product.product_name : '';
+	};
+
+	getDomainCreditIllustration = () => {
+		const cart = this.props.cart;
+
+		if ( ! cart.has_bundle_credit ) {
+			return;
 		}
-		return '';
+
+		return (
+			<span className="checkout__free-domain-credit-illustration">
+				<img src="/calypso/images/illustrations/custom-domain.svg" alt="" />
+			</span>
+		);
 	};
 
 	render() {

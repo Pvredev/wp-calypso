@@ -13,6 +13,7 @@ import { flowRight as compose, omit, padEnd, trimEnd } from 'lodash';
 /**
  * Internal dependencies
  */
+import { decimalPlaces } from 'lib/simple-payments/utils';
 import ExternalLink from 'components/external-link';
 import FormTextInput from 'components/forms/form-text-input';
 import FormTextarea from 'components/forms/form-textarea';
@@ -21,6 +22,7 @@ import CompactFormToggle from 'components/forms/form-toggle/compact';
 import ReduxFormFieldset, { FieldsetRenderer } from 'components/redux-forms/redux-form-fieldset';
 import { getCurrencyDefaults } from 'lib/format-currency';
 import ProductImagePicker from './product-image-picker';
+import { SUPPORTED_CURRENCY_LIST } from 'lib/simple-payments/constants';
 
 export const REDUX_FORM_NAME = 'simplePaymentsForm';
 
@@ -29,34 +31,6 @@ export const getProductFormValues = state => getFormValues( REDUX_FORM_NAME )( s
 export const isProductFormValid = state => isValid( REDUX_FORM_NAME )( state );
 export const isProductFormDirty = state => isDirty( REDUX_FORM_NAME )( state );
 
-// https://developer.paypal.com/docs/integration/direct/rest/currency-codes/
-const SUPPORTED_CURRENCY_LIST = [
-	'USD',
-	'EUR',
-	'AUD',
-	'BRL',
-	'CAD',
-	'CZK',
-	'DKK',
-	'HKD',
-	'HUF',
-	'ILS',
-	'JPY',
-	'MYR',
-	'MXN',
-	'TWD',
-	'NZD',
-	'NOK',
-	'PHP',
-	'PLN',
-	'GBP',
-	'RUB',
-	'SGD',
-	'SEK',
-	'CHF',
-	'THB',
-];
-
 const VISUAL_CURRENCY_LIST = SUPPORTED_CURRENCY_LIST.map( code => {
 	const { symbol } = getCurrencyDefaults( code );
 	// if symbol is equal to the code (e.g., 'CHF' === 'CHF'), don't duplicate it.
@@ -64,15 +38,6 @@ const VISUAL_CURRENCY_LIST = SUPPORTED_CURRENCY_LIST.map( code => {
 	const label = symbol === code ? code : `${ code } ${ trimEnd( symbol, '.' ) }`;
 	return { code, label };
 } );
-
-// based on https://stackoverflow.com/a/10454560/59752
-function decimalPlaces( number ) {
-	const match = ( '' + number ).match( /(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/ );
-	if ( ! match ) {
-		return 0;
-	}
-	return Math.max( 0, ( match[ 1 ] ? match[ 1 ].length : 0 ) - ( match[ 2 ] ? +match[ 2 ] : 0 ) );
-}
 
 // Validation function for the form
 const validate = ( values, props ) => {
@@ -89,7 +54,7 @@ const validate = ( values, props ) => {
 
 	if ( ! values.price || parseFloat( values.price ) === 0 ) {
 		errors.price = translate( 'Everything comes with a price tag these days. Add yours here.' );
-	} else if ( parseFloat( values.price ) === NaN ) {
+	} else if ( Number.isNaN( parseFloat( values.price ) ) ) {
 		errors.price = translate( 'Invalid price' );
 	} else if ( parseFloat( values.price ) < 0 ) {
 		errors.price = translate( "Your price is negative — now that doesn't sound right, does it?" );

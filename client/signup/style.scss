@@ -24,23 +24,23 @@
 }
 
 .signup__step-enter.signup__step-enter-active,
-.signup__step-leave.signup__step-leave-active {
+.signup__step-exit.signup__step-exit-active {
 	pointer-events: none;
 }
 
 .signup__step-enter.signup__step-enter-active {
 	opacity: 1;
-	transition: .2s ease-in-out;
-	transition-delay: .2s;
+	transition: 200ms ease-in-out;
+	transition-delay: 200ms;
 
 	.is-animated-content {
 		transform: translate3d( 0, 0, 0 );
-		transition: .2s ease-in-out;
-		transition-delay: .2s;
+		transition: 200ms ease-in-out;
+		transition-delay: 200ms;
 	}
 }
 
-.signup__step-leave {
+.signup__step-exit {
 	opacity: 1;
 
 	.is-animated-content {
@@ -48,16 +48,73 @@
 	}
 }
 
-.signup__step-leave.signup__step-leave-active {
+.signup__step-exit.signup__step-exit-active {
 	opacity: 0.01;
-	transition: .2s ease-in-out;
+	transition: 200ms ease-in-out;
 
 	.is-animated-content {
 		transform: translate3d( 0, 32px, 0 ) scale( 0.9 );
-		transition: .2s ease-in-out;
+		transition: 200ms ease-in-out;
 	}
 }
 
 .is-section-signup .layout__content {
 	overflow: visible;
+}
+
+/* New Signup Styles */
+
+.formatted-header__title {
+	font-family: $signup-sans;
+	font-size: 2.953em;
+	font-weight: 700;
+	line-height: 1.2;
+	margin-top: 1em;
+}
+
+.is-section-signup .layout__content,
+.is-section-signup .layout__primary {
+	padding-left: 0;
+	padding-right: 0;
+	overflow: visible;
+}
+
+.is-section-signup::before,
+.is-section-signup .layout__primary::before {
+	content: '';
+	background: $gray-lighten-30;
+	display: block;
+	position: fixed;
+	width: 250px;
+	height: 350px;
+	transform: rotate( -10deg );
+	left: -30px;
+	bottom: -30px;
+	z-index: z-index( '.is-section-signup', '.is-section-signup::before' );
+}
+
+.is-section-signup .layout__primary::before {
+	left: auto;
+	bottom: auto;
+	top: -30px;
+	right: -30px;
+	z-index: z-index( '.is-section-signup', '.layout__primary::before' );
+}
+
+.is-section-signup .site-type__wrapper .card {
+	padding-top: 0px;
+}
+
+.is-section-signup .site-type__wrapper .site-type__option:first-child {
+	border-top: none;
+}
+
+@include breakpoint( '>1040px' ) {
+ 	.formatted-header__title {
+		font-size: 3.375em;
+	}
+
+ 	.formatted-header__subtitle {
+		font-size: 1.313em;
+	}
 }

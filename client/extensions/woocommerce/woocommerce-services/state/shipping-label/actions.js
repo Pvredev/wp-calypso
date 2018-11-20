@@ -183,7 +183,7 @@ export const submitStep = ( orderId, siteId, stepName ) => ( dispatch, getState 
 	expandFirstErroneousStep( orderId, siteId, dispatch, getState );
 };
 
-export const convertToApiPackage = ( pckg, siteId, orderId, state, customsItems ) => {
+export const convertToApiPackage = ( pckg, customsItems ) => {
 	const apiPckg = pick( pckg, [
 		'id',
 		'box_id',
@@ -193,6 +193,7 @@ export const convertToApiPackage = ( pckg, siteId, orderId, state, customsItems 
 		'height',
 		'weight',
 		'signature',
+		'is_letter',
 	] );
 	if ( customsItems ) {
 		apiPckg.contents_type = pckg.contentsType || 'merchandise';
@@ -214,7 +215,7 @@ export const convertToApiPackage = ( pckg, siteId, orderId, state, customsItems 
 				quantity,
 				value: quantity * customsItems[ product_id ].value,
 				weight: quantity * customsItems[ product_id ].weight,
-				hs_tariff_number: customsItems[ product_id ].tariffNumber,
+				hs_tariff_number: customsItems[ product_id ].tariffNumber || '',
 				origin_country: customsItems[ product_id ].originCountry,
 				product_id,
 			};
@@ -248,9 +249,7 @@ const tryGetLabelRates = ( orderId, siteId, dispatch, getState ) => {
 	dispatch( NoticeActions.removeNotice( 'wcs-label-rates' ) );
 
 	const customsItems = isCustomsFormRequired( getState(), orderId, siteId ) ? customs.items : null;
-	const apiPackages = map( packages.selected, pckg =>
-		convertToApiPackage( pckg, siteId, orderId, state, customsItems )
-	);
+	const apiPackages = map( packages.selected, pckg => convertToApiPackage( pckg, customsItems ) );
 	getRates( orderId, siteId, dispatch, origin.values, destination.values, apiPackages )
 		.then( () => expandFirstErroneousStep( orderId, siteId, dispatch, getState ) )
 		.catch( error => {
@@ -385,10 +384,7 @@ export const submitAddressForNormalization = ( orderId, siteId, group ) => (
 	dispatch,
 	getState
 ) => {
-	const handleNormalizeResponse = success => {
-		if ( ! success ) {
-			return;
-		}
+	const handleNormalizeResponse = () => {
 		const { values, normalized, expanded } = getShippingLabel( getState(), orderId, siteId ).form[
 			group
 		];
@@ -412,21 +408,18 @@ export const submitAddressForNormalization = ( orderId, siteId, group ) => (
 		state = getShippingLabel( getState(), orderId, siteId ).form[ group ];
 	}
 	if ( state.isNormalized && isEqual( state.values, state.normalized ) ) {
-		handleNormalizeResponse( true );
+		handleNormalizeResponse();
 		return;
 	}
-	normalizeAddress(
+
+	// No `catch` is needed here: `normalizeAddress` already generates a notice.
+	return normalizeAddress(
 		orderId,
 		siteId,
 		dispatch,
 		getShippingLabel( getState(), orderId, siteId ).form[ group ].values,
 		group
-	)
-		.then( handleNormalizeResponse )
-		.catch( error => {
-			console.error( error );
-			dispatch( NoticeActions.errorNotice( error.toString() ) );
-		} );
+	).then( handleNormalizeResponse );
 };
 
 export const updatePackageWeight = ( orderId, siteId, packageId, value ) => {
@@ -845,15 +838,18 @@ const pollForLabelsPurchase = ( orderId, siteId, dispatch, getState, labels ) =>
 
 	dispatch( purchaseLabelResponse( orderId, siteId, labels, false ) );
 
-	const labelsToPrint = labels.map( ( label, index ) => ( {
-		caption: translate( 'PACKAGE %(num)d (OF %(total)d)', {
-			args: {
-				num: index + 1,
-				total: labels.length,
-			},
-		} ),
-		labelId: label.label_id,
-	} ) );
+	const labelsToPrint =
+		1 === labels.length
+			? [ { labelId: labels[ 0 ].label_id } ] // No need to print the "Package 1 (of 1)" message if there's only 1 label
+			: labels.map( ( label, index ) => ( {
+					caption: translate( 'PACKAGE %(num)d (OF %(total)d)', {
+						args: {
+							num: index + 1,
+							total: labels.length,
+						},
+					} ),
+					labelId: label.label_id,
+			  } ) );
 	const state = getShippingLabel( getState(), orderId, siteId );
 	const printUrl = getPrintURL( state.paperSize, labelsToPrint );
 	const showSuccessNotice = () => {
@@ -940,9 +936,8 @@ export const purchaseLabel = ( orderId, siteId ) => ( dispatch, getState ) => {
 			if ( ! every( normalizationResults ) ) {
 				return;
 			}
-			const state = getShippingLabel( getState(), orderId, siteId );
-			form = state.form;
-			const customsItems = isCustomsFormRequired( state, orderId, siteId )
+			form = getShippingLabel( getState(), orderId, siteId ).form;
+			const customsItems = isCustomsFormRequired( getState(), orderId, siteId )
 				? form.customs.items
 				: null;
 			const formData = {
@@ -950,7 +945,7 @@ export const purchaseLabel = ( orderId, siteId ) => ( dispatch, getState ) => {
 				origin: getAddressValues( form.origin ),
 				destination: getAddressValues( form.destination ),
 				packages: map( form.packages.selected, ( pckg, pckgId ) => {
-					const packageFields = convertToApiPackage( pckg, siteId, orderId, state, customsItems );
+					const packageFields = convertToApiPackage( pckg, customsItems );
 					const rate = find( form.rates.available[ pckgId ].rates, {
 						service_id: form.rates.values[ pckgId ],
 					} );

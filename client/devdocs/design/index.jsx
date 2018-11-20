@@ -39,11 +39,13 @@ import Buttons from 'components/button/docs/example';
 import CardHeading from 'components/card-heading/docs/example';
 import Cards from 'components/card/docs/example';
 import Chart from 'components/chart/docs/example';
+import Checklist from 'components/checklist/docs/example';
 import ClipboardButtonInput from 'components/clipboard-button-input/docs/example';
 import ClipboardButtons from 'components/forms/clipboard-button/docs/example';
 import Collection from 'devdocs/design/search-collection';
 import Count from 'components/count/docs/example';
 import CountedTextareas from 'components/forms/counted-textarea/docs/example';
+import CreditCard from 'components/credit-card/docs/example';
 import DatePicker from 'components/date-picker/docs/example';
 import DiffViewerExample from 'components/diff-viewer/docs/example';
 import DropZones from 'components/drop-zone/docs/example';
@@ -57,6 +59,7 @@ import FeatureGate from 'components/feature-example/docs/example';
 import FilePickers from 'components/file-picker/docs/example';
 import FocusableExample from 'components/focusable/docs/example';
 import FoldableCard from 'components/foldable-card/docs/example';
+import FormattedDate from 'components/formatted-date/docs/example';
 import FormattedHeader from 'components/formatted-header/docs/example';
 import FormFields from 'components/forms/docs/example';
 import Gauge from 'components/gauge/docs/example';
@@ -101,6 +104,7 @@ import SpinnerButton from 'components/spinner-button/docs/example';
 import SpinnerLine from 'components/spinner-line/docs/example';
 import SplitButton from 'components/split-button/docs/example';
 import Suggestions from 'components/suggestions/docs/example';
+import SuggestionSearchExample from 'components/suggestion-search/docs/example';
 import SupportInfoExample from 'components/support-info/docs/example';
 import TextareaAutosize from 'components/textarea-autosize/docs/example';
 import TextDiff from 'components/text-diff/docs/example';
@@ -120,7 +124,7 @@ class DesignAssets extends React.Component {
 	static displayName = 'DesignAssets';
 	state = { filter: '' };
 
-	componentWillMount() {
+	UNSAFE_componentWillMount() {
 		if ( config.isEnabled( 'devdocs/components-usage-stats' ) ) {
 			const { dispatchFetchComponentsUsageStats } = this.props;
 			dispatchFetchComponentsUsageStats();
@@ -183,10 +187,12 @@ class DesignAssets extends React.Component {
 					<Cards readmeFilePath="card" />
 					<CardHeading readmeFilePath="card-heading" />
 					<Chart readmeFilePath="chart" />
+					<Checklist readmeFilePath="checklist" />
 					<ClipboardButtonInput readmeFilePath="clipboard-button-input" />
 					<ClipboardButtons readmeFilePath="forms/clipboard-button" />
 					<Count readmeFilePath="count" />
 					<CountedTextareas readmeFilePath="forms/counted-textarea" />
+					<CreditCard readmeFilePath="credit-card" />
 					<DatePicker readmeFilePath="date-picker" />
 					<DiffViewerExample readmeFilePath="diff-viewer" />
 					<DropZones searchKeywords="drag" readmeFilePath="drop-zone" />
@@ -200,6 +206,7 @@ class DesignAssets extends React.Component {
 					<FilePickers readmeFilePath="file-picker" />
 					<FocusableExample readmeFilePath="focusable" />
 					<FoldableCard readmeFilePath="foldable-card" />
+					<FormattedDate readmeFilePath="formatted-date" />
 					<FormattedHeader readmeFilePath="formatted-header" />
 					<FormFields searchKeywords="input textbox textarea radio" readmeFilePath="forms" />
 					<Gauge readmeFilePath="gauge" />
@@ -244,6 +251,7 @@ class DesignAssets extends React.Component {
 					<SpinnerButton searchKeywords="loading input submit" readmeFilePath="spinner-button" />
 					<SpinnerLine searchKeywords="loading" readmeFilePath="spinner-line" />
 					<Suggestions readmeFilePath="suggestions" />
+					<SuggestionSearchExample />
 					<SupportInfoExample />
 					<TextareaAutosize readmeFilePath="textarea-autosize" />
 					<TextDiff readmeFilePath="text-diff" />

@@ -64,7 +64,9 @@ const StatsInsights = props => {
 				<PostingActivity />
 				<SectionHeader label={ translate( 'All Time Views' ) } />
 				<StatsViews />
-				{ siteId && <DomainTip siteId={ siteId } event="stats_insights_domain" /> }
+				{ siteId && (
+					<DomainTip siteId={ siteId } event="stats_insights_domain" vendor="domainsbot" />
+				) }
 				<div className="stats-insights__nonperiodic has-recent">
 					<div className="stats__module-list">
 						<div className="stats__module-column">

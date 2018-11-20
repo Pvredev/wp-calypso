@@ -19,6 +19,11 @@ import BlogStickersList from 'blocks/blog-stickers/list';
 import InfoPopover from 'components/info-popover';
 import { isAutomatticTeamMember } from 'reader/lib/teams';
 
+/**
+ * Style dependencies
+ */
+import './style.scss';
+
 const BlogStickers = ( { blogId, teams, stickers } ) => {
 	const isTeamMember = isAutomatticTeamMember( teams );
 	if ( teams && ! isTeamMember ) {
@@ -27,6 +32,7 @@ const BlogStickers = ( { blogId, teams, stickers } ) => {
 
 	return (
 		<div className="blog-stickers">
+			<QueryBlogStickers blogId={ blogId } />
 			{ isTeamMember &&
 				stickers &&
 				stickers.length > 0 && (
@@ -34,7 +40,6 @@ const BlogStickers = ( { blogId, teams, stickers } ) => {
 						<BlogStickersList stickers={ stickers } />
 					</InfoPopover>
 				) }
-			{ ! stickers && <QueryBlogStickers blogId={ blogId } /> }
 			{ ! teams && <QueryReaderTeams /> }
 		</div>
 	);
@@ -44,9 +49,7 @@ BlogStickers.propTypes = {
 	blogId: PropTypes.number.isRequired,
 };
 
-export default connect( ( state, ownProps ) => {
-	return {
-		teams: getReaderTeams( state ),
-		stickers: getBlogStickers( state, ownProps.blogId ),
-	};
-} )( BlogStickers );
+export default connect( ( state, { blogId } ) => ( {
+	teams: getReaderTeams( state ),
+	stickers: getBlogStickers( state, blogId ),
+} ) )( BlogStickers );

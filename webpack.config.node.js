@@ -120,6 +120,23 @@ const webpackConfig = {
 					plugins: [ path.join( __dirname, 'server', 'bundler', 'babel', 'babel-lodash-es' ) ],
 				},
 			},
+			{
+				test: /\.(svg)$/,
+				use: [
+					{
+						loader: 'file-loader',
+						options: {
+							emitFile: false, // On the server side, don't actually copy files
+							name: '[name].[ext]',
+							outputPath: 'images/',
+						},
+					},
+				],
+			},
+			{
+				test: /\.(sc|sa|c)ss$/,
+				loader: 'ignore-loader',
+			},
 		],
 	},
 	resolve: {
@@ -146,6 +163,7 @@ const webpackConfig = {
 			entryOnly: false,
 		} ),
 		new webpack.DefinePlugin( {
+			BUILD_TIMESTAMP: JSON.stringify( new Date().toISOString() ),
 			PROJECT_NAME: JSON.stringify( config( 'project' ) ),
 			COMMIT_SHA: JSON.stringify( commitSha ),
 			'process.env.NODE_ENV': JSON.stringify( bundleEnv ),

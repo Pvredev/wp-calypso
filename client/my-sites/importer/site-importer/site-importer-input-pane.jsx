@@ -8,30 +8,38 @@ import { connect } from 'react-redux';
 import Dispatcher from 'dispatcher';
 import PropTypes from 'prop-types';
 import { localize } from 'i18n-calypso';
-import { noop, every, has, defer, get, trim } from 'lodash';
+import { noop, every, flow, has, defer, get, trim, sortBy, reverse } from 'lodash';
 import url from 'url';
+import moment from 'moment';
 
 /**
  * Internal dependencies
  */
 import wpLib from 'lib/wp';
+import config from 'config';
+import { validateImportUrl } from 'lib/importers/url-validation';
 
 const wpcom = wpLib.undocumented();
 
 import { toApi, fromApi } from 'lib/importer/common';
 
-import { startMappingAuthors, startImporting, mapAuthor, finishUpload } from 'lib/importer/actions';
+import {
+	mapAuthor,
+	startMappingAuthors,
+	startImporting,
+	createFinishUploadAction,
+} from 'lib/importer/actions';
 import user from 'lib/user';
 
 import { appStates } from 'state/imports/constants';
 import Button from 'components/forms/form-button';
 import ErrorPane from '../error-pane';
 import TextInput from 'components/forms/form-text-input';
+import FormSelect from 'components/forms/form-select';
 
 import SiteImporterSitePreview from './site-importer-site-preview';
-import { connectDispatcher } from '../dispatcher-converter';
 
-import { loadmShotsPreview } from './site-preview-actions';
+import { prefetchmShotsPreview } from './site-preview-actions';
 
 import { recordTracksEvent } from 'state/analytics/actions';
 
@@ -62,11 +70,23 @@ class SiteImporterInputPane extends React.Component {
 		error: false,
 		errorMessage: '',
 		errorType: null,
-		siteURLInput: '',
+		siteURLInput: this.props.fromSite || '',
+		selectedEndpoint: '',
+		availableEndpoints: [],
 	};
 
+	UNSAFE_componentWillMount = () => {
+		if ( config.isEnabled( 'manage/import/site-importer-endpoints' ) ) {
+			this.fetchEndpoints();
+		}
+	};
+
+	componentDidMount() {
+		this.validateSite();
+	}
+
 	// TODO This can be improved if we move to Redux.
-	componentWillReceiveProps = nextProps => {
+	UNSAFE_componentWillReceiveProps = nextProps => {
 		// TODO test on a site without posts
 		const newImporterState = nextProps.importerStatus.importerState;
 		const oldImporterState = this.props.importerStatus.importerState;
@@ -82,11 +102,10 @@ class SiteImporterInputPane extends React.Component {
 						name: currentUserData.display_name,
 					};
 
-					const mappingFunction = this.props.mapAuthorFor( props.importerStatus.importerId );
-
 					// map all the authors to the current user
+					// TODO: when converting to redux, allow for multiple mappings in a single action
 					props.importerStatus.customData.sourceAuthors.forEach( author => {
-						mappingFunction( author, currentUser );
+						mapAuthor( props.importerStatus.importerId, author, currentUser );
 					} );
 				}, nextProps );
 			} else {
@@ -120,6 +139,46 @@ class SiteImporterInputPane extends React.Component {
 		}
 	};
 
+	fetchEndpoints = () => {
+		wpcom.wpcom.req
+			.get( {
+				path: `/sites/${ this.props.site.ID }/site-importer/list-endpoints`,
+				apiNamespace: 'wpcom/v2',
+			} )
+			.then( resp => {
+				const twoWeeksAgo = moment().subtract( 2, 'weeks' );
+				const endpoints = resp.reduce( ( validEndpoints, endpoint ) => {
+					const lastModified = moment( new Date( endpoint.lastModified ) );
+					if ( lastModified.isBefore( twoWeeksAgo ) ) {
+						return validEndpoints;
+					}
+
+					return [
+						...validEndpoints,
+						{
+							name: endpoint.name,
+							title: endpoint.name.replace( /^[a-zA-Z0-9]+-/i, '' ),
+							lastModifiedTitle: lastModified.fromNow(),
+							lastModifiedTimestamp: lastModified.unix(),
+						},
+					];
+				}, [] );
+				this.setState( {
+					availableEndpoints: reverse( sortBy( endpoints, 'lastModifiedTimestamp' ) ).slice(
+						0,
+						20
+					),
+				} );
+			} )
+			.catch( err => {
+				return err;
+			} );
+	};
+
+	setEndpoint = e => {
+		this.setState( { selectedEndpoint: e.target.value } );
+	};
+
 	setUrl = event => {
 		this.setState( { siteURLInput: event.target.value } );
 	};
@@ -130,22 +189,20 @@ class SiteImporterInputPane extends React.Component {
 
 	validateSite = () => {
 		const siteURL = trim( this.state.siteURLInput );
+
+		if ( ! siteURL ) {
+			return;
+		}
+
 		const { hostname, pathname } = url.parse(
 			siteURL.startsWith( 'http' ) ? siteURL : 'https://' + siteURL
 		);
 
-		let errorMessage;
-		if ( ! siteURL ) {
-			errorMessage = this.props.translate( 'Please enter a valid URL.' );
-		} else if ( hostname === 'editor.wix.com' || hostname === 'www.wix.com' ) {
-			errorMessage = this.props.translate(
-				"You've entered the URL for the Wix editor, which only you can access. Please enter your site's public URL. It should look like one of the examples below."
-			);
-		} else if ( hostname.indexOf( '.wixsite.com' ) > -1 && pathname === '/' ) {
-			errorMessage = this.props.translate(
-				"You haven't entered the full URL. Please include the part of the URL that comes after wixsite.com. See below for an example."
-			);
+		if ( ! hostname ) {
+			return;
 		}
+
+		const errorMessage = validateImportUrl( siteURL );
 
 		if ( errorMessage ) {
 			this.setState( {
@@ -165,21 +222,21 @@ class SiteImporterInputPane extends React.Component {
 			...NO_ERROR_STATE,
 		} );
 
-		this.props.recordTracksEvent( 'calypso_site_importer_validate_site', {
+		this.props.recordTracksEvent( 'calypso_site_importer_validate_site_start', {
 			blog_id: this.props.site.ID,
 			site_url: urlForImport,
 		} );
 
-		loadmShotsPreview( {
-			url: urlForImport,
-			maxRetries: 1,
-		} ).catch( noop ); // We don't care about the error, this is just a preload
+		prefetchmShotsPreview( urlForImport );
+
+		const endpointParam =
+			this.state.selectedEndpoint && `&force_endpoint=${ this.state.selectedEndpoint }`;
 
 		wpcom.wpcom.req
 			.get( {
 				path: `/sites/${
 					this.props.site.ID
-				}/site-importer/is-site-importable?site_url=${ urlForImport }`,
+				}/site-importer/is-site-importable?site_url=${ urlForImport }${ endpointParam }`,
 				apiNamespace: 'wpcom/v2',
 			} )
 			.then( resp => {
@@ -197,7 +254,7 @@ class SiteImporterInputPane extends React.Component {
 					importSiteURL: resp.site_url,
 				} );
 
-				this.props.recordTracksEvent( 'calypso_site_importer_validate_site_done', {
+				this.props.recordTracksEvent( 'calypso_site_importer_validate_site_success', {
 					blog_id: this.props.site.ID,
 					site_url: resp.site_url,
 					supported_content: resp.supported_content
@@ -231,7 +288,7 @@ class SiteImporterInputPane extends React.Component {
 			...NO_ERROR_STATE,
 		} );
 
-		this.props.recordTracksEvent( 'calypso_site_importer_start_import', {
+		this.props.recordTracksEvent( 'calypso_site_importer_start_import_request', {
 			blog_id: this.props.site.ID,
 			site_url: this.state.importSiteURL,
 			supported_content: this.state.importData.supported
@@ -245,9 +302,12 @@ class SiteImporterInputPane extends React.Component {
 			site_engine: this.state.importData.engine,
 		} );
 
+		const endpointParam =
+			this.state.selectedEndpoint && `?force_endpoint=${ this.state.selectedEndpoint }`;
+
 		wpcom.wpcom.req
 			.post( {
-				path: `/sites/${ this.props.site.ID }/site-importer/import-site`,
+				path: `/sites/${ this.props.site.ID }/site-importer/import-site${ endpointParam }`,
 				apiNamespace: 'wpcom/v2',
 				formData: [
 					[ 'import_status', JSON.stringify( toApi( this.props.importerStatus ) ) ],
@@ -257,7 +317,7 @@ class SiteImporterInputPane extends React.Component {
 			.then( resp => {
 				this.setState( { loading: false } );
 
-				this.props.recordTracksEvent( 'calypso_site_importer_start_import_done', {
+				this.props.recordTracksEvent( 'calypso_site_importer_start_import_success', {
 					blog_id: this.props.site.ID,
 					site_url: this.state.importSiteURL,
 					supported_content: this.state.importData.supported
@@ -272,7 +332,7 @@ class SiteImporterInputPane extends React.Component {
 				} );
 
 				const data = fromApi( resp );
-				const action = finishUpload( this.props.importerStatus.importerId )( data );
+				const action = createFinishUploadAction( this.props.importerStatus.importerId, data );
 				defer( () => {
 					Dispatcher.handleViewAction( action );
 				} );
@@ -329,13 +389,29 @@ class SiteImporterInputPane extends React.Component {
 								placeholder="https://example.com/"
 							/>
 							<Button
+								primary={ true }
 								disabled={ this.state.loading }
-								isPrimary={ true }
+								busy={ this.state.loading }
 								onClick={ this.validateSite }
 							>
 								{ this.props.translate( 'Continue' ) }
 							</Button>
 						</div>
+						{ this.state.availableEndpoints.length > 0 && (
+							<FormSelect
+								onChange={ this.setEndpoint }
+								disabled={ this.state.loading }
+								className="site-importer__site-importer-endpoint-select"
+								value={ this.state.selectedEndpoint }
+							>
+								<option value="">Production Endpoint</option>
+								{ this.state.availableEndpoints.map( endpoint => (
+									<option key={ endpoint.name } value={ endpoint.name }>
+										{ endpoint.title } ({ endpoint.lastModifiedTitle })
+									</option>
+								) ) }
+							</FormSelect>
+						) }
 					</div>
 				) }
 				{ this.state.importStage === 'importable' && (
@@ -381,14 +457,10 @@ class SiteImporterInputPane extends React.Component {
 	}
 }
 
-const mapDispatchToProps = dispatch => ( {
-	mapAuthorFor: importerId => ( source, target ) =>
-		defer( () => {
-			dispatch( mapAuthor( importerId, source, target ) );
-		} ),
-} );
-
-export default connect(
-	null,
-	{ recordTracksEvent }
-)( connectDispatcher( null, mapDispatchToProps )( localize( SiteImporterInputPane ) ) );
+export default flow(
+	connect(
+		null,
+		{ recordTracksEvent }
+	),
+	localize
+)( SiteImporterInputPane );

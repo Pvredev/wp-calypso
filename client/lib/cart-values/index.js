@@ -4,7 +4,7 @@
  * External dependencies
  */
 import url from 'url';
-import { extend, isArray } from 'lodash';
+import { extend, isArray, invert } from 'lodash';
 import update from 'immutability-helper';
 import i18n from 'i18n-calypso';
 import config from 'config';
@@ -15,6 +15,22 @@ import config from 'config';
 import cartItems from './cart-items';
 import productsValues from 'lib/products-values';
 import { requestGeoLocation } from 'state/data-getters';
+
+const PAYMENT_METHODS = {
+	alipay: 'WPCOM_Billing_Stripe_Source_Alipay',
+	bancontact: 'WPCOM_Billing_Stripe_Source_Bancontact',
+	'credit-card': 'WPCOM_Billing_MoneyPress_Paygate',
+	ebanx: 'WPCOM_Billing_Ebanx',
+	'emergent-paywall': 'WPCOM_Billing_Emergent_Paywall',
+	eps: 'WPCOM_Billing_Stripe_Source_Eps',
+	giropay: 'WPCOM_Billing_Stripe_Source_Giropay',
+	ideal: 'WPCOM_Billing_Stripe_Source_Ideal',
+	paypal: 'WPCOM_Billing_PayPal_Express',
+	p24: 'WPCOM_Billing_Stripe_Source_P24',
+	'brazil-tef': 'WPCOM_Billing_Ebanx_Redirect_Brazil_Tef',
+	wechat: 'WPCOM_Billing_Stripe_Source_Wechat',
+	'web-payment': 'WPCOM_Billing_Web_Payment',
+};
 
 /**
  * Preprocesses cart for server.
@@ -203,6 +219,23 @@ function getRefundPolicy( cart ) {
 	return 'genericRefund';
 }
 
+function getEnabledPaymentMethods( cart ) {
+	// Clone our allowed payment methods array
+	let allowedPaymentMethods = cart.allowed_payment_methods.slice( 0 );
+
+	// Ebanx is used as part of the credit-card method, does not need to be listed.
+	allowedPaymentMethods = allowedPaymentMethods.filter( function( method ) {
+		return 'WPCOM_Billing_Ebanx' !== method;
+	} );
+
+	// Invert so we can search by class name.
+	const paymentMethodsKeys = invert( PAYMENT_METHODS );
+
+	return allowedPaymentMethods.map( function( methodClassName ) {
+		return paymentMethodsKeys[ methodClassName ];
+	} );
+}
+
 /**
  * Return a string that represents the WPCOM class name for a payment method
  *
@@ -210,21 +243,7 @@ function getRefundPolicy( cart ) {
  * @returns {string} the wpcom class name
  */
 function paymentMethodClassName( method ) {
-	const paymentMethodsClassNames = {
-		alipay: 'WPCOM_Billing_Stripe_Source_Alipay',
-		bancontact: 'WPCOM_Billing_Stripe_Source_Bancontact',
-		'credit-card': 'WPCOM_Billing_MoneyPress_Paygate',
-		ebanx: 'WPCOM_Billing_Ebanx',
-		'emergent-paywall': 'WPCOM_Billing_Emergent_Paywall',
-		eps: 'WPCOM_Billing_Stripe_Source_Eps',
-		giropay: 'WPCOM_Billing_Stripe_Source_Giropay',
-		ideal: 'WPCOM_Billing_Stripe_Source_Ideal',
-		paypal: 'WPCOM_Billing_PayPal_Express',
-		p24: 'WPCOM_Billing_Stripe_Source_P24',
-		'brazil-tef': 'WPCOM_Billing_Ebanx_Redirect_Brazil_Tef',
-	};
-
-	return paymentMethodsClassNames[ method ] || '';
+	return PAYMENT_METHODS[ method ] || '';
 }
 
 /**
@@ -245,6 +264,10 @@ function paymentMethodName( method ) {
 		paypal: 'PayPal',
 		p24: 'Przelewy24',
 		'brazil-tef': 'Transferência bancária',
+		wechat: i18n.translate( 'WeChat Pay', {
+			comment: 'Name for WeChat Pay - https://pay.weixin.qq.com/',
+		} ),
+		'web-payment': i18n.translate( 'Wallet' ),
 	};
 
 	// Temporarily override 'credit or debit' with just 'credit' for india
@@ -270,6 +293,7 @@ function isPaymentMethodEnabled( cart, method ) {
 		'paypal',
 		'p24',
 		'brazil-tef',
+		'wechat',
 	];
 	const methodClassName = paymentMethodClassName( method );
 
@@ -295,6 +319,14 @@ function getLocationOrigin( l ) {
 	return l.protocol + '//' + l.hostname + ( l.port ? ':' + l.port : '' );
 }
 
+export function hasPendingPayment( cart ) {
+	if ( cart && cart.has_pending_payment ) {
+		return true;
+	}
+
+	return false;
+}
+
 export {
 	applyCoupon,
 	removeCoupon,
@@ -304,6 +336,7 @@ export {
 	preprocessCartForServer,
 	fillInAllCartItemAttributes,
 	fillInSingleCartItemAttributes,
+	getEnabledPaymentMethods,
 	getNewMessages,
 	getRefundPolicy,
 	isFree,
@@ -320,4 +353,5 @@ export default {
 	cartItems,
 	emptyCart,
 	isPaymentMethodEnabled,
+	hasPendingPayment,
 };

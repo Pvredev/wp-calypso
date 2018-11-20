@@ -9,6 +9,7 @@ import { assign, difference, get, isEmpty, pick } from 'lodash';
  * Internal dependencies
  */
 import {
+	PLAN_BUSINESS_MONTHLY,
 	PLAN_BUSINESS,
 	PLAN_BUSINESS_2_YEARS,
 	PLAN_PREMIUM,
@@ -26,7 +27,14 @@ import {
 	GROUP_JETPACK,
 } from 'lib/plans/constants';
 
-import { planMatches, isBusinessPlan, isPremiumPlan, isPersonalPlan } from 'lib/plans';
+import {
+	planMatches,
+	isEcommercePlan,
+	isBusinessPlan,
+	isPremiumPlan,
+	isPersonalPlan,
+	isBloggerPlan,
+} from 'lib/plans';
 import { domainProductSlugs } from 'lib/domains/constants';
 import schema from './schema.json';
 
@@ -37,6 +45,9 @@ const productDependencies = {
 		gapps_extra_license: true,
 		gapps_unlimited: true,
 		private_whois: true,
+	},
+	[ PLAN_BUSINESS_MONTHLY ]: {
+		domain_redemption: true,
 	},
 	[ PLAN_BUSINESS ]: {
 		domain_redemption: true,
@@ -125,6 +136,13 @@ export function isPersonal( product ) {
 	return isPersonalPlan( product.product_slug );
 }
 
+export function isBlogger( product ) {
+	product = formatProduct( product );
+	assertValidProduct( product );
+
+	return isBloggerPlan( product.product_slug );
+}
+
 export function isPremium( product ) {
 	product = formatProduct( product );
 	assertValidProduct( product );
@@ -137,6 +155,13 @@ export function isBusiness( product ) {
 	assertValidProduct( product );
 
 	return isBusinessPlan( product.product_slug );
+}
+
+export function isEcommerce( product ) {
+	product = formatProduct( product );
+	assertValidProduct( product );
+
+	return isEcommercePlan( product.product_slug );
 }
 
 export function isEnterprise( product ) {
@@ -211,9 +236,11 @@ export function isPlan( product ) {
 	assertValidProduct( product );
 
 	return (
+		isBlogger( product ) ||
 		isPersonal( product ) ||
 		isPremium( product ) ||
 		isBusiness( product ) ||
+		isEcommerce( product ) ||
 		isEnterprise( product ) ||
 		isJpphpBundle( product )
 	);

@@ -8,17 +8,17 @@
  * External dependencies
  */
 const _ = require( 'lodash' );
-const CopyWebpackPlugin = require( './server/bundler/copy-webpack-plugin' );
 const fs = require( 'fs' );
 const path = require( 'path' );
 const webpack = require( 'webpack' );
 const AssetsWriter = require( './server/bundler/assets-writer' );
-const MiniCssExtractPlugin = require( 'mini-css-extract-plugin' );
-const StatsWriter = require( './server/bundler/stats-writer' );
-const prism = require( 'prismjs' );
-const UglifyJsPlugin = require( 'uglifyjs-webpack-plugin' );
+const MiniCssExtractPluginWithRTL = require( 'mini-css-extract-plugin-with-rtl' );
+const WebpackRTLPlugin = require( 'webpack-rtl-plugin' );
+const { BundleAnalyzerPlugin } = require( 'webpack-bundle-analyzer' );
+const TerserPlugin = require( 'terser-webpack-plugin' );
 const CircularDependencyPlugin = require( 'circular-dependency-plugin' );
 const os = require( 'os' );
+const DuplicatePackageCheckerPlugin = require( 'duplicate-package-checker-webpack-plugin' );
 
 /**
  * Internal dependencies
@@ -35,9 +35,59 @@ const isDevelopment = bundleEnv !== 'production';
 const shouldMinify =
 	process.env.MINIFY_JS === 'true' ||
 	( process.env.MINIFY_JS !== 'false' && bundleEnv === 'production' );
-const shouldEmitStats = process.env.EMIT_STATS === 'true';
+const shouldEmitStats = process.env.EMIT_STATS && process.env.EMIT_STATS !== 'false';
+const shouldEmitStatsWithReasons = process.env.EMIT_STATS === 'withreasons';
 const shouldCheckForCycles = process.env.CHECK_CYCLES === 'true';
 const codeSplit = config.isEnabled( 'code-splitting' );
+const isCalypsoClient = process.env.CALYPSO_CLIENT === 'true';
+
+/*
+ * Create reporter for ProgressPlugin (used with EMIT_STATS)
+ */
+function createProgressHandler() {
+	const startTime = Date.now();
+	let lastShownBuildingMessageTime = null;
+	let lastUnshownBuildingMessage = null;
+
+	return ( percentage, msg, ...details ) => {
+		const nowTime = Date.now();
+		const timeString = ( ( nowTime - startTime ) / 1000 ).toFixed( 1 ) + 's';
+		const percentageString = `${ Math.floor( percentage * 100 ) }%`;
+		const detailsString = details
+			.map( detail => {
+				if ( ! detail ) {
+					return '';
+				}
+				if ( detail.length > 40 ) {
+					return `…${ detail.substr( detail.length - 39 ) }`;
+				}
+				return detail;
+			} )
+			.join( ' ' );
+		const message = `${ timeString } ${ percentageString } ${ msg } ${ detailsString }`;
+
+		// There are plenty of 'building' messages that make the log too long for CircleCI web UI.
+		// Let's throttle the 'building' messages to one per second, while always showing the last one.
+		if ( msg === 'building' ) {
+			if ( lastShownBuildingMessageTime && nowTime - lastShownBuildingMessageTime < 1000 ) {
+				// less than 1000ms since last message: ignore, but store for case it's the last one
+				lastUnshownBuildingMessage = message;
+				return;
+			}
+
+			// the message will be shown and its time recorded
+			lastShownBuildingMessageTime = nowTime;
+			lastUnshownBuildingMessage = null;
+		} else if ( lastUnshownBuildingMessage ) {
+			// The last 'building' message should always be shown, no matter the timing.
+			// We do that on the first non-'building' message.
+			console.log( lastUnshownBuildingMessage ); // eslint-disable-line no-console
+			lastUnshownBuildingMessage = null;
+		}
+
+		console.log( message ); // eslint-disable-line no-console
+	};
+}
 
 /**
  * This function scans the /client/extensions directory in order to generate a map that looks like this:
@@ -65,33 +115,53 @@ function getAliasesForExtensions() {
 	return aliasesMap;
 }
 
-const babelLoader = {
-	loader: 'babel-loader',
-	options: {
-		configFile: path.resolve( __dirname, 'babel.config.js' ),
-		babelrc: false,
-		cacheDirectory: path.join( __dirname, 'build', '.babel-client-cache' ),
-		cacheIdentifier,
-	},
+/**
+ * Converts @wordpress require into window reference
+ *
+ * Note this isn't the same as camel case because of the
+ * way that numbers don't trigger the capitalized next letter
+ *
+ * @example
+ * wordpressRequire( '@wordpress/api-fetch' ) = 'wp.apiFetch'
+ * wordpressRequire( '@wordpress/i18n' ) = 'wp.i18n'
+ *
+ * @param {string} request import name
+ * @return {string} global variable reference for import
+ */
+const wordpressRequire = request => {
+	// @wordpress/components -> [ @wordpress, components ]
+	const [ , name ] = request.split( '/' );
+
+	// components -> wp.components
+	return `wp.${ name.replace( /-([a-z])/g, ( match, letter ) => letter.toUpperCase() ) }`;
 };
+
+const wordpressExternals = ( context, request, callback ) =>
+	/^@wordpress\//.test( request )
+		? callback( null, `root ${ wordpressRequire( request ) }` )
+		: callback();
 
 /**
  * Return a webpack config object
  *
  * @see {@link https://webpack.js.org/configuration/configuration-types/#exporting-a-function}
  *
- * @param  {object}  env                environment options
- * @param  {string}  env.extensionName  set by bin/sdk/gutenberg.js when building Gutenberg extensions
- * @param  {object}  argv               options map
- * @return {object}                     webpack config
+ * @param {object}  env                              additional config options
+ * @param {boolean} env.externalizeWordPressPackages whether to bundle or extern the `@wordpress/` packages
+ *
+ * @return {object}                                  webpack config
  */
-function getWebpackConfig( { extensionName = '' } = {}, argv ) {
+function getWebpackConfig( { cssFilename, externalizeWordPressPackages = false } = {} ) {
+	cssFilename =
+		cssFilename ||
+		( isDevelopment || calypsoEnv === 'desktop' ? '[name].css' : '[name].[chunkhash].css' );
+
 	const webpackConfig = {
 		bail: ! isDevelopment,
+		context: __dirname,
 		entry: { build: [ path.join( __dirname, 'client', 'boot', 'app' ) ] },
-		profile: shouldEmitStats,
 		mode: isDevelopment ? 'development' : 'production',
-		devtool: isDevelopment ? '#eval' : process.env.SOURCEMAP || false, // in production builds you can specify a source-map via env var
+		devtool: process.env.SOURCEMAP || ( isDevelopment ? '#eval' : false ),
 		output: {
 			path: path.join( __dirname, 'public' ),
 			publicPath: '/calypso/',
@@ -111,23 +181,15 @@ function getWebpackConfig( { extensionName = '' } = {}, argv ) {
 			chunkIds: isDevelopment ? 'named' : 'natural',
 			minimize: shouldMinify,
 			minimizer: [
-				new UglifyJsPlugin( {
-					cache: 'docker' !== process.env.CONTAINER,
-					parallel: true,
+				new TerserPlugin( {
+					cache: process.env.CIRCLECI
+						? `${ process.env.HOME }/terser-cache`
+						: 'docker' !== process.env.CONTAINER,
+					parallel: process.env.CIRCLECI ? 2 : true,
 					sourceMap: Boolean( process.env.SOURCEMAP ),
-					uglifyOptions: {
-						compress: {
-							/**
-							 * Produces inconsistent results
-							 * Enable when the following is resolved:
-							 * https://github.com/mishoo/UglifyJS2/issues/3010
-							 */
-							collapse_vars: false,
-						},
-						mangle: {
-							safari10: true,
-						},
+					terserOptions: {
 						ecma: 5,
+						safari10: true,
 					},
 				} ),
 			],
@@ -139,7 +201,7 @@ function getWebpackConfig( { extensionName = '' } = {}, argv ) {
 			rules: [
 				{
 					test: /\.jsx?$/,
-					exclude: /node_modules[\/\\](?!notifications-panel)/,
+					exclude: /node_modules\//,
 					use: [
 						{
 							loader: 'thread-loader',
@@ -147,7 +209,36 @@ function getWebpackConfig( { extensionName = '' } = {}, argv ) {
 								workers: Math.max( 2, Math.floor( os.cpus().length / 2 ) ),
 							},
 						},
-						babelLoader,
+						{
+							loader: 'babel-loader',
+							options: {
+								configFile: path.resolve( __dirname, 'babel.config.js' ),
+								babelrc: false,
+								cacheDirectory: path.join( __dirname, 'build', '.babel-client-cache' ),
+								cacheIdentifier,
+								overrides: [
+									{
+										test: './client/gutenberg/extensions',
+										plugins: [
+											[
+												'@wordpress/import-jsx-pragma',
+												{
+													scopeVariable: 'createElement',
+													source: '@wordpress/element',
+													isDefault: false,
+												},
+											],
+											[
+												'@babel/transform-react-jsx',
+												{
+													pragma: 'createElement',
+												},
+											],
+										],
+									},
+								],
+							},
+						},
 					],
 				},
 				{
@@ -160,20 +251,26 @@ function getWebpackConfig( { extensionName = '' } = {}, argv ) {
 				},
 				{
 					test: /\.(sc|sa|c)ss$/,
-					use: _.compact( [
-						MiniCssExtractPlugin.loader,
+					use: [
+						MiniCssExtractPluginWithRTL.loader,
 						'css-loader',
-						extensionName && {
-							loader: 'namespace-css-loader',
-							options: `.${ extensionName }`, // Just the namespace class
+						{
+							loader: 'postcss-loader',
+							options: {
+								plugins: [ require( 'autoprefixer' ) ],
+							},
 						},
 						{
 							loader: 'sass-loader',
 							options: {
 								includePaths: [ path.join( __dirname, 'client' ) ],
+								data: `@import '${ path.join(
+									__dirname,
+									'assets/stylesheets/shared/_utils.scss'
+								) }';`,
 							},
 						},
-					] ),
+					],
 				},
 				{
 					test: /extensions[\/\\]index/,
@@ -189,28 +286,24 @@ function getWebpackConfig( { extensionName = '' } = {}, argv ) {
 					loader: 'html-loader',
 				},
 				{
+					test: /\.(?:gif|jpg|jpeg|png|svg)$/i,
+					use: [
+						{
+							loader: 'file-loader',
+							options: {
+								name: '[name]-[hash].[ext]',
+								outputPath: 'images/',
+							},
+						},
+					],
+				},
+				{
 					include: require.resolve( 'tinymce/tinymce' ),
 					use: 'exports-loader?window=tinymce',
 				},
 				{
 					test: /node_modules[\/\\]tinymce/,
 					use: 'imports-loader?this=>window',
-				},
-				{
-					test: /README\.md$/,
-					use: [
-						{ loader: 'html-loader' },
-						{
-							loader: 'markdown-loader',
-							options: {
-								sanitize: true,
-								highlight: function( code, language ) {
-									const syntax = prism.languages[ language ];
-									return syntax ? prism.highlight( code, syntax ) : code;
-								},
-							},
-						},
-					],
 				},
 			],
 		},
@@ -223,6 +316,8 @@ function getWebpackConfig( { extensionName = '' } = {}, argv ) {
 					'react-virtualized': 'react-virtualized/dist/commonjs',
 					'social-logos/example': 'social-logos/build/example',
 					debug: path.resolve( __dirname, 'node_modules/debug' ),
+					store: 'store/dist/store.modern',
+					gridicons$: path.resolve( __dirname, 'client/components/async-gridicons' ),
 				},
 				getAliasesForExtensions()
 			),
@@ -232,19 +327,25 @@ function getWebpackConfig( { extensionName = '' } = {}, argv ) {
 			! codeSplit && new webpack.optimize.LimitChunkCountPlugin( { maxChunks: 1 } ),
 			new webpack.DefinePlugin( {
 				'process.env.NODE_ENV': JSON.stringify( bundleEnv ),
+				BUILD_TIMESTAMP: JSON.stringify( new Date().toISOString() ),
 				PROJECT_NAME: JSON.stringify( config( 'project' ) ),
 				global: 'window',
 			} ),
 			new webpack.NormalModuleReplacementPlugin( /^path$/, 'path-browserify' ),
 			new webpack.IgnorePlugin( /^props$/ ),
-			new CopyWebpackPlugin( [
-				{ from: 'node_modules/flag-icon-css/flags/4x3', to: 'images/flags' },
-			] ),
-			new MiniCssExtractPlugin(),
+			isCalypsoClient && new webpack.IgnorePlugin( /^\.\/locale$/, /moment$/ ),
+			new MiniCssExtractPluginWithRTL( {
+				filename: cssFilename,
+				rtlEnabled: true,
+			} ),
+			new WebpackRTLPlugin( {
+				minify: ! isDevelopment,
+			} ),
 			new AssetsWriter( {
 				filename: 'assets.json',
 				path: path.join( __dirname, 'server', 'bundler' ),
 			} ),
+			new DuplicatePackageCheckerPlugin(),
 			shouldCheckForCycles &&
 				new CircularDependencyPlugin( {
 					exclude: /node_modules/,
@@ -253,31 +354,30 @@ function getWebpackConfig( { extensionName = '' } = {}, argv ) {
 					cwd: process.cwd(),
 				} ),
 			shouldEmitStats &&
-				new StatsWriter( {
-					filename: 'stats.json',
-					path: __dirname,
-					stats: {
-						assets: true,
-						children: true,
-						modules: true,
+				new BundleAnalyzerPlugin( {
+					analyzerMode: 'disabled', // just write the stats.json file
+					generateStatsFile: true,
+					statsFilename: path.join( __dirname, 'stats.json' ),
+					statsOptions: {
 						source: false,
-						reasons: false,
-						issuer: false,
-						timings: true,
+						reasons: shouldEmitStatsWithReasons,
+						optimizationBailout: false,
+						chunkOrigins: false,
 					},
 				} ),
+			shouldEmitStats && new webpack.ProgressPlugin( createProgressHandler() ),
 		] ),
-		externals: [ 'electron' ],
+		externals: _.compact( [
+			externalizeWordPressPackages && wordpressExternals,
+			externalizeWordPressPackages && 'wp',
+			'electron',
+		] ),
 	};
 
 	if ( calypsoEnv === 'desktop' ) {
 		// no chunks or dll here, just one big file for the desktop app
 		webpackConfig.output.filename = '[name].js';
 		webpackConfig.output.chunkFilename = '[name].js';
-	} else {
-		// jquery is only needed in the build for the desktop app
-		// see electron bug: https://github.com/atom/electron/issues/254
-		webpackConfig.externals.push( 'jquery' );
 	}
 
 	if ( isDevelopment ) {

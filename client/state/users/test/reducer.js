@@ -1,11 +1,6 @@
 /** @format */
 
 /**
- * External dependencies
- */
-import { expect } from 'chai';
-
-/**
  * Internal dependencies
  */
 import { items } from '../reducer';
@@ -16,7 +11,7 @@ describe( 'reducer', () => {
 		test( 'should default to an empty object', () => {
 			const state = items( undefined, {} );
 
-			expect( state ).to.eql( {} );
+			expect( state ).toEqual( {} );
 		} );
 
 		test( 'should index users by ID', () => {
@@ -25,7 +20,7 @@ describe( 'reducer', () => {
 				user: { ID: 73705554, login: 'testonesite2014' },
 			} );
 
-			expect( state ).to.eql( {
+			expect( state ).toEqual( {
 				73705554: { ID: 73705554, login: 'testonesite2014' },
 			} );
 		} );
@@ -34,12 +29,13 @@ describe( 'reducer', () => {
 			const original = Object.freeze( {
 				73705554: { ID: 73705554, login: 'testonesite2014' },
 			} );
+
 			const state = items( original, {
 				type: USER_RECEIVE,
 				user: { ID: 73705672, login: 'testtwosites2014' },
 			} );
 
-			expect( state ).to.eql( {
+			expect( state ).toEqual( {
 				73705554: { ID: 73705554, login: 'testonesite2014' },
 				73705672: { ID: 73705672, login: 'testtwosites2014' },
 			} );
@@ -49,12 +45,13 @@ describe( 'reducer', () => {
 			const original = Object.freeze( {
 				73705554: { ID: 73705554, login: 'testonesite2014' },
 			} );
+
 			const state = items( original, {
 				type: USER_RECEIVE,
 				user: { ID: 73705554, login: 'testtwosites2014' },
 			} );
 
-			expect( state ).to.eql( {
+			expect( state ).toEqual( {
 				73705554: { ID: 73705554, login: 'testtwosites2014' },
 			} );
 		} );

@@ -5,8 +5,9 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import createReactClass from 'create-react-class';
-import ReactCSSTransitionGroup from 'react-transition-group/CSSTransitionGroup';
-import i18n, { localize } from 'i18n-calypso';
+import TransitionGroup from 'react-transition-group/TransitionGroup';
+import CSSTransition from 'react-transition-group/CSSTransition';
+import { localize } from 'i18n-calypso';
 import debugFactory from 'debug';
 import emailValidator from 'email-validator';
 import { debounce, flowRight as compose, get, has, map, size, update } from 'lodash';
@@ -51,6 +52,7 @@ import { canDisplayCommunityTranslator } from 'components/community-translator/u
 import { ENABLE_TRANSLATOR_KEY } from 'components/community-translator/constants';
 import AccountSettingsCloseLink from './close-link';
 import { requestGeoLocation } from 'state/data-getters';
+import withLocalizedMoment from 'components/with-localized-moment';
 
 const user = _user();
 const colorSchemeKey = 'calypso_preferences.colorScheme';
@@ -386,8 +388,8 @@ const Account = createReactClass( {
 	},
 
 	renderJoinDate() {
-		const { translate } = this.props;
-		const dateMoment = i18n.moment( user.get().date );
+		const { translate, moment } = this.props;
+		const dateMoment = moment( user.get().date );
 
 		return (
 			<span>
@@ -795,13 +797,15 @@ const Account = createReactClass( {
 						</FormFieldset>
 
 						{ /* This is how we animate showing/hiding the form field sections */ }
-						<ReactCSSTransitionGroup
-							transitionName="account__username-form-toggle"
-							transitionEnterTimeout={ 500 }
-							transitionLeaveTimeout={ 10 }
-						>
-							{ renderUsernameForm ? this.renderUsernameFields() : this.renderAccountFields() }
-						</ReactCSSTransitionGroup>
+						<TransitionGroup>
+							<CSSTransition
+								key={ renderUsernameForm ? 'username' : 'account' }
+								classNames="account__username-form-toggle"
+								timeout={ { enter: 500, exit: 10 } }
+							>
+								{ renderUsernameForm ? this.renderUsernameFields() : this.renderAccountFields() }
+							</CSSTransition>
+						</TransitionGroup>
 					</form>
 				</Card>
 
@@ -820,5 +824,6 @@ export default compose(
 		{ errorNotice, recordGoogleEvent, recordTracksEvent, successNotice }
 	),
 	localize,
+	withLocalizedMoment,
 	protectForm
 )( Account );

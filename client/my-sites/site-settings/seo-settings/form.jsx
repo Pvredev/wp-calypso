@@ -48,6 +48,7 @@ import {
 	FEATURE_ADVANCED_SEO,
 	FEATURE_SEO_PREVIEW_TOOLS,
 	TYPE_BUSINESS,
+	TYPE_PREMIUM,
 	TERM_ANNUALLY,
 } from 'lib/plans/constants';
 import { findFirstSimilarPlanKey } from 'lib/plans';
@@ -57,6 +58,11 @@ import QuerySiteSettings from 'components/data/query-site-settings';
 import { requestSiteSettings, saveSiteSettings } from 'state/site-settings/actions';
 import WebPreview from 'components/web-preview';
 import { getFirstConflictingPlugin } from 'lib/seo';
+
+/**
+ * Style dependencies
+ */
+import './style.scss';
 
 // Basic matching for HTML tags
 // Not perfect but meets the needs of this component well
@@ -298,7 +304,7 @@ export class SeoForm extends React.Component {
 		const jetpackUpdateUrl = getJetpackPluginUrl( slug );
 
 		const nudgeTitle = siteIsJetpack
-			? translate( 'Enable SEO Tools by upgrading to Jetpack Professional' )
+			? translate( 'Enable SEO Tools by upgrading to Jetpack Premium' )
 			: translate( 'Enable SEO Tools by upgrading to the Business plan' );
 
 		const seoSubmitButton = (
@@ -313,7 +319,6 @@ export class SeoForm extends React.Component {
 			</Button>
 		);
 
-		/* eslint-disable react/jsx-no-target-blank */
 		return (
 			<div>
 				<QuerySiteSettings siteId={ siteId } />
@@ -375,7 +380,7 @@ export class SeoForm extends React.Component {
 							event={ 'calypso_seo_settings_upgrade_nudge' }
 							feature={ siteIsJetpack ? FEATURE_SEO_PREVIEW_TOOLS : FEATURE_ADVANCED_SEO }
 							plan={ findFirstSimilarPlanKey( site.plan.product_slug, {
-								type: TYPE_BUSINESS,
+								type: siteIsJetpack ? TYPE_PREMIUM : TYPE_BUSINESS,
 								...( siteIsJetpack ? { term: TERM_ANNUALLY } : {} ),
 							} ) }
 							title={ nudgeTitle }
@@ -470,7 +475,6 @@ export class SeoForm extends React.Component {
 				/>
 			</div>
 		);
-		/* eslint-enable react/jsx-no-target-blank */
 	}
 }
 

@@ -24,6 +24,7 @@ import Card from 'components/card';
 import { fetchMagicLoginRequestEmail } from 'state/login/magic-login/actions';
 import FormPasswordInput from 'components/forms/form-password-input';
 import FormTextInput from 'components/forms/form-text-input';
+import getCurrentQueryArguments from 'state/selectors/get-current-query-arguments';
 import getInitialQueryArguments from 'state/selectors/get-initial-query-arguments';
 import { getCurrentUserId } from 'state/current-user/selectors';
 import { getCurrentOAuth2Client } from 'state/ui/oauth2-clients/selectors';
@@ -33,6 +34,7 @@ import {
 	loginUser,
 	resetAuthAccountType,
 } from 'state/login/actions';
+import { isCrowdsignalOAuth2Client } from 'lib/oauth2-clients';
 import { login } from 'lib/paths';
 import { preventWidows } from 'lib/formatting';
 import { recordTracksEventWithClientId as recordTracksEvent } from 'state/analytics/actions';
@@ -105,7 +107,7 @@ export class LoginForm extends Component {
 		}
 	}
 
-	componentWillReceiveProps( nextProps ) {
+	UNSAFE_componentWillReceiveProps( nextProps ) {
 		const { disableAutoFocus } = this.props;
 
 		if (
@@ -267,12 +269,13 @@ export class LoginForm extends Component {
 		let signupUrl = config( 'signup_url' );
 
 		if ( isOauthLogin && config.isEnabled( 'signup/wpcc' ) ) {
-			signupUrl =
-				'/start/wpcc?' +
-				stringify( {
-					oauth2_client_id: oauth2Client.id,
-					oauth2_redirect: redirectTo,
-				} );
+			const oauth2Flow = isCrowdsignalOAuth2Client( oauth2Client ) ? 'crowdsignal' : 'wpcc';
+			const oauth2Params = {
+				oauth2_client_id: oauth2Client.id,
+				oauth2_redirect: redirectTo,
+			};
+
+			signupUrl = `/start/${ oauth2Flow }?${ stringify( oauth2Params ) }`;
 		}
 
 		return (
@@ -438,7 +441,9 @@ export default connect(
 			socialAccountIsLinking: getSocialAccountIsLinking( state ),
 			socialAccountLinkEmail: getSocialAccountLinkEmail( state ),
 			socialAccountLinkService: getSocialAccountLinkService( state ),
-			userEmail: getInitialQueryArguments( state ).email_address,
+			userEmail:
+				getInitialQueryArguments( state ).email_address ||
+				getCurrentQueryArguments( state ).email_address,
 		};
 	},
 	{

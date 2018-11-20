@@ -1,3 +1,5 @@
+/** @format */
+
 .checkout {
 	position: relative;
 
@@ -407,7 +409,8 @@
 	// -----------------------------------
 
 	.paypal-payment-box,
-	.credits-payment-box {
+	.credits-payment-box,
+	.web-payment-box {
 		.payment-box-section,
 		.checkout__payment-box-section {
 			background-color: $white;
@@ -420,7 +423,8 @@
 		}
 	}
 
-	.paypal-payment-box {
+	.paypal-payment-box,
+	.web-payment-box {
 		.payment-box-section,
 		.checkout__payment-box-section {
 			display: flex;
@@ -477,6 +481,73 @@
 					color: $gray-darken-10;
 					font-size: 15px;
 				}
+			}
+
+			.checkout__free-domain-credit-illustration {
+				max-width: 100%;
+				max-height: 150px;
+				margin: -10px auto 10px;
+
+				img {
+					max-width: 100%;
+					max-height: 150px;
+				}
+
+				@include breakpoint( '>960px' ) {
+					float: left;
+					margin-left: 20px;
+					width: calc( 25% - 20px );
+				}
+			}
+
+			.checkout__free-domain-credit-illustration + h6,
+			.checkout__free-domain-credit-illustration + h6 + span {
+				display: block;
+				padding-left: 20px;
+
+				@include breakpoint( '>960px' ) {
+					clear: none;
+					float: left;
+					width: calc( 75% - 20px );
+				}
+			}
+		}
+	}
+
+	// WeChat Payment Box
+	// -----------------------------------
+	.wechat-payment-box {
+		.payment-box__content {
+			// WeChat Pay QR code Display
+			.checkout__wechat-qrcode {
+				text-align: center;
+				margin-bottom: 12px;
+			}
+			.checkout__wechat-qrcode-redirect {
+				color: $gray-text-min;
+				font-size: 12px;
+			}
+		}
+
+		form.loading {
+			opacity: 0.5;
+			pointer-events: none;
+		}
+	}
+
+	// Web Payment Box
+	// -----------------------------------
+	.web-payment-box {
+		.web-payment-box__apple-pay-button {
+			-webkit-appearance: -apple-pay-button;
+			-apple-pay-button-type: buy;
+			-apple-pay-button-style: black;
+			vertical-align: middle;
+			cursor: pointer;
+
+			&[disabled] {
+				opacity: 0.4;
+				cursor: not-allowed;
 			}
 		}
 	}
@@ -633,7 +704,8 @@
 	&.bancontact,
 	&.p24,
 	&.alipay,
-	&.eps {
+	&.eps,
+	&.wechat {
 		margin-left: 1em;
 	}
 
@@ -885,6 +957,7 @@
 
 	.checkout__alipay {
 		width: 100px;
+		height: 24px;
 	}
 
 	.checkout__eps {
@@ -909,6 +982,16 @@
 	.checkout__paytm {
 		width: 50px;
 		margin: -20px 0;
+	}
+
+	.checkout__wechat {
+		height: 24px;
+		margin-right: 5px;
+	}
+
+	.checkout__apple-pay {
+		height: 22px;
+		margin-right: 6px;
 	}
 
 	.select-dropdown__item-text {
@@ -951,6 +1034,12 @@
 		height: auto;
 		overflow: visible;
 	}
+}
+
+.checkout__emergent-paywall-support-link {
+	text-align: center;
+	font-size: 11px;
+	margin-top: -6px;
 }
 
 // Ebanx checkout fields

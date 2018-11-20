@@ -44,6 +44,11 @@ import {
 } from './utils';
 import versionCompare from 'lib/version-compare';
 
+/**
+ * Style dependencies
+ */
+import './style.scss';
+
 const IOS_REGEX = /iPad|iPod|iPhone/i;
 const ANDROID_REGEX = /Android (\d+(\.\d+)?(\.\d+)?)/i;
 
@@ -122,13 +127,13 @@ export class AppBanner extends Component {
 			//TODO: update when section deep links are available.
 			switch ( currentSection ) {
 				case EDITOR:
-					return 'intent://editor/#Intent;scheme=wordpress;package=org.wordpress.android;end';
+					return 'intent://post/#Intent;scheme=wordpress;package=org.wordpress.android;end';
 				case NOTES:
-					return 'intent://editor/#Intent;scheme=wordpress;package=org.wordpress.android;end';
+					return 'intent://notifications/#Intent;scheme=wordpress;package=org.wordpress.android;end';
 				case READER:
-					return 'intent://editor/#Intent;scheme=wordpress;package=org.wordpress.android;end';
+					return 'intent://read/#Intent;scheme=wordpress;package=org.wordpress.android;end';
 				case STATS:
-					return 'intent://editor/#Intent;scheme=wordpress;package=org.wordpress.android;end';
+					return 'intent://stats/#Intent;scheme=wordpress;package=org.wordpress.android;end';
 			}
 		}
 
@@ -185,9 +190,9 @@ export class AppBanner extends Component {
 					>
 						{ translate( 'Open in app' ) }
 					</Button>
-					<a className="app-banner__no-thanks-button" onClick={ this.dismiss }>
+					<Button className="app-banner__no-thanks-button" onClick={ this.dismiss }>
 						{ translate( 'No thanks' ) }
-					</a>
+					</Button>
 				</div>
 			</Card>
 		);
@@ -195,7 +200,7 @@ export class AppBanner extends Component {
 }
 
 export function getiOSDeepLink( currentRoute, currentSection ) {
-	const baseURI = 'https://apps.wordpress.com/get';
+	const baseURI = 'https://apps.wordpress.com/get?campaign=calypso-open-in-app';
 	const fragment = buildDeepLinkFragment( currentRoute, currentSection );
 
 	return fragment.length > 0 ? `${ baseURI }#${ fragment }` : baseURI;

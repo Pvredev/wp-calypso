@@ -12,15 +12,15 @@ import { get } from 'lodash';
 /**
  * Internal dependencies
  */
-import QueryPostStats from 'components/data/query-post-stats';
 import PostLikesPopover from 'blocks/post-likes/popover';
 import { getNormalizedPost } from 'state/posts/selectors';
-import { getPostStat } from 'state/stats/posts/selectors';
 import canCurrentUser from 'state/selectors/can-current-user';
 import { getSiteSlug, isJetpackModuleActive, isJetpackSite } from 'state/sites/selectors';
 import { recordTracksEvent } from 'state/analytics/actions';
 import { hideActiveLikesPopover, toggleLikesPopover } from 'state/ui/post-type-list/actions';
 import { isLikesPopoverOpen } from 'state/ui/post-type-list/selectors';
+import { getRecentViewsForPost } from 'state/stats/recent-post-views/selectors';
+import ScreenReaderText from 'components/screen-reader-text';
 
 class PostActionCounts extends PureComponent {
 	static propTypes = {
@@ -81,6 +81,50 @@ class PostActionCounts extends PureComponent {
 		);
 	}
 
+	renderViewCount() {
+		const { viewCount: count, numberFormat, postId, showViews, siteSlug, translate } = this.props;
+		if ( ! count || count < 1 || ! showViews ) {
+			return null;
+		}
+		const recentViewsText = translate(
+			'%(count)s Recent View{{srText}}in the past 30 days{{/srText}}',
+			'%(count)s Recent Views{{srText}}in the past 30 days{{/srText}}',
+			{
+				count,
+				args: {
+					count: numberFormat( count ),
+				},
+				comment:
+					'text wrapped by "srText" is not visible on screen for brevity, but is read by screen readers to provide more context',
+				components: {
+					srText: <ScreenReaderText />,
+				},
+			}
+		);
+		const linkTitleText = translate(
+			'%(count)s recent view in the past 30 days',
+			'%(count)s recent views in the past 30 days',
+			{
+				count,
+				args: {
+					count: numberFormat( count ),
+				},
+			}
+		);
+
+		return (
+			<li>
+				<a
+					href={ `/stats/post/${ postId }/${ siteSlug }` }
+					onClick={ this.onActionClick( 'stats' ) }
+					title={ linkTitleText }
+				>
+					{ recentViewsText }
+				</a>
+			</li>
+		);
+	}
+
 	renderLikeCount() {
 		const {
 			likeCount: count,
@@ -119,34 +163,9 @@ class PostActionCounts extends PureComponent {
 		);
 	}
 
-	renderViewCount() {
-		const { viewCount: count, numberFormat, postId, showViews, siteSlug, translate } = this.props;
-
-		if ( count < 1 || ! showViews ) {
-			return null;
-		}
-
-		return (
-			<li>
-				<a
-					href={ `/stats/post/${ postId }/${ siteSlug }` }
-					onClick={ this.onActionClick( 'stats' ) }
-				>
-					{ translate( '%(count)s View', '%(count)s Views', {
-						count,
-						args: { count: numberFormat( count ) },
-					} ) }
-				</a>
-			</li>
-		);
-	}
-
 	render() {
-		const { postId, siteId } = this.props;
-
 		return (
 			<ul className="post-action-counts">
-				{ siteId && <QueryPostStats siteId={ siteId } postId={ postId } fields={ [ 'views' ] } /> }
 				{ this.renderViewCount() }
 				{ this.renderLikeCount() }
 				{ this.renderCommentCount() }
@@ -183,7 +202,7 @@ export default connect(
 			siteId,
 			siteSlug: getSiteSlug( state, siteId ),
 			type: get( post, 'type', 'unknown' ),
-			viewCount: getPostStat( state, siteId, postId, 'views' ),
+			viewCount: getRecentViewsForPost( state, siteId, postId ),
 			isCurrentLikesPopoverOpen: isLikesPopoverOpen( state, globalId ),
 		};
 	},

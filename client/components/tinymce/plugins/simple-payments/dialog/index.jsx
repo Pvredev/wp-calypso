@@ -5,7 +5,7 @@
  * External dependencies
  */
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { connect } from 'react-redux';
 import { getFormValues } from 'redux-form';
 import { localize } from 'i18n-calypso';
@@ -53,6 +53,8 @@ import {
 } from 'state/analytics/actions';
 import EmptyContent from 'components/empty-content';
 import Banner from 'components/banner';
+import canCurrentUser from 'state/selectors/can-current-user';
+import { DEFAULT_CURRENCY } from 'lib/simple-payments/constants';
 
 // Utility function for checking the state of the Payment Buttons list
 const isEmptyArray = a => Array.isArray( a ) && a.length === 0;
@@ -144,13 +146,14 @@ class SimplePaymentsDialog extends Component {
 		onClose: PropTypes.func.isRequired,
 		onInsert: PropTypes.func.isRequired,
 		isJetpackNotSupported: PropTypes.bool,
+		canCurrentUserAddButtons: PropTypes.bool,
 	};
 
 	static initialFields = {
 		title: '',
 		description: '',
 		price: '',
-		currency: 'USD',
+		currency: DEFAULT_CURRENCY,
 		multiple: false,
 		email: '',
 		featuredImageId: null,
@@ -217,7 +220,7 @@ class SimplePaymentsDialog extends Component {
 			}
 		}
 
-		const initialCurrency = currencyCode || 'USD';
+		const initialCurrency = currencyCode || DEFAULT_CURRENCY;
 		const initialEmail = get( paymentButtons, '0.email', currentUserEmail );
 
 		return { ...initialFields, currency: initialCurrency, email: initialEmail };
@@ -456,6 +459,7 @@ class SimplePaymentsDialog extends Component {
 			translate,
 			planHasSimplePaymentsFeature,
 			shouldQuerySitePlans,
+			canCurrentUserAddButtons,
 		} = this.props;
 		const { activeTab, initialFormValues, errorMessage } = this.state;
 
@@ -504,6 +508,39 @@ class SimplePaymentsDialog extends Component {
 							event="editor_simple_payments_modal_nudge"
 							shouldDisplay={ this.returnTrue }
 						/>
+					}
+					secondaryAction={
+						<a
+							className="empty-content__action button"
+							href="https://support.wordpress.com/simple-payments/"
+						>
+							{ translate( 'Learn more about Simple Payments' ) }
+						</a>
+					}
+				/>,
+				true
+			);
+		}
+
+		if ( ! canCurrentUserAddButtons ) {
+			return this.renderEmptyDialog(
+				<EmptyContent
+					illustration="/calypso/images/illustrations/type-e-commerce.svg"
+					illustrationWidth={ 300 }
+					title={ translate( 'Want to add a payment button to your site?' ) }
+					action={
+						<Fragment>
+							<p>
+								{ translate(
+									"You're a contributor to this site, so you don't currently have permission to do this – only authors, editors, and administrators can add payment buttons."
+								) }
+							</p>
+							<p>
+								{ translate(
+									'Contact your site administrator for options! They can change your permissions or add the button for you.'
+								) }
+							</p>
+						</Fragment>
 					}
 					secondaryAction={
 						<a
@@ -579,5 +616,6 @@ export default connect( ( state, { siteId } ) => {
 		formIsDirty: isProductFormDirty( state ),
 		currentUserEmail: getCurrentUserEmail( state ),
 		featuredImageId: get( getFormValues( REDUX_FORM_NAME )( state ), 'featuredImageId' ),
+		canCurrentUserAddButtons: canCurrentUser( state, siteId, 'publish_posts' ),
 	};
 } )( localize( SimplePaymentsDialog ) );

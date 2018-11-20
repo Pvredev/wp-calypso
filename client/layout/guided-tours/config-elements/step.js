@@ -24,7 +24,7 @@ import {
 	query,
 	targetForSlug,
 } from '../positioning';
-import contextTypes from '../context-types';
+import { contextTypes } from '../context-types';
 
 const debug = debugFactory( 'calypso:guided-tours' );
 
@@ -178,9 +178,15 @@ export default class Step extends Component {
 
 		if ( ! this.observer ) {
 			this.observer = new MutationObserver( () => {
-				const target = document.querySelector( `[data-tip-target="${ this.props.target }"]` );
-				if ( ! target ) {
-					this.props.onTargetDisappear( {
+				const { target, onTargetDisappear } = this.props;
+
+				if ( ! target || ! onTargetDisappear ) {
+					return;
+				}
+
+				const targetEl = document.querySelector( `[data-tip-target="${ target }"]` );
+				if ( ! targetEl ) {
+					onTargetDisappear( {
 						quit: () => this.context.quit( this.context ),
 						next: () => this.skipToNext( this.props, this.context ),
 					} );
@@ -332,8 +338,7 @@ export default class Step extends Component {
 			shouldScrollTo,
 			scrollContainer: this.scrollContainer,
 		} );
-		const stepCoords = posToCss( stepPos );
-		this.setState( { stepPos, stepCoords } );
+		this.setState( { stepPos } );
 	}
 
 	render() {
@@ -357,7 +362,7 @@ export default class Step extends Component {
 		}
 
 		const { arrow, target: targetSlug } = this.props;
-		const { stepCoords, stepPos } = this.state;
+		const { stepPos } = this.state;
 
 		const classes = [
 			this.props.className,
@@ -375,7 +380,7 @@ export default class Step extends Component {
 					} ),
 		].filter( Boolean );
 
-		const style = { ...this.props.style, ...stepCoords };
+		const style = { ...this.props.style, ...posToCss( stepPos ) };
 
 		return (
 			<Card className={ classNames( ...classes ) } style={ style }>

@@ -4,15 +4,17 @@
  * External dependencies
  */
 
-import { flow, get, isUndefined, map, noop, omit, omitBy } from 'lodash';
+import { get, isUndefined, map, noop, omit, omitBy } from 'lodash';
 
 /**
  * Internal dependencies
  */
-import { USERS_REQUEST } from 'state/action-types';
-import { dispatchRequest, getHeaders } from 'state/data-layer/wpcom-http/utils';
+import { POST_REVISIONS_AUTHORS_REQUEST } from 'state/action-types';
+import { dispatchRequestEx, getHeaders } from 'state/data-layer/wpcom-http/utils';
 import { http } from 'state/data-layer/wpcom-http/actions';
-import { receiveUser } from 'state/users/actions';
+import { receivePostRevisionAuthors } from 'state/posts/revisions/authors/actions';
+
+import { registerHandlers } from 'state/data-layer/handler-registry';
 
 export const DEFAULT_PER_PAGE = 10;
 
@@ -34,63 +36,59 @@ export const normalizeUser = user =>
 	);
 
 /**
- * Dispatches a request to fetch post revisions users
+ * Dispatches a request to fetch post revisions authors
  *
- * @param {Function} dispatch Redux dispatcher
- * @param {Object} action Redux action
+ * @param {Object} action The `POST_REVISIONS_AUTHORS_REQUEST` action used to trigger the fetch
+ * @returns {Object} The low-level action used to execute the fetch
  */
-export const fetchUsers = ( { dispatch }, action ) => {
+export const fetchPostRevisionAuthors = action => {
 	const { siteId, ids, page = 1, perPage = DEFAULT_PER_PAGE } = action;
-	dispatch(
-		http(
-			{
-				path: `/sites/${ siteId }/users`,
-				method: 'GET',
-				apiNamespace: 'wp/v2',
-				query: {
-					include: ids,
-					page,
-					per_page: perPage,
-				},
+	return http(
+		{
+			path: `/sites/${ siteId }/users`,
+			method: 'GET',
+			apiNamespace: 'wp/v2',
+			query: {
+				include: ids,
+				page,
+				per_page: perPage,
 			},
-			action
-		)
+		},
+		action
 	);
 };
 
 /**
- * Dispatches returned users
+ * Dispatches returned post revision authors
  *
- * @param {Function} dispatch Redux dispatcher
- * @param {Object} action Redux action
+ * @param {Object} action The `POST_REVISIONS_AUTHORS_REQUEST` action with response data as meta
  * @param {Array} users raw data from post revisions API
+ * @returns {Object|Function} Action or action thunk that handles the response
  */
-export const receiveSuccess = ( { dispatch }, action, users ) => {
-	const { page = 1, perPage = DEFAULT_PER_PAGE } = action;
+export const receivePostRevisionAuthorsSuccess = ( action, users ) => dispatch => {
+	// receive users from response into Redux state
 	const normalizedUsers = map( users, normalizeUser );
+	dispatch( receivePostRevisionAuthors( normalizedUsers ) );
 
+	// issue request for next page if needed
+	const { page = 1, perPage = DEFAULT_PER_PAGE } = action;
 	if ( get( getHeaders( action ), 'X-WP-TotalPages', 0 ) > page ) {
-		fetchUsers(
-			{ dispatch },
-			{
+		dispatch(
+			fetchPostRevisionAuthors( {
 				...omit( action, 'meta' ),
 				page: page + 1,
 				perPage,
-			}
+			} )
 		);
 	}
-
-	map(
-		normalizedUsers,
-		flow(
-			receiveUser,
-			dispatch
-		)
-	);
 };
 
-const dispatchUsersRequest = dispatchRequest( fetchUsers, receiveSuccess, noop );
+const dispatchPostRevisionAuthorsRequest = dispatchRequestEx( {
+	fetch: fetchPostRevisionAuthors,
+	onSuccess: receivePostRevisionAuthorsSuccess,
+	onError: noop,
+} );
 
-export default {
-	[ USERS_REQUEST ]: [ dispatchUsersRequest ],
-};
+registerHandlers( 'state/data-layer/wpcom/sites/users/index.js', {
+	[ POST_REVISIONS_AUTHORS_REQUEST ]: [ dispatchPostRevisionAuthorsRequest ],
+} );

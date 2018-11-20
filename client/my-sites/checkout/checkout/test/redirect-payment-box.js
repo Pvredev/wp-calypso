@@ -15,12 +15,17 @@ import { identity } from 'lodash';
  */
 import { RedirectPaymentBox } from '../redirect-payment-box';
 import {
+	PLAN_ECOMMERCE,
+	PLAN_ECOMMERCE_2_YEARS,
+	PLAN_BUSINESS_MONTHLY,
 	PLAN_BUSINESS,
 	PLAN_BUSINESS_2_YEARS,
 	PLAN_PREMIUM,
 	PLAN_PREMIUM_2_YEARS,
 	PLAN_PERSONAL,
 	PLAN_PERSONAL_2_YEARS,
+	PLAN_BLOGGER,
+	PLAN_BLOGGER_2_YEARS,
 	PLAN_FREE,
 	PLAN_JETPACK_FREE,
 	PLAN_JETPACK_PERSONAL,
@@ -71,8 +76,8 @@ const defaultProps = {
 		},
 	],
 	paymentType: 'default',
-	transaction: identity,
-	redirectTo: 'http://here',
+	transaction: {},
+	redirectTo: () => 'http://here',
 };
 
 describe( 'RedirectPaymentBox', () => {
@@ -83,10 +88,16 @@ describe( 'RedirectPaymentBox', () => {
 		expect( wrapper.find( 'TermsOfService' ) ).toHaveLength( 1 );
 	} );
 
-	const businessPlans = [ PLAN_BUSINESS, PLAN_BUSINESS_2_YEARS ];
+	const eligiblePlans = [
+		PLAN_BUSINESS_MONTHLY,
+		PLAN_BUSINESS,
+		PLAN_BUSINESS_2_YEARS,
+		PLAN_ECOMMERCE,
+		PLAN_ECOMMERCE_2_YEARS,
+	];
 
-	businessPlans.forEach( product_slug => {
-		test( 'should render PaymentChatButton if any WP.com business plan is in the cart', () => {
+	eligiblePlans.forEach( product_slug => {
+		test( 'should render PaymentChatButton if any WP.com business/ecommerce plan is in the cart', () => {
 			const props = {
 				...defaultProps,
 				presaleChatAvailable: true,
@@ -99,7 +110,7 @@ describe( 'RedirectPaymentBox', () => {
 		} );
 	} );
 
-	businessPlans.forEach( product_slug => {
+	eligiblePlans.forEach( product_slug => {
 		test( 'should not render PaymentChatButton if presaleChatAvailable is false', () => {
 			const props = {
 				...defaultProps,
@@ -118,6 +129,8 @@ describe( 'RedirectPaymentBox', () => {
 		PLAN_PREMIUM_2_YEARS,
 		PLAN_PERSONAL,
 		PLAN_PERSONAL_2_YEARS,
+		PLAN_BLOGGER,
+		PLAN_BLOGGER_2_YEARS,
 		PLAN_FREE,
 		PLAN_JETPACK_FREE,
 		PLAN_JETPACK_PERSONAL,

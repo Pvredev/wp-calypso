@@ -3,16 +3,23 @@
 /**
  * External dependencies
  */
-import { expect } from 'chai';
 import { chunk, times } from 'lodash';
-import sinon from 'sinon';
 
 /**
  * Internal dependencies
  */
-import { DEFAULT_PER_PAGE, fetchUsers, normalizeUser, receiveSuccess } from '../';
+import {
+	DEFAULT_PER_PAGE,
+	fetchPostRevisionAuthors,
+	normalizeUser,
+	receivePostRevisionAuthorsSuccess,
+} from '../';
 import { http } from 'state/data-layer/wpcom-http/actions';
-import { receiveUser, requestUsers } from 'state/users/actions';
+import {
+	receivePostRevisionAuthors,
+	requestPostRevisionAuthors,
+} from 'state/posts/revisions/authors/actions';
+import { POST_REVISION_AUTHORS_RECEIVE } from 'state/action-types';
 
 describe( '#normalizeRevision', () => {
 	test( 'should rename `id`, `name` and `slug`', () => {
@@ -22,7 +29,7 @@ describe( '#normalizeRevision', () => {
 				name: 'Alice Bob',
 				slug: 'alicebob',
 			} )
-		).to.eql( {
+		).toEqual( {
 			ID: 10,
 			display_name: 'Alice Bob',
 			username: 'alicebob',
@@ -34,21 +41,17 @@ describe( '#normalizeRevision', () => {
 			normalizeUser( {
 				id: 10,
 			} )
-		).to.eql( {
+		).toEqual( {
 			ID: 10,
 		} );
 	} );
 } );
 
-describe( '#fetchUsers', () => {
+describe( '#fetchPostRevisionAuthors', () => {
 	test( 'should dispatch HTTP request to users endpoint', () => {
-		const action = requestUsers( 12345678, [ 10, 11 ] );
-		const dispatch = sinon.spy();
+		const action = requestPostRevisionAuthors( 12345678, [ 10, 11 ] );
 
-		fetchUsers( { dispatch }, action );
-
-		expect( dispatch ).to.have.been.calledOnce;
-		expect( dispatch ).to.have.been.calledWith(
+		expect( fetchPostRevisionAuthors( action ) ).toEqual(
 			http(
 				{
 					method: 'GET',
@@ -66,15 +69,11 @@ describe( '#fetchUsers', () => {
 	} );
 
 	test( 'should respect pagination information coming from action', () => {
-		const action = requestUsers( 12345678, [ 10 ] );
+		const action = requestPostRevisionAuthors( 12345678, [ 10 ] );
 		action.page = 2;
 		action.perPage = 42;
-		const dispatch = sinon.spy();
 
-		fetchUsers( { dispatch }, action );
-
-		expect( dispatch ).to.have.been.calledOnce;
-		expect( dispatch ).to.have.been.calledWith(
+		expect( fetchPostRevisionAuthors( action ) ).toEqual(
 			http(
 				{
 					method: 'GET',
@@ -93,22 +92,19 @@ describe( '#fetchUsers', () => {
 } );
 
 describe( '#receiveSuccess', () => {
-	test( 'should normalize the users and dispatch `receiveUser` for each one', () => {
-		const action = requestUsers( 12345678, [ 10, 11 ] );
-		const dispatch = sinon.spy();
+	test( 'should normalize the users and dispatch `receiveUsers` with their list', () => {
+		const requestAction = requestPostRevisionAuthors( 12345678, [ 10, 11 ] );
+		const successAction = receivePostRevisionAuthorsSuccess( requestAction, [
+			{ id: 10 },
+			{ id: 11 },
+		] );
 
-		receiveSuccess( { dispatch }, action, [ { id: 10 }, { id: 11 } ] );
+		const dispatch = jest.fn();
+		successAction( dispatch );
 
-		expect( dispatch ).to.have.been.calledTwice;
-		expect( dispatch ).to.have.been.calledWith(
-			receiveUser( {
-				ID: 10,
-			} )
-		);
-		expect( dispatch ).to.have.been.calledWith(
-			receiveUser( {
-				ID: 11,
-			} )
+		expect( dispatch ).toHaveBeenCalledTimes( 1 );
+		expect( dispatch ).toHaveBeenCalledWith(
+			receivePostRevisionAuthors( [ { ID: 10 }, { ID: 11 } ] )
 		);
 	} );
 
@@ -118,13 +114,10 @@ describe( '#receiveSuccess', () => {
 		const users = times( nbUsers, id => ( { id } ) );
 		const usersChunks = chunk( users, DEFAULT_PER_PAGE );
 
-		const action = requestUsers( 12345678, ids );
-		const dispatch = sinon.spy();
-
-		receiveSuccess(
-			{ dispatch },
+		const requestAction = requestPostRevisionAuthors( 12345678, ids );
+		const successAction = receivePostRevisionAuthorsSuccess(
 			{
-				...action,
+				...requestAction,
 				meta: {
 					dataLayer: {
 						headers: {
@@ -137,7 +130,16 @@ describe( '#receiveSuccess', () => {
 			usersChunks[ 0 ]
 		);
 
-		expect( dispatch ).to.have.been.calledWith(
+		const dispatch = jest.fn();
+		successAction( dispatch );
+
+		expect( dispatch ).toHaveBeenCalledTimes( 2 );
+		expect( dispatch ).toHaveBeenNthCalledWith(
+			1,
+			expect.objectContaining( { type: POST_REVISION_AUTHORS_RECEIVE } )
+		);
+		expect( dispatch ).toHaveBeenNthCalledWith(
+			2,
 			http(
 				{
 					method: 'GET',
@@ -150,7 +152,7 @@ describe( '#receiveSuccess', () => {
 					},
 				},
 				{
-					...action,
+					...requestAction,
 					page: 2,
 					perPage: DEFAULT_PER_PAGE,
 				}
@@ -165,16 +167,10 @@ describe( '#receiveSuccess', () => {
 		const users = times( nbUsers, id => ( { id } ) );
 		const usersChunks = chunk( users, perPage );
 
-		const action = {
-			...requestUsers( 12345678, ids ),
-			perPage: perPage,
-		};
-		const dispatch = sinon.spy();
-
-		receiveSuccess(
-			{ dispatch },
+		const requestAction = { ...requestPostRevisionAuthors( 12345678, ids ), perPage };
+		const successAction = receivePostRevisionAuthorsSuccess(
 			{
-				...action,
+				...requestAction,
 				meta: {
 					dataLayer: {
 						headers: {
@@ -187,7 +183,16 @@ describe( '#receiveSuccess', () => {
 			usersChunks[ 0 ]
 		);
 
-		expect( dispatch ).to.have.been.calledWith(
+		const dispatch = jest.fn();
+		successAction( dispatch );
+
+		expect( dispatch ).toHaveBeenCalledTimes( 2 );
+		expect( dispatch ).toHaveBeenNthCalledWith(
+			1,
+			expect.objectContaining( { type: POST_REVISION_AUTHORS_RECEIVE } )
+		);
+		expect( dispatch ).toHaveBeenNthCalledWith(
+			2,
 			http(
 				{
 					method: 'GET',
@@ -200,9 +205,9 @@ describe( '#receiveSuccess', () => {
 					},
 				},
 				{
-					...action,
+					...requestAction,
 					page: 2,
-					perPage: perPage,
+					perPage,
 				}
 			)
 		);

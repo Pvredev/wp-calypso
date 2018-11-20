@@ -11,17 +11,20 @@ import { execSync } from 'child_process';
 import cookieParser from 'cookie-parser';
 import debugFactory from 'debug';
 import {
+	defaults,
 	endsWith,
 	get,
 	includes,
 	pick,
 	flatten,
 	forEach,
+	groupBy,
 	intersection,
 	snakeCase,
 	split,
 } from 'lodash';
 import bodyParser from 'body-parser';
+import superagent from 'superagent';
 
 /**
  * Internal dependencies
@@ -32,15 +35,16 @@ import utils from 'bundler/utils';
 import { pathToRegExp } from '../../client/utils';
 import sections from '../../client/sections';
 import { serverRouter, getNormalizedPath } from 'isomorphic-routing';
-import { serverRender, serverRenderError, renderJsx } from 'render';
+import { serverRender, renderJsx } from 'render';
 import stateCache from 'state-cache';
-import { createReduxStore, reducer } from 'state';
+import { createReduxStore } from 'state';
+import initialReducer from 'state/reducer';
 import { DESERIALIZE, LOCALE_SET } from 'state/action-types';
 import { login } from 'lib/paths';
 import { logSectionResponseTime } from './analytics';
 import { setCurrentUserOnReduxStore } from 'lib/redux-helpers';
 import analytics from '../lib/analytics';
-import { getLanguage } from 'lib/i18n-utils';
+import { getLanguage, filterLanguageRevisions } from 'lib/i18n-utils';
 
 const debug = debugFactory( 'calypso:pages' );
 
@@ -75,7 +79,7 @@ const prideLocations = [];
 // TODO: Re-use (a modified version of) client/state/initial-state#getInitialServerState here
 function getInitialServerState( serializedServerState ) {
 	// Bootstrapped state from a server-render
-	const serverState = reducer( serializedServerState, { type: DESERIALIZE } );
+	const serverState = initialReducer( serializedServerState, { type: DESERIALIZE } );
 	return pick( serverState, Object.keys( serializedServerState ) );
 }
 
@@ -89,6 +93,21 @@ const getAssets = ( () => {
 		return assets;
 	};
 } )();
+
+const EMPTY_ASSETS = { js: [], 'css.ltr': [], 'css.rtl': [] };
+
+const getAssetType = asset => {
+	if ( asset.endsWith( '.rtl.css' ) ) {
+		return 'css.rtl';
+	}
+	if ( asset.endsWith( '.css' ) ) {
+		return 'css.ltr';
+	}
+
+	return 'js';
+};
+
+const groupAssetsByType = assets => defaults( groupBy( assets, getAssetType ), EMPTY_ASSETS );
 
 const getFilesForChunk = chunkName => {
 	const assets = getAssets();
@@ -108,14 +127,21 @@ const getFilesForChunk = chunkName => {
 		assets.chunks.forEach( c => {
 			console.log( '    ' + c.id + ': ' + c.names.join( ',' ) );
 		} );
-		return [];
+		return EMPTY_ASSETS;
 	}
 
 	const allTheFiles = chunk.files.concat(
 		flatten( chunk.siblings.map( sibling => getChunkById( sibling ).files ) )
 	);
 
-	return allTheFiles;
+	return groupAssetsByType( allTheFiles );
+};
+
+const getFilesForEntrypoint = () => {
+	const entrypointAssets = getAssets().entrypoints.build.assets.filter(
+		asset => ! asset.startsWith( 'manifest' )
+	);
+	return groupAssetsByType( entrypointAssets );
 };
 
 /**
@@ -233,11 +259,9 @@ function getDefaultContext( request ) {
 		isDebug,
 		badge: false,
 		lang,
-		entrypoint: getAssets().entrypoints.build.assets.filter(
-			asset => ! asset.startsWith( 'manifest' )
-		),
+		entrypoint: getFilesForEntrypoint(),
 		manifest: getAssets().manifests.manifest,
-		faviconURL: '//s1.wp.com/i/favicon.ico',
+		faviconURL: config( 'favicon_url' ),
 		isFluidWidth: !! config.isEnabled( 'fluid-width' ),
 		abTestHelper: !! config.isEnabled( 'dev/test-helper' ),
 		preferencesHelper: !! config.isEnabled( 'dev/preferences-helper' ),
@@ -258,26 +282,26 @@ function getDefaultContext( request ) {
 		context.badge = calypsoEnv;
 		context.devDocs = true;
 		context.feedbackURL = 'https://github.com/Automattic/wp-calypso/issues/';
-		context.faviconURL = '/calypso/images/favicons/favicon-wpcalypso.ico';
+		// this is for calypso.live, so that branchName can be available while rendering the page
+		if ( request.query.branch ) {
+			context.branchName = request.query.branch;
+		}
 	}
 
 	if ( calypsoEnv === 'horizon' ) {
 		context.badge = 'feedback';
 		context.feedbackURL = 'https://horizonfeedback.wordpress.com/';
-		context.faviconURL = '/calypso/images/favicons/favicon-horizon.ico';
 	}
 
 	if ( calypsoEnv === 'stage' ) {
 		context.badge = 'staging';
 		context.feedbackURL = 'https://github.com/Automattic/wp-calypso/issues/';
-		context.faviconURL = '/calypso/images/favicons/favicon-staging.ico';
 	}
 
 	if ( calypsoEnv === 'development' ) {
 		context.badge = 'dev';
 		context.devDocs = true;
 		context.feedbackURL = 'https://github.com/Automattic/wp-calypso/issues/';
-		context.faviconURL = '/calypso/images/favicons/favicon-development.ico';
 		context.branchName = getCurrentBranchName();
 		context.commitChecksum = getCurrentCommitShortChecksum();
 	}
@@ -300,9 +324,25 @@ function setUpLoggedInRoute( req, res, next ) {
 		'X-Frame-Options': 'SAMEORIGIN',
 	} );
 
-	if ( config.isEnabled( 'wpcom-user-bootstrap' ) ) {
-		const user = require( 'user-bootstrap' );
+	const LANG_REVISION_FILE_URL = 'https://widgets.wp.com/languages/calypso/lang-revisions.json';
+	const langPromise = superagent
+		.get( LANG_REVISION_FILE_URL )
+		.then( response => {
+			const languageRevisions = filterLanguageRevisions( response.body );
 
+			req.context.languageRevisions = languageRevisions;
+
+			return languageRevisions;
+		} )
+		.catch( error => {
+			console.error( 'Failed to fetch the language revision files.', error );
+
+			throw error;
+		} );
+
+	const setupRequests = [ langPromise ];
+
+	if ( config.isEnabled( 'wpcom-user-bootstrap' ) ) {
 		const geoCountry = req.get( 'x-geoip-country-code' ) || '';
 		const protocol = req.get( 'X-Forwarded-Proto' ) === 'https' ? 'https' : 'http';
 
@@ -318,13 +358,58 @@ function setUpLoggedInRoute( req, res, next ) {
 			res.redirect( redirectUrl );
 			return;
 		}
+
+		const user = require( 'user-bootstrap' );
+
 		start = new Date().getTime();
 
 		debug( 'Issuing API call to fetch user object' );
-		user( req.cookies.wordpress_logged_in, geoCountry, function( error, data ) {
-			let searchParam, errorMessage;
 
-			if ( error ) {
+		const userPromise = user( req.cookies.wordpress_logged_in, geoCountry )
+			.then( data => {
+				const end = new Date().getTime() - start;
+
+				debug( 'Rendering with bootstrapped user object. Fetched in %d ms', end );
+				req.context.user = data;
+
+				// Setting user in the state is safe as long as we don't cache it
+				setCurrentUserOnReduxStore( data, req.context.store );
+
+				if ( data.localeSlug ) {
+					req.context.lang = data.localeSlug;
+					req.context.store.dispatch( {
+						type: LOCALE_SET,
+						localeSlug: data.localeSlug,
+						localeVariant: data.localeVariant,
+					} );
+				}
+
+				if ( req.path === '/' && req.query ) {
+					const searchParam = req.query.s || req.query.q;
+					if ( searchParam ) {
+						res.redirect(
+							'https://' +
+								req.context.lang +
+								'.search.wordpress.com/?q=' +
+								encodeURIComponent( searchParam )
+						);
+						return;
+					}
+
+					if ( req.query.newuseremail ) {
+						debug( 'Detected legacy email verification action. Redirecting...' );
+						res.redirect( 'https://wordpress.com/verify-email/?' + stringify( req.query ) );
+						return;
+					}
+
+					if ( req.query.action === 'wpcom-invite-users' ) {
+						debug( 'Detected legacy invite acceptance action. Redirecting...' );
+						res.redirect( 'https://wordpress.com/accept-invite/?' + stringify( req.query ) );
+						return;
+					}
+				}
+			} )
+			.catch( error => {
 				if ( error.error === 'authorization_required' ) {
 					debug( 'User public API authorization required. Redirecting to %s', redirectUrl );
 					res.clearCookie( 'wordpress_logged_in', {
@@ -334,6 +419,8 @@ function setUpLoggedInRoute( req, res, next ) {
 					} );
 					res.redirect( redirectUrl );
 				} else {
+					let errorMessage;
+
 					if ( error.error ) {
 						errorMessage = error.error + ' ' + error.message;
 					} else {
@@ -341,60 +428,17 @@ function setUpLoggedInRoute( req, res, next ) {
 					}
 
 					console.error( 'API Error: ' + errorMessage );
-
-					next( error );
 				}
 
-				return;
-			}
+				throw error;
+			} );
 
-			const end = new Date().getTime() - start;
-
-			debug( 'Rendering with bootstrapped user object. Fetched in %d ms', end );
-			req.context.user = data;
-
-			// Setting user in the state is safe as long as we don't cache it
-			setCurrentUserOnReduxStore( data, req.context.store );
-
-			if ( data.localeSlug ) {
-				req.context.lang = data.localeSlug;
-				req.context.store.dispatch( {
-					type: LOCALE_SET,
-					localeSlug: data.localeSlug,
-					localeVariant: data.localeVariant,
-				} );
-			}
-
-			if ( req.path === '/' && req.query ) {
-				searchParam = req.query.s || req.query.q;
-				if ( searchParam ) {
-					res.redirect(
-						'https://' +
-							req.context.lang +
-							'.search.wordpress.com/?q=' +
-							encodeURIComponent( searchParam )
-					);
-					return;
-				}
-
-				if ( req.query.newuseremail ) {
-					debug( 'Detected legacy email verification action. Redirecting...' );
-					res.redirect( 'https://wordpress.com/verify-email/?' + stringify( req.query ) );
-					return;
-				}
-
-				if ( req.query.action === 'wpcom-invite-users' ) {
-					debug( 'Detected legacy invite acceptance action. Redirecting...' );
-					res.redirect( 'https://wordpress.com/accept-invite/?' + stringify( req.query ) );
-					return;
-				}
-			}
-
-			next();
-		} );
-	} else {
-		next();
+		setupRequests.push( userPromise );
 	}
+
+	Promise.all( setupRequests )
+		.then( () => next() )
+		.catch( error => next( error ) );
 }
 
 /**
@@ -490,6 +534,24 @@ function setUpRoute( req, res, next ) {
 function render404( request, response ) {
 	const ctx = getDefaultContext( request );
 	response.status( 404 ).send( renderJsx( '404', ctx ) );
+}
+
+/* eslint-disable no-unused-vars */
+/* We don't use `next` but need to add it for express.js to
+   recognize this function as an error handler, hence the
+   eslint-disable. */
+function renderServerError( err, req, res, next ) {
+	/* eslint-enable no-unused-vars */
+	if ( process.env.NODE_ENV !== 'production' ) {
+		console.error( err );
+	}
+
+	res.status( err.status || 500 );
+	const ctx = {
+		urls: generateStaticUrls(),
+		faviconURL: config( 'favicon_url' ),
+	};
+	res.send( renderJsx( '500', ctx ) );
 }
 
 /**
@@ -629,6 +691,16 @@ module.exports = function() {
 		res.redirect( 301, newRoute );
 	} );
 
+	app.get( [ '/domains', '/start/domain-first' ], function( req, res ) {
+		let redirectUrl = '/start/domain';
+		const domain = get( req, 'query.new', false );
+		if ( domain ) {
+			redirectUrl += '?new=' + encodeURIComponent( domain );
+		}
+
+		res.redirect( redirectUrl );
+	} );
+
 	sections
 		.filter( section => ! section.envId || section.envId.indexOf( config( 'env_id' ) ) > -1 )
 		.forEach( section => {
@@ -641,7 +713,7 @@ module.exports = function() {
 					if ( config.isEnabled( 'code-splitting' ) ) {
 						req.context.chunkFiles = getFilesForChunk( section.name );
 					} else {
-						req.context.chunkFiles = [];
+						req.context.chunkFiles = EMPTY_ASSETS;
 					}
 
 					if ( section.secondary && req.context ) {
@@ -732,11 +804,30 @@ module.exports = function() {
 
 		// Maybe not logged in, note that you need docker to test this properly
 		const user = require( 'user-bootstrap' );
+		const geoCountry = req.get( 'x-geoip-country-code' ) || '';
 
 		debug( 'Issuing API call to fetch user object' );
-		const geoCountry = req.get( 'x-geoip-country-code' ) || '';
-		user( req.cookies.wordpress_logged_in, geoCountry, function( error, data ) {
-			if ( error ) {
+
+		user( req.cookies.wordpress_logged_in, geoCountry )
+			.then( data => {
+				const activeFlags = get( data, 'meta.data.flags.active_flags', [] );
+
+				// A8C check
+				if ( ! includes( activeFlags, 'calypso_support_user' ) ) {
+					return res.send( renderJsx( 'support-user' ) );
+				}
+
+				// Passed all checks, prepare support user session
+				return res.send(
+					renderJsx( 'support-user', {
+						authorized: true,
+						supportUser: req.query.support_user,
+						supportToken: req.query._support_token,
+						supportPath: req.query.support_path,
+					} )
+				);
+			} )
+			.catch( () => {
 				res.clearCookie( 'wordpress_logged_in', {
 					path: '/',
 					httpOnly: true,
@@ -744,32 +835,14 @@ module.exports = function() {
 				} );
 
 				return res.send( renderJsx( 'support-user' ) );
-			}
-
-			const activeFlags = get( data, 'meta.data.flags.active_flags', [] );
-
-			// A8C check
-			if ( ! includes( activeFlags, 'calypso_support_user' ) ) {
-				return res.send( renderJsx( 'support-user' ) );
-			}
-
-			// Passed all checks, prepare support user session
-			return res.send(
-				renderJsx( 'support-user', {
-					authorized: true,
-					supportUser: req.query.support_user,
-					supportToken: req.query._support_token,
-					supportPath: req.query.support_path,
-				} )
-			);
-		} );
+			} );
 	} );
 
 	// catchall to render 404 for all routes not whitelisted in client/sections
 	app.use( render404 );
 
 	// Error handling middleware for displaying the server error 500 page must be the very last middleware defined
-	app.use( serverRenderError );
+	app.use( renderServerError );
 
 	return app;
 };

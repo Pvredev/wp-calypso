@@ -137,6 +137,11 @@ export function generateSteps( {
 			providesDependencies: [ 'siteTitle' ],
 		},
 
+		'site-topic': {
+			stepName: 'site-topic',
+			providesDependencies: [ 'siteTopic' ],
+		},
+
 		test: {
 			stepName: 'test',
 		},
@@ -164,6 +169,14 @@ export function generateSteps( {
 			},
 			dependencies: [ 'themeSlugWithRepo' ],
 			delayApiRequestUntilComplete: true,
+		},
+
+		'domain-only': {
+			stepName: 'domain-only',
+			providesDependencies: [ 'siteId', 'siteSlug', 'domainItem' ],
+			props: {
+				isDomainOnly: true,
+			},
 		},
 
 		'domains-store': {
@@ -206,6 +219,19 @@ export function generateSteps( {
 			},
 			providesToken: true,
 			providesDependencies: [ 'bearer_token', 'username', 'oauth2_client_id', 'oauth2_redirect' ],
+		},
+
+		'oauth2-name': {
+			stepName: 'oauth2-name',
+			apiRequestFunction: createAccount,
+			providesToken: true,
+			providesDependencies: [ 'bearer_token', 'username', 'oauth2_client_id', 'oauth2_redirect' ],
+			props: {
+				isSocialSignupEnabled: config.isEnabled( 'signup/social' ),
+				oauth2Signup: true,
+				displayNameInput: true,
+				displayUsernameInput: false,
+			},
 		},
 
 		'get-dot-blog-plans': {
@@ -336,6 +362,23 @@ export function generateSteps( {
 		'clone-cloning': {
 			stepName: 'clone-cloning',
 			providesDependencies: [],
+		},
+
+		/* Imports */
+		'from-url': {
+			stepName: 'from-url',
+			providesDependencies: [ 'importSiteDetails', 'importUrl', 'themeSlugWithRepo' ],
+		},
+
+		'reader-landing': {
+			stepName: 'reader-landing',
+			providesDependencies: [],
+		},
+
+		/* Improved Onboarding */
+		'site-type': {
+			stepName: 'site-type',
+			providesDependencies: [ 'siteType', 'themeSlugWithRepo' ],
 		},
 	};
 }

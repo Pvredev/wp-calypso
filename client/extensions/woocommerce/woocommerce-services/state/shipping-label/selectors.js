@@ -300,7 +300,7 @@ export const getCustomsErrors = (
 
 	const valuesByTariffNumber = {};
 	forEach( pick( customs.items, usedProductIds ), ( itemData, productId ) => {
-		if ( 6 === itemData.tariffNumber.length ) {
+		if ( itemData.tariffNumber && 6 === itemData.tariffNumber.length ) {
 			if ( ! valuesByTariffNumber[ itemData.tariffNumber ] ) {
 				valuesByTariffNumber[ itemData.tariffNumber ] = 0;
 			}
@@ -333,14 +333,16 @@ export const getCustomsErrors = (
 			} );
 
 			if ( pckg.itn ) {
-				if ( ! /^(AES X\d{14})|(NOEEI 30\.\d{1,2}(\([a-z]\)(\(\d\))?)?)$/.test( pckg.itn ) ) {
+				if (
+					! /^(?:(?:AES X\d{14})|(?:NOEEI 30\.\d{1,2}(?:\([a-z]\)(?:\(\d\))?)?))$/.test( pckg.itn )
+				) {
 					errors.itn = translate( 'Invalid format' );
 				}
 			} else if ( 'CA' !== destinationCountryCode ) {
 				if ( ! isEmpty( classesAbove2500usd ) ) {
 					errors.itn = translate(
-						'International Transaction Number is required for shipping items valued over $2,500 per tariff code. ' +
-							'Products with tariff code %(code)s add up to more than $2,500.',
+						'International Transaction Number is required for shipping items valued over $2,500 per tariff number. ' +
+							'Products with tariff number %(code)s add up to more than $2,500.',
 						{
 							args: { code: classesAbove2500usd.values().next().value }, // Just pick the first code
 						}
@@ -377,34 +379,34 @@ export const getCustomsErrors = (
 					itemErrors.value = translate( 'Declared value must be greater than zero' );
 				}
 			}
-			if (
-				! customs.ignoreTariffNumberValidation[ productId ] &&
-				6 !== itemData.tariffNumber.length
-			) {
-				itemErrors.tariffNumber = translate( 'The tariff code must be 6 digits long' );
+			if ( itemData.tariffNumber && 6 !== itemData.tariffNumber.length ) {
+				itemErrors.tariffNumber = translate( 'The tariff number must be 6 digits long' );
 			}
 			return itemErrors;
 		} ),
 	};
 };
 
-export const getRatesErrors = ( { values: selectedRates, available: allRates } ) => {
-	return {
-		server: mapValues( allRates, rate => {
-			if ( ! rate.errors ) {
-				return;
-			}
+export const getRatesErrors = ( { values: selectedRates, available: allRates } ) =>
+	mapValues( allRates, ( rate, boxId ) => {
+		if ( ! isEmpty( rate.errors ) ) {
+			const messages = rate.errors.map( err => err.userMessage || err.message ).filter( Boolean );
+			return messages.length
+				? messages
+				: [ "We couldn't get a rate for this package, please try again." ];
+		}
 
-			return rate.errors.map(
-				error =>
-					error.userMessage ||
-					error.message ||
-					translate( "We couldn't get a rate for this package, please try again." )
-			);
-		} ),
-		form: mapValues( selectedRates, rate => ( rate ? null : translate( 'Please choose a rate' ) ) ),
-	};
-};
+		if ( selectedRates[ boxId ] ) {
+			return [];
+		} else if ( isEmpty( rate.rates ) ) {
+			return [
+				translate(
+					'No rates available, please double check dimensions and weight or try using different packaging.'
+				),
+			];
+		}
+		return [ translate( 'Please choose a rate' ) ];
+	} );
 
 const getSidebarErrors = paperSize => {
 	const errors = {};
@@ -463,7 +465,7 @@ export const isCustomsFormStepSubmitted = (
 	return ! some(
 		usedProductIds.map(
 			productId =>
-				form.customs.ignoreTariffNumberValidation[ productId ] ||
+				isNil( form.customs.items[ productId ].tariffNumber ) ||
 				form.customs.ignoreWeightValidation[ productId ] ||
 				form.customs.ignoreValueValidation[ productId ]
 		)

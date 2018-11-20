@@ -43,14 +43,24 @@ const translate = x => x;
  */
 import { shallow } from 'enzyme';
 import React from 'react';
+
+/**
+ * Internal dependencies
+ */
+import { PlansAtomicStoreStep } from '../index';
 import {
 	PLAN_FREE,
+	PLAN_ECOMMERCE,
+	PLAN_ECOMMERCE_2_YEARS,
+	PLAN_BUSINESS_MONTHLY,
 	PLAN_BUSINESS,
 	PLAN_BUSINESS_2_YEARS,
 	PLAN_PREMIUM,
 	PLAN_PREMIUM_2_YEARS,
 	PLAN_PERSONAL,
 	PLAN_PERSONAL_2_YEARS,
+	PLAN_BLOGGER,
+	PLAN_BLOGGER_2_YEARS,
 	PLAN_JETPACK_PERSONAL,
 	PLAN_JETPACK_PERSONAL_MONTHLY,
 	PLAN_JETPACK_PREMIUM,
@@ -58,11 +68,6 @@ import {
 	PLAN_JETPACK_BUSINESS,
 	PLAN_JETPACK_BUSINESS_MONTHLY,
 } from 'lib/plans/constants';
-
-/**
- * Internal dependencies
- */
-import { PlansAtomicStoreStep } from '../index';
 
 const props = {
 	translate,
@@ -195,8 +200,14 @@ describe( 'PlansAtomicStoreStep.onSelectPlan', () => {
 		} );
 	} );
 
-	[ PLAN_BUSINESS, PLAN_BUSINESS_2_YEARS ].forEach( plan => {
-		test( `Should add is_store_signup to cartItem.extra when processing wp.com business plans (${ plan })`, () => {
+	[
+		PLAN_BUSINESS_MONTHLY,
+		PLAN_BUSINESS,
+		PLAN_BUSINESS_2_YEARS,
+		PLAN_ECOMMERCE,
+		PLAN_ECOMMERCE_2_YEARS,
+	].forEach( plan => {
+		test( `Should add is_store_signup to cartItem.extra when processing wp.com business and eCommerce plans (${ plan })`, () => {
 			const myProps = {
 				...tplProps,
 				goToNextStep: jest.fn(),
@@ -230,6 +241,8 @@ describe( 'PlansAtomicStoreStep.onSelectPlan', () => {
 		PLAN_PREMIUM_2_YEARS,
 		PLAN_PERSONAL,
 		PLAN_PERSONAL_2_YEARS,
+		PLAN_BLOGGER,
+		PLAN_BLOGGER_2_YEARS,
 		PLAN_JETPACK_PERSONAL,
 		PLAN_JETPACK_PERSONAL_MONTHLY,
 		PLAN_JETPACK_PREMIUM,

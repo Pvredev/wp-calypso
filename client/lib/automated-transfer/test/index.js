@@ -23,10 +23,14 @@ import {
 	PLAN_FREE,
 	PLAN_BUSINESS,
 	PLAN_BUSINESS_2_YEARS,
+	PLAN_ECOMMERCE,
+	PLAN_ECOMMERCE_2_YEARS,
 	PLAN_PREMIUM,
 	PLAN_PREMIUM_2_YEARS,
 	PLAN_PERSONAL,
 	PLAN_PERSONAL_2_YEARS,
+	PLAN_BLOGGER,
+	PLAN_BLOGGER_2_YEARS,
 	PLAN_JETPACK_PERSONAL,
 	PLAN_JETPACK_PERSONAL_MONTHLY,
 	PLAN_JETPACK_PREMIUM,
@@ -100,13 +104,15 @@ describe( 'isATEnabled basic tests', () => {
 		assert.equal( isATEnabled( site ), true );
 	} );
 
-	test( 'should return false if site does not have a business plan', () => {
+	test( 'should return false if site does not have a business or ecommerce plan', () => {
 		const plans = [
 			PLAN_FREE,
 			PLAN_PREMIUM,
 			PLAN_PREMIUM_2_YEARS,
 			PLAN_PERSONAL,
 			PLAN_PERSONAL_2_YEARS,
+			PLAN_BLOGGER,
+			PLAN_BLOGGER_2_YEARS,
 			PLAN_JETPACK_PERSONAL,
 			PLAN_JETPACK_PERSONAL_MONTHLY,
 			PLAN_JETPACK_PREMIUM,
@@ -130,7 +136,7 @@ describe( 'isATEnabled basic tests', () => {
 	} );
 
 	test( 'should return true otherwise', () => {
-		const plans = [ PLAN_BUSINESS, PLAN_BUSINESS_2_YEARS ];
+		const plans = [ PLAN_BUSINESS, PLAN_BUSINESS_2_YEARS, PLAN_ECOMMERCE, PLAN_ECOMMERCE_2_YEARS ];
 		plans.forEach( product_slug => {
 			const mySite = {
 				...site,

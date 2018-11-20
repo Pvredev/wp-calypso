@@ -31,8 +31,9 @@ class MasterbarLoggedOut extends PureComponent {
 		title: PropTypes.string,
 
 		// Connected props
-		currentQuery: PropTypes.object,
+		currentQuery: PropTypes.oneOfType( [ PropTypes.bool, PropTypes.object ] ),
 		currentRoute: PropTypes.string,
+		userSiteCount: PropTypes.number,
 	};
 
 	static defaultProps = {
@@ -42,7 +43,6 @@ class MasterbarLoggedOut extends PureComponent {
 
 	renderLoginItem() {
 		const { currentQuery, currentRoute, sectionName, translate, redirectUri } = this.props;
-
 		if ( includes( [ 'login', 'jetpack-onboarding' ], sectionName ) ) {
 			return null;
 		}

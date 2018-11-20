@@ -19,7 +19,6 @@ import React, { Component } from 'react';
 import classNames from 'classnames';
 import page from 'page';
 import wpcom from 'lib/wp';
-import 'config';
 import { connect } from 'react-redux';
 
 /**
@@ -28,9 +27,15 @@ import { connect } from 'react-redux';
 import analytics from 'lib/analytics';
 import config from 'config';
 import { recordTracksEvent } from 'state/analytics/actions';
-import NotificationsPanel, { refreshNotes } from 'notifications-panel';
+import NotificationsPanel, { refreshNotes } from './src/panel/Notifications';
 import getCurrentLocaleSlug from 'state/selectors/get-current-locale-slug';
 import getCurrentLocaleVariant from 'state/selectors/get-current-locale-variant';
+import { setUnseenCount } from 'state/notifications';
+
+/**
+ * Style dependencies
+ */
+import './style.scss';
 
 /**
  * Returns whether or not the browser session
@@ -164,48 +169,50 @@ export class Notifications extends Component {
 		const localeSlug = this.props.currentLocaleSlug || config( 'i18n_default_locale_slug' );
 
 		const customMiddleware = {
-			APP_RENDER_NOTES: [ ( store, { newNoteCount } ) => this.props.setIndicator( newNoteCount ) ],
-			OPEN_LINK: [ ( store, { href } ) => window.open( href, '_blank' ) ],
-			OPEN_POST: [
-				( store, { siteId, postId, href } ) => {
-					if ( config.isEnabled( 'notifications/link-to-reader' ) ) {
-						this.props.checkToggle();
-						this.props.recordTracksEvent( 'calypso_notifications_open_post', {
-							site_id: siteId,
-							post_id: postId,
+			APP_RENDER_NOTES: [
+				( store, { newNoteCount } ) => {
+					this.props.setIndicator( newNoteCount );
+					this.props.setUnseenCount( newNoteCount );
+				},
+			],
+			OPEN_LINK: [
+				( store, { href, tracksEvent } ) => {
+					if ( tracksEvent ) {
+						this.props.recordTracksEvent( 'calypso_notifications_' + tracksEvent, {
+							link: href,
 						} );
-						page( `/read/blogs/${ siteId }/posts/${ postId }` );
-					} else {
-						window.open( href, '_blank' );
 					}
+					window.open( href, '_blank' );
+				},
+			],
+			OPEN_POST: [
+				( store, { siteId, postId } ) => {
+					this.props.checkToggle();
+					this.props.recordTracksEvent( 'calypso_notifications_open_post', {
+						site_id: siteId,
+						post_id: postId,
+					} );
+					page( `/read/blogs/${ siteId }/posts/${ postId }` );
 				},
 			],
 			OPEN_COMMENT: [
-				( store, { siteId, postId, href, commentId } ) => {
-					if ( config.isEnabled( 'notifications/link-to-reader' ) ) {
-						this.props.checkToggle();
-						this.props.recordTracksEvent( 'calypso_notifications_open_comment', {
-							site_id: siteId,
-							post_id: postId,
-							comment_id: commentId,
-						} );
-						page( `/read/blogs/${ siteId }/posts/${ postId }#comment-${ commentId }` );
-					} else {
-						window.open( href, '_blank' );
-					}
+				( store, { siteId, postId, commentId } ) => {
+					this.props.checkToggle();
+					this.props.recordTracksEvent( 'calypso_notifications_open_comment', {
+						site_id: siteId,
+						post_id: postId,
+						comment_id: commentId,
+					} );
+					page( `/read/blogs/${ siteId }/posts/${ postId }#comment-${ commentId }` );
 				},
 			],
 			OPEN_SITE: [
-				( store, { siteId, href } ) => {
-					if ( config.isEnabled( 'notifications/link-to-reader' ) ) {
-						this.props.checkToggle();
-						this.props.recordTracksEvent( 'calypso_notifications_open_site', {
-							site_id: siteId,
-						} );
-						page( `/read/blogs/${ siteId }` );
-					} else {
-						window.open( href, '_blank' );
-					}
+				( store, { siteId } ) => {
+					this.props.checkToggle();
+					this.props.recordTracksEvent( 'calypso_notifications_open_site', {
+						site_id: siteId,
+					} );
+					page( `/read/blogs/${ siteId }` );
 				},
 			],
 			VIEW_SETTINGS: [
@@ -251,5 +258,8 @@ export default connect(
 	state => ( {
 		currentLocaleSlug: getCurrentLocaleVariant( state ) || getCurrentLocaleSlug( state ),
 	} ),
-	{ recordTracksEvent }
+	{
+		recordTracksEvent,
+		setUnseenCount,
+	}
 )( Notifications );

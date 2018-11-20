@@ -15,6 +15,7 @@ import debugFactory from 'debug';
  */
 import config from 'config';
 import { isDefaultLocale } from 'lib/i18n-utils';
+import { getLanguageFileUrl } from 'lib/i18n-utils/switch-locale';
 import { isSectionIsomorphic } from 'state/ui/selectors';
 import {
 	getDocumentHeadFormattedTitle,
@@ -24,7 +25,7 @@ import {
 import isRTL from 'state/selectors/is-rtl';
 import getCurrentLocaleSlug from 'state/selectors/get-current-locale-slug';
 import getCurrentLocaleVariant from 'state/selectors/get-current-locale-variant';
-import { reducer } from 'state';
+import initialReducer from 'state/reducer';
 import { SERIALIZE } from 'state/action-types';
 import stateCache from 'state-cache';
 import { getNormalizedPath } from 'isomorphic-routing';
@@ -136,7 +137,8 @@ export function serverRender( req, res ) {
 
 	if ( ! isDefaultLocale( context.lang ) ) {
 		const langFileName = getCurrentLocaleVariant( context.store.getState() ) || context.lang;
-		context.i18nLocaleScript = '//widgets.wp.com/languages/calypso/' + langFileName + '.js';
+
+		context.i18nLocaleScript = getLanguageFileUrl( langFileName, 'js', context.languageRevisions );
 	}
 
 	if ( shouldServerSideRender( context ) ) {
@@ -168,7 +170,7 @@ export function serverRender( req, res ) {
 		// And cache on the server, too.
 		if ( cacheKey ) {
 			const cacheableInitialState = pick( context.store.getState(), cacheableReduxSubtrees );
-			const serverState = reducer( cacheableInitialState, { type: SERIALIZE } );
+			const serverState = initialReducer( cacheableInitialState, { type: SERIALIZE } );
 			stateCache.set( cacheKey, serverState );
 		}
 
@@ -180,6 +182,12 @@ export function serverRender( req, res ) {
 
 	context.head = { title, metas, links };
 	context.clientData = config.clientData;
+	try {
+		context.buildTimestamp = BUILD_TIMESTAMP;
+	} catch ( e ) {
+		context.buildTimestamp = null;
+		debug( 'BUILD_TIMESTAMP is not defined for wp-desktop builds and is expected to fail here.' );
+	}
 
 	if ( config.isEnabled( 'desktop' ) ) {
 		res.send( renderJsx( 'desktop', context ) );
@@ -187,20 +195,6 @@ export function serverRender( req, res ) {
 	}
 
 	res.send( renderJsx( 'index', context ) );
-}
-
-export function serverRenderError( err, req, res, next ) {
-	if ( err ) {
-		if ( process.env.NODE_ENV !== 'production' ) {
-			console.error( err );
-		}
-		req.error = err;
-		res.status( err.status || 500 );
-		res.send( renderJsx( '500', req.context ) );
-		return;
-	}
-
-	next();
 }
 
 /**

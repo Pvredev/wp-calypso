@@ -33,6 +33,7 @@ const isAdwordsEnabled = true;
 const isFacebookEnabled = true;
 const isBingEnabled = true;
 const isGeminiEnabled = true;
+const isDonutsGtagEnabled = true;
 const isQuantcastEnabled = true;
 const isTwitterEnabled = true;
 const isAolEnabled = true;
@@ -61,10 +62,13 @@ let lastFloodlightPageViewTime = 0;
  */
 const FACEBOOK_TRACKING_SCRIPT_URL = 'https://connect.facebook.net/en_US/fbevents.js',
 	GOOGLE_TRACKING_SCRIPT_URL = 'https://www.googleadservices.com/pagead/conversion_async.js',
+	DONUTS_GOOGLE_GTAG_SCRIPT_URL = 'https://www.googletagmanager.com/gtag/js?id=DC-8907854',
 	BING_TRACKING_SCRIPT_URL = 'https://bat.bing.com/bat.js',
 	CRITEO_TRACKING_SCRIPT_URL = 'https://static.criteo.net/js/ld/ld.js',
 	ADWORDS_CONVERSION_ID = config( 'google_adwords_conversion_id' ),
 	ADWORDS_CONVERSION_ID_JETPACK = config( 'google_adwords_conversion_id_jetpack' ),
+	ADWORDS_SIGNUP_CONVERSION_ID = config( 'google_adwords_signup_conversion_id' ),
+	ADWORDS_SIGNUP_CONVERSION_ID_JETPACK = config( 'google_adwords_signup_conversion_id_jetpack' ),
 	YAHOO_GEMINI_CONVERSION_PIXEL_URL =
 		'https://sp.analytics.yahoo.com/spp.pl?a=10000&.yp=10014088&ec=wordpresspurchase',
 	YAHOO_GEMINI_AUDIENCE_BUILDING_PIXEL_URL =
@@ -94,6 +98,8 @@ const FACEBOOK_TRACKING_SCRIPT_URL = 'https://connect.facebook.net/en_US/fbevent
 		facebookJetpackInit: '919484458159593',
 		googleConversionLabel: 'MznpCMGHr2MQ1uXz_AM',
 		googleConversionLabelJetpack: '0fwbCL35xGIQqv3svgM',
+		googleSignupConversionLabel: 'zKK-CKPG7ocBENbl8_wD',
+		googleSignupConversionLabelJetpack: 'J8Z5CNTi14cBEKr97L4D',
 		criteo: '31321',
 		quantcast: 'p-3Ma3jHaQMB_bS',
 		yahooProjectId: '10000',
@@ -307,6 +313,10 @@ async function loadTrackingScripts( callback ) {
 		scripts.push( GOOGLE_TRACKING_SCRIPT_URL );
 	}
 
+	if ( isDonutsGtagEnabled ) {
+		scripts.push( DONUTS_GOOGLE_GTAG_SCRIPT_URL );
+	}
+
 	if ( isBingEnabled ) {
 		scripts.push( BING_TRACKING_SCRIPT_URL );
 	}
@@ -364,6 +374,10 @@ async function loadTrackingScripts( callback ) {
 	// init Facebook
 	if ( isFacebookEnabled ) {
 		initFacebook();
+	}
+
+	if ( isDonutsGtagEnabled ) {
+		initDonutsGtag();
 	}
 
 	// init Bing
@@ -675,6 +689,50 @@ export function recordViewCheckout( cart ) {
 	if ( isCriteoEnabled ) {
 		recordViewCheckoutInCriteo( cart );
 	}
+	if ( isDonutsGtagEnabled ) {
+		recordViewCheckoutInDonutsGtag( cart );
+	}
+}
+
+/**
+ * Tracks a signup conversion by generating a
+ * synthetic cart and then treating it like an order.
+ *
+ * @param {String} slug - Signup slug.
+ * @returns {void}
+ */
+export function recordSignup( slug ) {
+	if ( ! isAdTrackingAllowed() ) {
+		debug( 'recordSignup: skipping as ad tracking is disallowed' );
+		return;
+	}
+
+	if ( ! hasStartedFetchingScripts ) {
+		return loadTrackingScripts( recordSignup.bind( null, slug ) );
+	}
+
+	// Synthesize a cart object for signup tracking.
+	const syntheticCart = {
+		is_signup: true,
+		currency: 'USD',
+		total_cost: 0,
+		products: [
+			{
+				is_signup: true,
+				product_id: slug,
+				product_slug: slug,
+				product_name: slug,
+				currency: 'USD',
+				volume: 1,
+				cost: 0,
+			},
+		],
+	};
+
+	// 35-byte signup tracking ID.
+	const syntheticOrderId = 's_' + uuid().replace( /-/g, '' );
+
+	recordOrder( syntheticCart, syntheticOrderId );
 }
 
 /**
@@ -704,6 +762,8 @@ export function recordOrder( cart, orderId ) {
 	recordOrderInFloodlight( cart, orderId );
 	recordOrderInFacebook( cart, orderId );
 	recordOrderInNanigans( cart, orderId );
+	recordOrderInDonutsGtag( cart, orderId );
+	recordOrderInBing( cart, orderId );
 
 	// This has to come before we add the items to the Google Analytics cart
 	recordOrderInGoogleAnalytics( cart, orderId );
@@ -721,25 +781,25 @@ export function recordOrder( cart, orderId ) {
 	// 3. Fire a single tracking event without any details about what was purchased
 
 	// Experian / One 2 One Media
-	if ( isExperianEnabled ) {
+	if ( isExperianEnabled && ! cart.is_signup ) {
 		new Image().src = EXPERIAN_CONVERSION_PIXEL_URL;
 	}
 
 	// Yahoo Gemini
-	if ( isGeminiEnabled ) {
+	if ( isGeminiEnabled && ! cart.is_signup ) {
 		new Image().src =
 			YAHOO_GEMINI_CONVERSION_PIXEL_URL + ( usdTotalCost !== null ? '&gv=' + usdTotalCost : '' );
 	}
 
-	if ( isAolEnabled ) {
+	if ( isAolEnabled && ! cart.is_signup ) {
 		new Image().src = ONE_BY_AOL_CONVERSION_PIXEL_URL;
 	}
 
-	if ( isPandoraEnabled ) {
+	if ( isPandoraEnabled && ! cart.is_signup ) {
 		new Image().src = PANDORA_CONVERSION_PIXEL_URL;
 	}
 
-	if ( isQuoraEnabled ) {
+	if ( isQuoraEnabled && ! cart.is_signup ) {
 		window.qp( 'track', 'Generic' );
 	}
 }
@@ -787,13 +847,27 @@ function recordProduct( product, orderId ) {
 		// Google AdWords
 		if ( isAdwordsEnabled ) {
 			if ( window.google_trackConversion ) {
+				let googleConversionId, googleConversionLabel;
+
+				if ( product.is_signup ) {
+					if ( isJetpackPlan ) {
+						googleConversionId = ADWORDS_SIGNUP_CONVERSION_ID_JETPACK;
+						googleConversionLabel = TRACKING_IDS.googleSignupConversionLabelJetpack;
+					} else {
+						googleConversionId = ADWORDS_SIGNUP_CONVERSION_ID;
+						googleConversionLabel = TRACKING_IDS.googleSignupConversionLabel;
+					}
+				} else if ( isJetpackPlan ) {
+					googleConversionId = ADWORDS_CONVERSION_ID_JETPACK;
+					googleConversionLabel = TRACKING_IDS.googleConversionLabelJetpack;
+				} else {
+					googleConversionId = ADWORDS_CONVERSION_ID;
+					googleConversionLabel = TRACKING_IDS.googleConversionLabel;
+				}
+
 				window.google_trackConversion( {
-					google_conversion_id: isJetpackPlan
-						? ADWORDS_CONVERSION_ID_JETPACK
-						: ADWORDS_CONVERSION_ID,
-					google_conversion_label: isJetpackPlan
-						? TRACKING_IDS.googleConversionLabelJetpack
-						: TRACKING_IDS.googleConversionLabel,
+					google_conversion_id: googleConversionId,
+					google_conversion_label: googleConversionLabel,
 					google_conversion_value: product.cost,
 					google_conversion_currency: product.currency,
 					google_custom_params: {
@@ -808,7 +882,7 @@ function recordProduct( product, orderId ) {
 
 		// Facebook (disabled for now as we are not sure this works as intended).
 		// The entire order is already reported to Facebook, so not absolutely necessary.
-		/* if ( isFacebookEnabled ) {
+		/* if ( isFacebookEnabled && ! product.is_signup ) {
 			window.fbq(
 				'trackSingle',
 				isJetpackPlan ? TRACKING_IDS.facebookJetpackInit : TRACKING_IDS.facebookInit,
@@ -824,7 +898,7 @@ function recordProduct( product, orderId ) {
 		} */
 
 		// Twitter
-		if ( isTwitterEnabled ) {
+		if ( isTwitterEnabled && ! product.is_signup ) {
 			window.twq( 'track', 'Purchase', {
 				value: product.cost.toString(),
 				currency: product.currency,
@@ -837,7 +911,7 @@ function recordProduct( product, orderId ) {
 		}
 
 		// Yandex Goal
-		if ( isYandexEnabled ) {
+		if ( isYandexEnabled && ! product.is_signup ) {
 			window.yaCounter45268389.reachGoal( 'ProductPurchase', {
 				order_id: orderId,
 				product_slug: product.product_slug,
@@ -849,21 +923,22 @@ function recordProduct( product, orderId ) {
 		if ( isSupportedCurrency( product.currency ) ) {
 			const costUSD = costToUSD( product.cost, product.currency );
 
-			// Bing
-			if ( isBingEnabled ) {
+			// Bing: only record purchases here.
+			// We track signups in `recordOrderInBing()`.
+			if ( isBingEnabled && ! product.is_signup ) {
 				const bingParams = {
 					ec: 'purchase',
 					gv: costUSD,
 				};
 				if ( isJetpackPlan ) {
-					// `el` must be included only for jetpack plans
+					// NOTE: `el` must be included only for jetpack plans.
 					bingParams.el = 'jetpack';
 				}
 				window.uetq.push( bingParams );
 			}
 
 			// Quantcast
-			if ( isQuantcastEnabled ) {
+			if ( isQuantcastEnabled && ! product.is_signup ) {
 				// Note that all properties have to be strings or they won't get tracked
 				window._qevents.push( {
 					qacct: TRACKING_IDS.quantcast,
@@ -875,7 +950,7 @@ function recordProduct( product, orderId ) {
 			}
 
 			// Yahoo
-			if ( isYahooEnabled ) {
+			if ( isYahooEnabled && ! product.is_signup ) {
 				// Like the Quantcast tracking above, the price has to be passed as a string
 				// See: https://developer.yahoo.com/gemini/guide/dottags/installing-tags/
 				/*global YAHOO*/
@@ -913,6 +988,10 @@ function recordOrderInFloodlight( cart, orderId ) {
 		return;
 	}
 
+	if ( cart.is_signup ) {
+		return;
+	}
+
 	debug( 'recordOrderInFloodlight: Record purchase' );
 
 	const params = {
@@ -938,6 +1017,10 @@ function recordOrderInFloodlight( cart, orderId ) {
  */
 function recordOrderInNanigans( cart, orderId ) {
 	if ( ! isAdTrackingAllowed() || ! isNanigansEnabled ) {
+		return;
+	}
+
+	if ( cart.is_signup ) {
 		return;
 	}
 
@@ -974,6 +1057,22 @@ function recordOrderInNanigans( cart, orderId ) {
 	window.NaN_api.push( eventStruct ); // NaN api is either an array that supports push, either the real Nanigans API
 }
 
+function recordOrderInDonutsGtag( cart, orderId ) {
+	debug( 'recordOrderInDonutsGtag', cart, orderId );
+	if ( ! isAdTrackingAllowed() || ! isDonutsGtagEnabled ) {
+		return;
+	}
+
+	if ( cart.is_signup ) {
+		return;
+	}
+
+	const orderSummary = cartToDonutsOrderSummary( cart );
+	if ( orderSummary ) {
+		recordParamsInDonutsGtag( 'purchase', 'DC-8907854/purch0/wpress+transactions', orderSummary );
+	}
+}
+
 /**
  * Records an order in Facebook (a single event for the entire order)
  *
@@ -983,6 +1082,10 @@ function recordOrderInNanigans( cart, orderId ) {
  */
 function recordOrderInFacebook( cart, orderId ) {
 	if ( ! isAdTrackingAllowed() || ! isFacebookEnabled ) {
+		return;
+	}
+
+	if ( cart.is_signup ) {
 		return;
 	}
 
@@ -1051,6 +1154,80 @@ export function recordAliasInFloodlight() {
 	};
 
 	recordParamsInFloodlight( params );
+}
+
+/**
+ * Records a signup|purchase in Bing.
+ *
+ * @param {Object} cart - cart as `CartValue` object.
+ * @param {Number} orderId - the order ID.
+ * @returns {void}
+ */
+function recordOrderInBing( cart /*, orderId */ ) {
+	// NOTE: `orderId` is not used at this time, but it could be useful in the near future.
+
+	if ( ! isAdTrackingAllowed() || ! isBingEnabled ) {
+		return;
+	}
+
+	if ( ! cart.is_signup ) {
+		return; // We only track signups here for now.
+		// We already record each individual product purchase.
+	}
+
+	const containsJetpackPlan = some( cart.products, productsValues.isJetpackPlan );
+	const containsNonJetpackProduct = some( cart.products, p => {
+		return ! productsValues.isJetpackPlan( p );
+	} );
+
+	if ( containsJetpackPlan && containsNonJetpackProduct ) {
+		debug(
+			'recordOrderInBing: Record ' +
+				( cart.is_signup ? 'signup' : 'purchase' ) +
+				' containing Jetpack and non-Jetpack products'
+		);
+	} else if ( containsJetpackPlan ) {
+		debug(
+			'recordOrderInBing: Record ' +
+				( cart.is_signup ? 'signup' : 'purchase' ) +
+				' containing Jetpack'
+		);
+	} else {
+		debug( 'recordOrderInBing: Record ' + ( cart.is_signup ? 'signup' : 'purchase' ) );
+	}
+
+	const bingParams = {
+		ec: cart.is_signup ? 'signup' : 'purchase',
+		gv: cart.total_cost,
+	};
+	if ( containsJetpackPlan ) {
+		// NOTE: `el` must be included only for jetpack plans.
+		bingParams.el = 'jetpack';
+	}
+	window.uetq.push( bingParams );
+}
+
+function recordSignupStartInDonutsGtag() {
+	if ( ! isAdTrackingAllowed() || ! isDonutsGtagEnabled ) {
+		return;
+	}
+
+	debug( 'Donuts Gtag: Recording sign up start' );
+
+	recordParamsInDonutsGtag( 'conversion', 'DC-8907854/visit0/wpresslp+unique' );
+}
+
+function recordParamsInDonutsGtag( event_type, send_to, order_summary = false ) {
+	initDonutsGtag();
+	const params = {
+		allow_custom_scripts: false,
+		u1: document.referrer,
+		u2: document.location.href,
+		send_to: send_to,
+		...( order_summary && { u90: order_summary } ),
+	};
+	debug( 'Recording Donuts Gtag "' + event_type + '" event with parameters:', params );
+	window.gtag( 'event', event_type, params );
 }
 
 /**
@@ -1259,6 +1436,10 @@ function recordOrderInCriteo( cart, orderId ) {
 		return;
 	}
 
+	if ( cart.is_signup ) {
+		return;
+	}
+
 	recordInCriteo( 'trackTransaction', {
 		id: orderId,
 		currency: cart.currency,
@@ -1277,11 +1458,166 @@ function recordViewCheckoutInCriteo( cart ) {
 		return;
 	}
 
+	if ( cart.is_signup ) {
+		return;
+	}
+
 	// Note that unlike `recordOrderInCriteo` above, this doesn't include the order id
 	recordInCriteo( 'viewBasket', {
 		currency: cart.currency,
 		item: cartToCriteoItems( cart ),
 	} );
+}
+
+/**
+ * Records that a user viewed the checkout page
+ *
+ * @param {Object} cart - cart as `CartValue` object
+ * @returns {void}
+ */
+function recordViewCheckoutInDonutsGtag( cart ) {
+	if ( ! isAdTrackingAllowed() || ! isDonutsGtagEnabled ) {
+		return;
+	}
+
+	if ( cart.is_signup ) {
+		return;
+	}
+
+	const orderSummary = cartToDonutsOrderSummary( cart );
+	if ( orderSummary ) {
+		recordParamsInDonutsGtag( 'conversion', 'DC-8907854/cartd0/wpress+unique', orderSummary );
+	}
+}
+
+function domainNameToTld( domainName ) {
+	if ( domainName.indexOf( '.' ) === -1 ) {
+		return null;
+	}
+	return domainName.slice( domainName.indexOf( '.' ) + 1 ).toLowerCase();
+}
+
+/**
+ * Converts the products in a cart to the format Donuts expects for its `u90` order summary property
+ *
+ * @param {Object} cart - cart as `CartValue` object
+ * @returns {Array} - An array of items to include in the Donuts Gtag tracking call
+ */
+function cartToDonutsOrderSummary( cart ) {
+	const DONUTS_TLDS = [
+		'associates',
+		'business',
+		'careers',
+		'center',
+		'company',
+		'consulting',
+		'enterprises',
+		'gmbh',
+		'group',
+		'industries',
+		'international',
+		'limited',
+		'ltd',
+		'management',
+		'network',
+		'partners',
+		'sarl',
+		'services',
+		'solutions',
+		'support',
+		'ventures',
+		'actor',
+		'band',
+		'bingo',
+		'casino',
+		'dance',
+		'dating',
+		'dog',
+		'events',
+		'games',
+		'live',
+		'media',
+		'movie',
+		'rocks',
+		'show',
+		'singles',
+		'studio',
+		'theater',
+		'video',
+		'camera',
+		'equipment',
+		'gallery',
+		'graphics',
+		'media',
+		'photography',
+		'photos',
+		'pictures',
+		'studio',
+		'video',
+		'agency',
+		'consulting',
+		'digital',
+		'direct',
+		'email',
+		'marketing',
+		'media',
+		'productions',
+		'social',
+		'studio',
+		'video',
+		'chat',
+		'directory',
+		'fyi',
+		'media',
+		'memorial',
+		'news',
+		'reviews',
+		'social',
+		'tips',
+		'video',
+		'zone',
+	];
+	// for each domain: if domain ending is in list of donuts domain endings, add to u99 string
+	// types of products covered: domain registration, whois_privacy
+	// TODO: consider adding support for 'renewal' and 'transfer' products
+	debug( 'cartToDonutsOrderSummary:cart', cart );
+	const domain_registrations = cart.products
+		.filter( p => p.is_domain_registration || p.product_slug === 'private_whois' )
+		.map( p => {
+			let donuts_type = 'unknown';
+			if ( p.is_domain_registration ) {
+				donuts_type = 'registration';
+			} else if ( p.product_slug === 'private_whois' ) {
+				donuts_type = 'whois_privacy';
+			}
+			return Object.assign(
+				{},
+				{
+					domain_name: p.meta,
+					donuts_type: donuts_type,
+					duration: Math.round( p.bill_period / 365 ),
+					price: costToUSD( p.cost, p.currency ),
+					tld: domainNameToTld( p.meta ),
+				}
+			);
+		} );
+	const donuts_domain_registrations = domain_registrations.filter( p =>
+		includes( DONUTS_TLDS, p.tld )
+	);
+	const order_summary = donuts_domain_registrations.map( p => {
+		return {
+			domain_name: p.domain_name,
+			duration: p.duration,
+			price: p.price,
+			tld: p.tld,
+			type: p.donuts_type,
+		};
+	} );
+	debug( 'cartToDonutsOrderSummary:order_summary', order_summary );
+	if ( order_summary && order_summary.length > 0 ) {
+		return JSON.stringify( order_summary );
+	}
+	return false;
 }
 
 /**
@@ -1434,6 +1770,18 @@ function isSupportedCurrency( currency ) {
 	return Object.keys( EXCHANGE_RATES ).indexOf( currency ) !== -1;
 }
 
+function initDonutsGtag() {
+	if ( window.dataLayer && window.gtag ) {
+		return;
+	}
+	window.dataLayer = window.dataLayer || [];
+	window.gtag = function() {
+		window.dataLayer.push( arguments );
+	};
+	window.gtag( 'js', new Date() );
+	window.gtag( 'config', 'DC-8907854' );
+}
+
 /**
  * Initializes the Facebook pixel.
  *
@@ -1489,15 +1837,22 @@ function initFacebookAdvancedMatching() {
  */
 export function recordSignupStart() {
 	recordSignupStartInFloodlight();
+	recordSignupStartInDonutsGtag();
 }
 
 /**
  * Record that a user completed sign up
  *
+ * @param {object} details Signup details.
+ *
  * @returns {void}
  */
-export function recordSignupCompletion() {
+export function recordSignupCompletion( { isNewUser, isNewSite } ) {
 	recordSignupCompletionInFloodlight();
+
+	if ( isNewUser && isNewSite ) {
+		recordSignup( 'new-user-site' );
+	}
 }
 
 export function retarget( context, next ) {

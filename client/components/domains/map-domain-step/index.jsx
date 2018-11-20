@@ -21,6 +21,7 @@ import DomainRegistrationSuggestion from 'components/domains/domain-registration
 import DomainProductPrice from 'components/domains/domain-product-price';
 import { getCurrentUser } from 'state/current-user/selectors';
 import { getSelectedSite } from 'state/ui/selectors';
+import { MAP_EXISTING_DOMAIN, INCOMING_DOMAIN_TRANSFER } from 'lib/url/support';
 import FormTextInputWithAffixes from 'components/forms/form-text-input-with-affixes';
 import {
 	recordAddDomainButtonClickInMapDomain,
@@ -32,7 +33,7 @@ import Notice from 'components/notice';
 
 class MapDomainStep extends React.Component {
 	static propTypes = {
-		products: PropTypes.object.isRequired,
+		products: PropTypes.object,
 		cart: PropTypes.object,
 		selectedSite: PropTypes.oneOfType( [ PropTypes.object, PropTypes.bool ] ),
 		initialQuery: PropTypes.string,
@@ -56,7 +57,7 @@ class MapDomainStep extends React.Component {
 		};
 	}
 
-	componentWillMount() {
+	UNSAFE_componentWillMount() {
 		if ( this.props.initialState ) {
 			this.setState( Object.assign( {}, this.props.initialState, this.getDefaultState() ) );
 		}
@@ -79,7 +80,7 @@ class MapDomainStep extends React.Component {
 	}
 
 	render() {
-		const suggestion = this.props.products.domain_map
+		const suggestion = get( this.props, 'products.domain_map', false )
 			? {
 					cost: this.props.products.domain_map.cost_display,
 					product_slug: this.props.products.domain_map.product_slug,
@@ -104,7 +105,8 @@ class MapDomainStep extends React.Component {
 							this.props.domainsWithPlansOnly,
 							this.props.selectedSite,
 							this.props.cart,
-							suggestion
+							suggestion,
+							false
 						) }
 						price={ suggestion.cost }
 					/>
@@ -119,7 +121,7 @@ class MapDomainStep extends React.Component {
 							onBlur={ this.save }
 							onChange={ this.setSearchQuery }
 							onClick={ this.recordInputFocus }
-							autoFocus
+							autoFocus // eslint-disable-line jsx-a11y/no-autofocus
 						/>
 						<button
 							disabled={ ! getTld( searchQuery ) }
@@ -133,6 +135,33 @@ class MapDomainStep extends React.Component {
 					</div>
 
 					{ this.domainRegistrationUpsell() }
+
+					<div className="map-domain-step__domain-text">
+						{ translate(
+							"We'll add your domain and help you change its settings so it points to your site. Keep your domain renewed with your current provider. (They'll remind you when it's time.) {{a}}Learn more about adding a domain{{/a}}.",
+							{
+								components: {
+									a: <a href={ MAP_EXISTING_DOMAIN } rel="noopener noreferrer" target="_blank" />,
+								},
+							}
+						) }
+					</div>
+					<div className="map-domain-step__domain-text">
+						{ translate(
+							"You can transfer your domain's registration to WordPress.com and renew your domain and site from the same place. {{a}}Learn more about domain transfers{{/a}}.",
+							{
+								components: {
+									a: (
+										<a
+											href={ INCOMING_DOMAIN_TRANSFER }
+											rel="noopener noreferrer"
+											target="_blank"
+										/>
+									),
+								},
+							}
+						) }
+					</div>
 				</form>
 			</div>
 		);
@@ -145,12 +174,7 @@ class MapDomainStep extends React.Component {
 		}
 
 		return (
-			<div className="domain-search-results__domain-availability is-mapping-suggestion">
-				<Notice status="is-success" showDismiss={ false }>
-					{ this.props.translate( '%(domain)s is available!', {
-						args: { domain: suggestion.domain_name },
-					} ) }
-				</Notice>
+			<div className="map-domain-step__domain-availability">
 				<DomainRegistrationSuggestion
 					suggestion={ suggestion }
 					selectedSite={ this.props.selectedSite }
@@ -199,14 +223,23 @@ class MapDomainStep extends React.Component {
 			( error, result ) => {
 				const mappableStatus = get( result, 'mappable', error );
 				const status = get( result, 'status', error );
-				const { AVAILABLE, MAPPABLE, NOT_REGISTRABLE, UNKNOWN } = domainAvailability;
+				const {
+					AVAILABLE,
+					AVAILABILITY_CHECK_ERROR,
+					MAPPABLE,
+					NOT_REGISTRABLE,
+					UNKNOWN,
+				} = domainAvailability;
 
 				if ( status === AVAILABLE ) {
 					this.setState( { suggestion: result } );
 					return;
 				}
 
-				if ( status !== NOT_REGISTRABLE && includes( [ MAPPABLE, UNKNOWN ], mappableStatus ) ) {
+				if (
+					! includes( [ AVAILABILITY_CHECK_ERROR, NOT_REGISTRABLE ], status ) &&
+					includes( [ MAPPABLE, UNKNOWN ], mappableStatus )
+				) {
 					this.props.onMapDomain( domain );
 					return;
 				}

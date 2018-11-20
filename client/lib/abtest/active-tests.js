@@ -1,13 +1,19 @@
 /** @format */
 export default {
-	nudgeAPalooza: {
-		datestamp: '20180806',
+	improvedOnboarding: {
+		datestamp: '20181023',
 		variations: {
-			sidebarUpsells: 20,
-			themesNudgesUpdates: 20,
-			customPluginAndThemeLandingPages: 20,
-			plansBannerUpsells: 20,
-			control: 20,
+			main: 90,
+			onboarding: 10,
+		},
+		defaultVariation: 'main',
+		localeTargets: 'any',
+	},
+	cartNudgeUpdateToPremium: {
+		datestamp: '20180917',
+		variations: {
+			test: 50,
+			control: 50,
 		},
 		defaultVariation: 'control',
 		allowExistingUsers: true,
@@ -67,49 +73,33 @@ export default {
 		allowExistingUsers: true,
 		localeTargets: 'any',
 	},
-	jetpackSignupGoogleTop: {
-		datestamp: '20180427',
+	krackenRebootM33: {
+		datestamp: '20181108',
 		variations: {
-			original: 50,
-			top: 50,
+			domainsbot_front: 25,
+			variation1_front: 25,
+			variation2_front: 25,
+			variation3_front: 25,
 		},
-		defaultVariation: 'original',
+		defaultVariation: 'domainsbot_front',
+		assignmentMethod: 'userId',
+		allowExistingUsers: true,
+		localeTargets: 'any',
 	},
-	domainSuggestionKrakenV323: {
-		datestamp: '20180726',
+	privateByDefault: {
+		datestamp: '20181115',
 		variations: {
-			domainsbot: 0,
-			group_1: 22700,
-			group_3: 22700,
-			group_4: 22700,
-			group_6: 10000,
-			group_7: 10000,
-			group_8: 22700,
+			private: 10,
+			public: 90,
 		},
-		defaultVariation: 'domainsbot',
+		defaultVariation: 'public',
 	},
-	aboutSuggestionMatches: {
-		datestamp: '20180704',
+	crowdsignalNameBasedSignup: {
+		datestamp: '20181119',
 		variations: {
-			control: 50,
-			enhancedSort: 50,
+			nameSignup: 1,
+			usernameSignup: 99,
 		},
-		defaultVariation: 'control',
-	},
-	includeDotBlogSubdomain: {
-		datestamp: '20180723',
-		variations: {
-			yes: 50,
-			no: 50,
-		},
-		defaultVariation: 'no',
-	},
-	gSuiteDiscount: {
-		datestamp: '20180803',
-		variations: {
-			control: 50,
-			discount: 50,
-		},
-		defaultVariation: 'control',
+		defaultVariation: 'usernameSignup',
 	},
 };

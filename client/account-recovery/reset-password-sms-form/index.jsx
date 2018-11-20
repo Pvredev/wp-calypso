@@ -27,6 +27,11 @@ import {
 	clearResetMethod,
 } from 'state/account-recovery/reset/actions';
 
+/**
+ * Style dependencies
+ */
+import './style.scss';
+
 class ResetPasswordSmsForm extends Component {
 	constructor( props ) {
 		super( props );
@@ -59,7 +64,7 @@ class ResetPasswordSmsForm extends Component {
 						'Please enter the code you were sent by SMS. ' +
 							'It will look something like {{code}}%(code)s{{/code}}. You may need to wait a few moments before it arrives.',
 						{
-							args: { code: '6342 3423' },
+							args: { code: '63423423' },
 							components: { code: <code /> },
 						}
 					) }

@@ -7,12 +7,16 @@ import { shallow } from 'enzyme';
 import React from 'react';
 import {
 	PLAN_FREE,
+	PLAN_ECOMMERCE,
+	PLAN_ECOMMERCE_2_YEARS,
 	PLAN_BUSINESS,
 	PLAN_BUSINESS_2_YEARS,
 	PLAN_PREMIUM,
 	PLAN_PREMIUM_2_YEARS,
 	PLAN_PERSONAL,
 	PLAN_PERSONAL_2_YEARS,
+	PLAN_BLOGGER,
+	PLAN_BLOGGER_2_YEARS,
 	PLAN_JETPACK_PERSONAL,
 	PLAN_JETPACK_PERSONAL_MONTHLY,
 	PLAN_JETPACK_PREMIUM,
@@ -82,12 +86,12 @@ describe( 'CheckoutThankYou', () => {
 	describe( 'Basic tests', () => {
 		test( 'should not blow up and have proper CSS class', () => {
 			const comp = shallow( <CheckoutThankYou { ...defaultProps } /> );
-			expect( comp.find( '.checkout-thank-you' ).length ).toBe( 1 );
+			expect( comp.find( '.checkout-thank-you' ) ).toHaveLength( 1 );
 		} );
 
 		test( 'Show WordPressLogo when there are no purchase but a receipt is present', () => {
 			const comp = shallow( <CheckoutThankYou { ...defaultProps } receiptId={ 12 } /> );
-			expect( comp.find( 'WordPressLogo' ).length ).toBe( 1 );
+			expect( comp.find( 'WordPressLogo' ) ).toHaveLength( 1 );
 		} );
 	} );
 
@@ -108,7 +112,7 @@ describe( 'CheckoutThankYou', () => {
 					},
 				};
 				const comp = shallow( <CheckoutThankYou { ...props } /> );
-				expect( comp.find( 'component--RebrandCitiesThankYou' ).length ).toBe( 1 );
+				expect( comp.find( 'component--RebrandCitiesThankYou' ) ).toHaveLength( 1 );
 			} );
 		} );
 
@@ -124,11 +128,13 @@ describe( 'CheckoutThankYou', () => {
 					},
 				};
 				const comp = shallow( <CheckoutThankYou { ...props } /> );
-				expect( comp.find( 'component--RebrandCitiesThankYou' ).length ).toBe( 0 );
+				expect( comp.find( 'component--RebrandCitiesThankYou' ) ).toHaveLength( 0 );
 			} );
 		} );
 
 		[
+			PLAN_BLOGGER,
+			PLAN_BLOGGER_2_YEARS,
 			PLAN_PERSONAL,
 			PLAN_PERSONAL_2_YEARS,
 			PLAN_JETPACK_PERSONAL,
@@ -151,7 +157,7 @@ describe( 'CheckoutThankYou', () => {
 					},
 				};
 				const comp = shallow( <CheckoutThankYou { ...props } /> );
-				expect( comp.find( 'component--RebrandCitiesThankYou' ).length ).toBe( 0 );
+				expect( comp.find( 'component--RebrandCitiesThankYou' ) ).toHaveLength( 0 );
 			} );
 		} );
 	} );
@@ -172,6 +178,7 @@ describe( 'CheckoutThankYou', () => {
 					purchases: [ [], [] ],
 				},
 			},
+			planSlug: PLAN_ECOMMERCE,
 		};
 
 		afterAll( () => {
@@ -179,28 +186,19 @@ describe( 'CheckoutThankYou', () => {
 		} );
 
 		test( 'Should be there for AT', () => {
-			productValues.isDotComPlan.mockImplementation( () => true );
-			let comp;
-			comp = shallow( <CheckoutThankYou { ...props } isAtomicSite={ true } /> );
-			expect( comp.find( 'component--AtomicStoreThankYouCard' ).length ).toBe( 1 );
-
-			comp = shallow( <CheckoutThankYou { ...props } hasPendingAT={ true } /> );
-			expect( comp.find( 'component--AtomicStoreThankYouCard' ).length ).toBe( 1 );
+			const comp = shallow( <CheckoutThankYou { ...props } transferComplete={ true } /> );
+			expect( comp.find( 'component--AtomicStoreThankYouCard' ) ).toHaveLength( 1 );
 		} );
 
 		test( 'Should not be there for AT', () => {
-			productValues.isDotComPlan.mockImplementation( () => false );
 			let comp;
-			comp = shallow( <CheckoutThankYou { ...props } isAtomicSite={ true } /> );
-			expect( comp.find( 'component--AtomicStoreThankYouCard' ).length ).toBe( 0 );
-
-			comp = shallow( <CheckoutThankYou { ...props } hasPendingAT={ true } /> );
-			expect( comp.find( 'component--AtomicStoreThankYouCard' ).length ).toBe( 0 );
+			comp = shallow( <CheckoutThankYou { ...props } transferComplete={ false } /> );
+			expect( comp.find( 'component--AtomicStoreThankYouCard' ) ).toHaveLength( 0 );
 
 			productValues.isDotComPlan.mockImplementation( () => true );
 
 			comp = shallow( <CheckoutThankYou { ...props } /> );
-			expect( comp.find( 'component--AtomicStoreThankYouCard' ).length ).toBe( 0 );
+			expect( comp.find( 'component--AtomicStoreThankYouCard' ) ).toHaveLength( 0 );
 		} );
 	} );
 
@@ -214,6 +212,8 @@ describe( 'CheckoutThankYou', () => {
 
 		[
 			PLAN_FREE,
+			PLAN_BLOGGER,
+			PLAN_BLOGGER_2_YEARS,
 			PLAN_PERSONAL,
 			PLAN_PERSONAL_2_YEARS,
 			PLAN_JETPACK_PERSONAL,
@@ -224,6 +224,8 @@ describe( 'CheckoutThankYou', () => {
 			PLAN_JETPACK_PREMIUM_MONTHLY,
 			PLAN_BUSINESS,
 			PLAN_BUSINESS_2_YEARS,
+			PLAN_ECOMMERCE,
+			PLAN_ECOMMERCE_2_YEARS,
 		].forEach( planSlug => {
 			test( `Should return false for all other plans (${ planSlug })`, () => {
 				const instance = new CheckoutThankYou( { planSlug } );

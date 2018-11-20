@@ -17,6 +17,7 @@ import { receivePosts } from 'state/reader/posts/actions';
 import { keyForPost } from 'reader/post-key';
 import { recordTracksEvent } from 'state/analytics/actions';
 import XPostHelper from 'reader/xpost-helper';
+import { registerHandlers } from 'state/data-layer/handler-registry';
 
 /**
  * Pull the suffix off of a stream key
@@ -74,6 +75,10 @@ export const SITE_LIMITER_FIELDS = [
 	'feed_ID',
 	'feed_item_ID',
 	'global_ID',
+	'metadata',
+	'tags',
+	'site_URL',
+	'URL',
 ];
 function getQueryStringForPoll( extraFields = [], extraQueryParams = {} ) {
 	return {
@@ -243,7 +248,7 @@ export function handlePage( action, data ) {
 	return actions;
 }
 
-export default {
+registerHandlers( 'state/data-layer/wpcom/read/streams/index.js', {
 	[ READER_STREAMS_PAGE_REQUEST ]: [
 		dispatchRequestEx( {
 			fetch: requestPage,
@@ -251,4 +256,4 @@ export default {
 			onError: noop,
 		} ),
 	],
-};
+} );

@@ -2,8 +2,8 @@
 /**
  * External dependencies
  */
-import { find, isString, map } from 'lodash';
-import { parse } from 'url';
+import { find, isString, map, pickBy, includes, endsWith } from 'lodash';
+import url from 'url';
 import { getLocaleSlug } from 'i18n-calypso';
 
 /**
@@ -20,7 +20,7 @@ import config from 'config';
  */
 const localeRegex = /^[A-Z]{2,3}(-[A-Z]{2,3})?(_[A-Z]{2,6})?$/i;
 
-function getPathParts( path ) {
+export function getPathParts( path ) {
 	// Remove trailing slash then split. If there is a trailing slash,
 	// then the end of the array could contain an empty string.
 	return path.replace( /\/$/, '' ).split( '/' );
@@ -94,7 +94,7 @@ export function getLanguage( langSlug ) {
  * @return {string|undefined} The locale slug if present or undefined
  */
 export function getLocaleFromPath( path ) {
-	const urlParts = parse( path );
+	const urlParts = url.parse( path );
 	const locale = getPathParts( urlParts.pathname ).pop();
 
 	return 'undefined' === typeof getLanguage( locale ) ? undefined : locale;
@@ -110,18 +110,95 @@ export function getLocaleFromPath( path ) {
  * @returns {string} original path with new locale slug
  */
 export function addLocaleToPath( path, locale ) {
-	const urlParts = parse( path );
+	const urlParts = url.parse( path );
 	const queryString = urlParts.search || '';
 
 	return removeLocaleFromPath( urlParts.pathname ) + `/${ locale }` + queryString;
 }
 
-export function addLocaleToWpcomUrl( url, locale ) {
-	if ( locale && locale !== 'en' ) {
-		return url.replace( 'https://wordpress.com', 'https://' + locale + '.wordpress.com' );
+const localesWithBlog = [ 'en', 'ja', 'es', 'pt', 'fr', 'pt-br' ];
+const localesWithPrivacyPolicy = [ 'en', 'fr', 'de' ];
+const localesWithCookiePolicy = [ 'en', 'fr', 'de' ];
+
+const setLocalizedUrlHost = ( hostname, validLocales = [] ) => ( urlParts, localeSlug ) => {
+	const localesToSubdomains = {
+		'pt-br': 'br',
+		br: 'bre',
+		zh: 'zh-cn',
+		'zh-hk': 'zh-tw',
+		'zh-sg': 'zh-cn',
+		kr: 'ko',
+	};
+
+	if ( typeof validLocales === 'string' ) {
+		validLocales = config( validLocales );
 	}
 
-	return url;
+	if ( validLocales.includes( localeSlug ) ) {
+		urlParts.host = `${ localesToSubdomains[ localeSlug ] || localeSlug }.${ hostname }`;
+	}
+	return urlParts;
+};
+
+const prefixLocalizedUrlPath = ( validLocales = [] ) => ( urlParts, localeSlug ) => {
+	if ( typeof validLocales === 'string' ) {
+		validLocales = config( validLocales );
+	}
+	if ( validLocales.includes( localeSlug ) ) {
+		urlParts.pathname = localeSlug + urlParts.pathname;
+	}
+	return urlParts;
+};
+
+const urlLocalizationMapping = {
+	'wordpress.com': setLocalizedUrlHost( 'wordpress.com', 'magnificent_non_en_locales' ),
+	'wordpress.com/tos/': setLocalizedUrlHost( 'wordpress.com', 'magnificent_non_en_locales' ),
+	'jetpack.com': setLocalizedUrlHost( 'jetpack.com', 'jetpack_com_locales' ),
+	'en.support.wordpress.com': setLocalizedUrlHost(
+		'support.wordpress.com',
+		'support_site_locales'
+	),
+	'en.blog.wordpress.com': setLocalizedUrlHost( 'blog.wordpress.com', localesWithBlog ),
+	'en.forums.wordpress.com': setLocalizedUrlHost( 'forums.wordpress.com', 'forum_locales' ),
+	'automattic.com/privacy/': prefixLocalizedUrlPath( localesWithPrivacyPolicy ),
+	'automattic.com/cookies/': prefixLocalizedUrlPath( localesWithCookiePolicy ),
+};
+
+export function localizeUrl( fullUrl, locale ) {
+	const localeSlug = locale || getLocaleSlug();
+	const urlParts = url.parse( String( fullUrl ) );
+
+	if ( ! urlParts ) {
+		return fullUrl;
+	}
+
+	// Let's unify the URL.
+	urlParts.protocol = 'https';
+	if ( 'en.wordpress.com' === urlParts.hostname ) {
+		urlParts.host = 'wordpress.com';
+	}
+	if ( ! endsWith( urlParts.pathname, '.php' ) ) {
+		urlParts.pathname = ( urlParts.pathname + '/' ).replace( /\/+$/, '/' );
+	}
+
+	if ( ! localeSlug || 'en' === localeSlug ) {
+		if ( 'en.wordpress.com' === urlParts.hostname ) {
+			urlParts.host = 'wordpress.com';
+			return url.format( urlParts );
+		}
+		return fullUrl;
+	}
+
+	const lookup = [ urlParts.hostname, urlParts.hostname + urlParts.pathname ];
+
+	for ( let i = lookup.length - 1; i >= 0; i-- ) {
+		if ( lookup[ i ] in urlLocalizationMapping ) {
+			return url.format( urlLocalizationMapping[ lookup[ i ] ]( urlParts, localeSlug ) );
+		}
+	}
+
+	// Nothing needed to be changed, just return it unmodified.
+	return fullUrl;
 }
 
 /**
@@ -131,7 +208,7 @@ export function addLocaleToWpcomUrl( url, locale ) {
  * @returns {string} original path minus locale slug
  */
 export function removeLocaleFromPath( path ) {
-	const urlParts = parse( path );
+	const urlParts = url.parse( path );
 	const queryString = urlParts.search || '';
 	const parts = getPathParts( urlParts.pathname );
 	const locale = parts.pop();
@@ -144,33 +221,26 @@ export function removeLocaleFromPath( path ) {
 }
 
 /**
- * Returns the slug for the WordPress.com support site for the current user, if
- * any.
+ * Filter out unexpected values from the given language revisions object.
  *
- * Uses a (short) list of relatively well-updated *.support.wordpress.com
- * support sites defined in config/_shared.json.
+ * @param {Object} languageRevisions A candidate language revisions object for filtering.
  *
- * @returns {string} A slug which is a valid subdomain of *.support.wordpress.com.
+ * @return {Object} A valid language revisions object derived from the given one.
  */
-export function getSupportSiteLocale() {
-	const localeSlug = getLocaleSlug();
-	if ( config( 'support_site_locales' ).indexOf( localeSlug ) > -1 ) {
-		return localeSlug;
-	}
-	return 'en';
-}
+export function filterLanguageRevisions( languageRevisions ) {
+	const langSlugs = getLanguageSlugs();
 
-/**
- * Returns the base url for the forums, for example //{locale}.forums.wordpress.com
- *
- * Checks for a valid bb forum against a list `forum_locales` defined in config/_shared.json.
- *
- * @param {string} localeSlug Forum subdomain locale. Default is getLocaleSlug().
- * @returns {string} //{locale}.forums.wordpress.com
- */
-export function getForumUrl( localeSlug = getLocaleSlug() ) {
-	if ( config( 'forum_locales' ).indexOf( localeSlug ) > -1 ) {
-		return `//${ localeSlug }.forums.wordpress.com`;
-	}
-	return `//en.forums.wordpress.com`;
+	// Since there is no strong guarantee that the passed-in revisions map will have the identical set of languages as we define in calypso,
+	// simply filtering against what we have here should be sufficient.
+	return pickBy( languageRevisions, ( revision, slug ) => {
+		if ( typeof revision !== 'number' ) {
+			return false;
+		}
+
+		if ( ! includes( langSlugs, slug ) ) {
+			return false;
+		}
+
+		return true;
+	} );
 }

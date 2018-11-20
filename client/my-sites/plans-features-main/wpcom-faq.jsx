@@ -16,7 +16,7 @@ import isHappychatAvailable from 'state/happychat/selectors/is-happychat-availab
 import { getSelectedSiteSlug } from 'state/ui/selectors';
 import { isEnabled } from 'config';
 import { purchasesRoot } from 'me/purchases/paths';
-import { getSupportSiteLocale } from 'lib/i18n-utils';
+import { localizeUrl } from 'lib/i18n-utils';
 
 const WpcomFAQ = ( { isChatAvailable, siteSlug, translate } ) => {
 	const helpLink =
@@ -31,14 +31,16 @@ const WpcomFAQ = ( { isChatAvailable, siteSlug, translate } ) => {
 			<FAQItem
 				question={ translate( 'Do you sell domains?' ) }
 				answer={ translate(
-					'Yes! The Personal, Premium, and Business plans include a free custom domain. That includes new' +
+					'Yes! The Personal, Premium, and Business plans include a free custom domain for one year. That includes new' +
 						' domains purchased through WordPress.com or your own existing domain that you can map' +
-						' to your WordPress.com site. Does not apply to premium domains. {{a}}Find out more about domains.{{/a}}',
+						' to your WordPress.com site. Does not apply to premium domains. Domain name should be' +
+						' registered within one year of the purchase of the plan to use this promotion. Registered' +
+						' domain names will renew at regular prices. {{a}}Find out more about domains.{{/a}}',
 					{
 						components: {
 							a: (
 								<a
-									href="https://en.support.wordpress.com/all-about-domains/"
+									href={ localizeUrl( 'https://en.support.wordpress.com/all-about-domains/' ) }
 									target="_blank"
 									rel="noopener noreferrer"
 								/>
@@ -58,7 +60,7 @@ const WpcomFAQ = ( { isChatAvailable, siteSlug, translate } ) => {
 						components: {
 							a: (
 								<a
-									href={ 'https://' + getSupportSiteLocale() + '.support.wordpress.com/plugins/' }
+									href={ localizeUrl( 'https://en.support.wordpress.com/plugins/' ) }
 									target="_blank"
 									rel="noopener noreferrer"
 								/>
@@ -99,7 +101,7 @@ const WpcomFAQ = ( { isChatAvailable, siteSlug, translate } ) => {
 						components: {
 							a: (
 								<a
-									href="https://en.support.wordpress.com/add-email/"
+									href={ localizeUrl( 'https://en.support.wordpress.com/add-email/' ) }
 									target="_blank"
 									rel="noopener noreferrer"
 								/>
@@ -120,7 +122,7 @@ const WpcomFAQ = ( { isChatAvailable, siteSlug, translate } ) => {
 						components: {
 							a: (
 								<a
-									href="https://en.support.wordpress.com/custom-design/"
+									href={ localizeUrl( 'https://en.support.wordpress.com/custom-design/' ) }
 									target="_blank"
 									rel="noopener noreferrer"
 								/>

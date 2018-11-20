@@ -1,5 +1,7 @@
 /** @format */
 
+const reactVersion = require( './package.json' ).dependencies.react;
+
 module.exports = {
 	root: true,
 	extends: [
@@ -24,8 +26,15 @@ module.exports = {
 		PROJECT_NAME: true,
 		// this is the SHA of the current commit. Injected at boot in a script tag.
 		COMMIT_SHA: true,
+		// this is when Webpack last built the bundle
+		BUILD_TIMESTAMP: true,
 	},
 	plugins: [ 'jest', 'jsx-a11y', 'import' ],
+	settings: {
+		react: {
+			version: reactVersion,
+		},
+	},
 	rules: {
 		// REST API objects include underscores
 		camelcase: 0,

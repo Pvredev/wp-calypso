@@ -9,12 +9,10 @@ import { Component } from '@wordpress/element';
 import { compose, withInstanceId } from '@wordpress/compose';
 import { dispatch, withSelect } from '@wordpress/data';
 import { get, trimEnd } from 'lodash';
-import { InspectorControls } from '@wordpress/editor';
 import { sprintf } from '@wordpress/i18n';
 import {
 	Disabled,
 	ExternalLink,
-	PanelBody,
 	SelectControl,
 	TextareaControl,
 	TextControl,
@@ -53,14 +51,12 @@ class SimplePaymentsEdit extends Component {
 			this.injectPaymentAttributes();
 		}
 
-		if ( prevProps.isSelected && ! isSelected ) {
-			// Validate and save on block deselect
-
+		if ( ! prevProps.isSaving && this.props.isSaving ) {
+			// Validate and save product on post save
 			this.saveProduct();
-		} else if ( ! prevProps.isSaving && this.props.isSaving ) {
-			// Save payment on post save
-
-			this.saveProduct();
+		} else if ( prevProps.isSelected && ! isSelected ) {
+			// Validate on block deselect
+			this.validateAttributes();
 		}
 	}
 
@@ -369,14 +365,6 @@ class SimplePaymentsEdit extends Component {
 
 		return (
 			<Wrapper className="wp-block-jetpack-simple-payments">
-				<InspectorControls key="inspector">
-					<PanelBody>
-						<ExternalLink href="https://support.wordpress.com/simple-payments/">
-							{ __( 'Support reference' ) }
-						</ExternalLink>
-					</PanelBody>
-				</InspectorControls>
-
 				<TextControl
 					aria-describedby={ `${ instanceId }-title-error` }
 					className={ classNames( 'simple-payments__field', 'simple-payments__field-title', {

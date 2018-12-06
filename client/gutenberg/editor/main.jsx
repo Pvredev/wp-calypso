@@ -32,6 +32,20 @@ class GutenbergEditor extends Component {
 		if ( ! postId ) {
 			createAutoDraft( siteId, uniqueDraftKey, postType );
 		}
+		if ( siteId && postId && postType ) {
+			requestSitePost( siteId, postId, postType, 0 );
+		}
+	}
+
+	componentDidUpdate( prevProp ) {
+		const { siteId, postId, postType } = this.props;
+		if (
+			prevProp.siteId !== siteId ||
+			prevProp.postId !== postId ||
+			prevProp.postType !== postType
+		) {
+			requestSitePost( siteId, postId, postType, 0 );
+		}
 	}
 
 	getAnalyticsPathAndTitle = () => {
@@ -68,7 +82,7 @@ class GutenbergEditor extends Component {
 
 		//see also https://github.com/WordPress/gutenberg/blob/45bc8e4991d408bca8e87cba868e0872f742230b/lib/client-assets.php#L1451
 		const editorSettings = {
-			autosaveInterval: 3, //interval to debounce autosaving events, in seconds.
+			autosaveInterval: 10, //interval to debounce autosaving events, in seconds.
 			titlePlaceholder: translate( 'Add title' ),
 			bodyPlaceholder: translate( 'Write your story' ),
 			postLock: {},

@@ -98,6 +98,12 @@ $gutenberg-theme-toggle: #11a0d2;
 		.editor-post-publish-panel {
 			top: 0;
 		}
+
+		.components-notice-list {
+			@media (max-width: 600px) {
+				top: auto;
+			}
+		}
 	}
 
 	.edit-post-visual-editor .editor-post-title__block > div {
@@ -199,6 +205,23 @@ $gutenberg-theme-toggle: #11a0d2;
 			line-height: 1.8;
 		}
 	}
+
+	.edit-post-sidebar-header ul {
+		list-style: none;
+		margin: 0;
+	}
+
+	.editor-block-navigation__list {
+		list-style: none;
+	}
+
+	div.mce-toolbar-grp {
+		position: static;
+	}
+}
+
+.is-section-gutenberg-editor,
+.edit-post-options-modal {
 
 	// UNSET CALYPSO DEFAULT STYLES
 	input[type='text'],

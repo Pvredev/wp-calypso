@@ -81,21 +81,14 @@ export default {
 		},
 		defaultVariation: 'public',
 	},
-	crowdsignalNameBasedSignup: {
-		datestamp: '20181120',
+	krackenM5NonEnDomainSuggestions: {
+		datestamp: '20181207',
 		variations: {
-			nameSignup: 50,
-			usernameSignup: 50,
-		},
-		defaultVariation: 'usernameSignup',
-	},
-	krackenM5DomainSuggestions: {
-		datestamp: '20181129',
-		variations: {
-			domainsbot_front: 25,
-			variation_front: 75,
+			domainsbot_front: 50,
+			variation2_front: 50,
 		},
 		allowExistingUsers: true,
 		defaultVariation: 'domainsbot_front',
+		localeTargets: 'any',
 	},
 };

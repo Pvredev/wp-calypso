@@ -59,8 +59,8 @@ import { affiliateReferral } from 'state/refer/actions';
 import { getSignupDependencyStore } from 'state/signup/dependency-store/selectors';
 import { getSignupProgress } from 'state/signup/progress/selectors';
 import { setSurvey } from 'state/signup/steps/survey/actions';
-import { setSiteType } from 'state/signup/steps/site-type/actions';
-import { setSiteTopic } from 'state/signup/steps/site-topic/actions';
+import { submitSiteType } from 'state/signup/steps/site-type/actions';
+import { submitSiteTopic } from 'state/signup/steps/site-topic/actions';
 
 // Current directory dependencies
 import steps from './config/steps';
@@ -120,8 +120,6 @@ class Signup extends React.Component {
 		// here.
 		disableCart();
 
-		this.submitQueryDependencies();
-
 		const flow = flows.getFlow( this.props.flowName );
 		const queryObject = ( this.props.initialContext && this.props.initialContext.query ) || {};
 
@@ -131,12 +129,16 @@ class Signup extends React.Component {
 			providedDependencies = pick( queryObject, flow.providesDependenciesInQuery );
 		}
 
+		// Caution: any signup Flux actions should happen after this initialization.
+		// Otherwise, the redux adpatation layer won't work and the state can go off.
 		this.signupFlowController = new SignupFlowController( {
 			flowName: this.props.flowName,
 			providedDependencies,
 			reduxStore: this.context.store,
 			onComplete: this.handleSignupFlowControllerCompletion,
 		} );
+
+		this.submitQueryDependencies();
 
 		this.updateShouldShowLoadingScreen();
 
@@ -241,18 +243,34 @@ class Signup extends React.Component {
 		}
 	};
 
+	recordExcludeStepEvent = ( step, value ) => {
+		analytics.tracks.recordEvent( 'calypso_signup_actions_exclude_step', {
+			step,
+			value,
+		} );
+	};
+
 	submitQueryDependencies = () => {
 		if ( isEmpty( this.props.initialContext && this.props.initialContext.query ) ) {
 			return;
 		}
 
-		const queryObject = this.props.initialContext.query;
-		const flowSteps = flows.getFlow( this.props.flowName ).steps;
+		const {
+			initialContext: {
+				query: { vertical, site_type: siteType },
+			},
+			flowName,
+		} = this.props;
+
+		const flowSteps = flows.getFlow( flowName ).steps;
+		const fulfilledSteps = [];
 
 		// `vertical` query parameter
-		const vertical = queryObject.vertical;
 		if ( 'undefined' !== typeof vertical && -1 === flowSteps.indexOf( 'survey' ) ) {
 			debug( 'From query string: vertical = %s', vertical );
+
+			const siteTopicStepName = 'site-topic';
+
 			this.props.setSurvey( {
 				vertical,
 				otherText: '',
@@ -261,27 +279,38 @@ class Signup extends React.Component {
 				surveySiteType: 'blog',
 				surveyQuestion: vertical,
 			} );
-			this.props.setSiteTopic( vertical );
-			SignupActions.submitSignupStep( { stepName: 'site-topic' }, [], {
-				siteTopic: vertical,
-			} );
+
+			this.props.submitSiteTopic( vertical );
+
 			// Track our landing page verticals
 			if ( isValidLandingPageVertical( vertical ) ) {
 				analytics.tracks.recordEvent( 'calypso_signup_vertical_landing_page', {
 					vertical,
-					flow: this.props.flowName,
+					flow: flowName,
 				} );
 			}
+
+			fulfilledSteps.push( siteTopicStepName );
+
+			this.recordExcludeStepEvent( siteTopicStepName, vertical );
 		}
 
 		//`site_type` query parameter
-		const siteTypeQueryParam = queryObject.site_type;
-		const siteTypeValue = getSiteTypePropertyValue( 'slug', siteTypeQueryParam, 'slug' );
+		const siteTypeValue = getSiteTypePropertyValue( 'slug', siteType, 'slug' );
 		if ( 'undefined' !== typeof siteTypeValue ) {
-			debug( 'From query string: site_type = %s', siteTypeQueryParam );
+			debug( 'From query string: site_type = %s', siteType );
 			debug( 'Site type value = %s', siteTypeValue );
-			this.props.setSiteType( siteTypeValue );
+
+			const siteTypeStepName = 'site-type';
+
+			this.props.submitSiteType( siteTypeValue );
+
+			fulfilledSteps.push( siteTypeStepName );
+
+			this.recordExcludeStepEvent( siteTypeStepName, siteTypeValue );
 		}
+
+		flows.excludeSteps( fulfilledSteps );
 	};
 
 	checkForCartItems = signupDependencies => {
@@ -614,8 +643,8 @@ export default connect(
 	} ),
 	{
 		setSurvey,
-		setSiteType,
-		setSiteTopic,
+		submitSiteType,
+		submitSiteTopic,
 		loadTrackingTool,
 		trackAffiliateReferral: affiliateReferral,
 	},

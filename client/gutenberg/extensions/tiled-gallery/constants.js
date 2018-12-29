@@ -6,9 +6,9 @@
 import { _x } from 'gutenberg/extensions/presets/jetpack/utils/i18n';
 
 export const ALLOWED_MEDIA_TYPES = [ 'image' ];
-export const DEFAULT_COLUMNS = 3;
 export const DEFAULT_GALLERY_WIDTH = 580;
 export const DEFAULT_LAYOUT = 'rectangular';
+export const GUTTER_WIDTH = 4;
 export const LAYOUT_STYLES = [
 	{
 		isDefault: true,
@@ -31,4 +31,4 @@ export const LAYOUT_STYLES = [
 	*/
 ];
 export const MAX_COLUMNS = 20;
-export const TILE_MARGIN = 2;
+export const PHOTON_MAX_RESIZE = 2000;

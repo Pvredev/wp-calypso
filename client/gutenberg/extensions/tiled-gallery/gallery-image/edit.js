@@ -5,7 +5,7 @@ import classnames from 'classnames';
 import { BACKSPACE, DELETE } from '@wordpress/keycodes';
 import { Component, createRef, Fragment } from '@wordpress/element';
 import { IconButton, Spinner } from '@wordpress/components';
-import { isBlobURL } from '@wordpress/blob'; // @TODO Add dep Jetpack-side
+import { isBlobURL } from '@wordpress/blob';
 import { RichText } from '@wordpress/editor';
 import { withSelect } from '@wordpress/data';
 
@@ -34,7 +34,6 @@ class GalleryImageEdit extends Component {
 	};
 
 	onImageClick = e => {
-		// Don't let click event trigger naviagtion on <a>. @TODO How does g7g handle this?
 		e.preventDefault();
 		e.stopPropagation();
 
@@ -70,22 +69,25 @@ class GalleryImageEdit extends Component {
 	}
 
 	componentDidUpdate() {
-		const { alt, height, image, url, width } = this.props;
+		const { alt, height, image, link, url, width } = this.props;
 
 		if ( image ) {
 			const nextAtts = {};
 
-			if ( ! url && image.source_url ) {
-				nextAtts.url = image.source_url;
-			}
 			if ( ! alt && image.alt_text ) {
 				nextAtts.alt = image.alt_text;
 			}
-			if ( ! width && image.media_details && image.media_details.width ) {
-				nextAtts.width = +image.media_details.width;
-			}
 			if ( ! height && image.media_details && image.media_details.height ) {
 				nextAtts.height = +image.media_details.height;
+			}
+			if ( ! link && image.link ) {
+				nextAtts.link = image.link;
+			}
+			if ( ! url && image.source_url ) {
+				nextAtts.url = image.source_url;
+			}
+			if ( ! width && image.media_details && image.media_details.width ) {
+				nextAtts.width = +image.media_details.width;
 			}
 
 			if ( Object.keys( nextAtts ).length ) {
@@ -132,6 +134,7 @@ class GalleryImageEdit extends Component {
 					aria-label={ ariaLabel }
 					data-height={ height }
 					data-id={ id }
+					data-link={ link }
 					data-url={ origUrl }
 					data-width={ width }
 					onClick={ this.onImageClick }

@@ -13,9 +13,7 @@ import GalleryImageEdit from '../gallery-image/edit';
 import GalleryImageSave from '../gallery-image/save';
 import Mosaic from './mosaic';
 import Square from './square';
-
-// @TODO put in consts?
-const PHOTON_MAX_RESIZE = 2000;
+import { PHOTON_MAX_RESIZE } from '../constants';
 
 export default class Layout extends Component {
 	photonize( { height, width, url } ) {
@@ -40,7 +38,6 @@ export default class Layout extends Component {
 	renderImage( img, i ) {
 		const {
 			columns,
-			imageCrop,
 			images,
 			isSave,
 			linkTo,
@@ -63,9 +60,9 @@ export default class Layout extends Component {
 				height={ img.height }
 				id={ img.id }
 				origUrl={ img.url }
-				imageCrop={ imageCrop }
 				isSelected={ selectedImage === i }
 				key={ i }
+				link={ img.link }
 				linkTo={ linkTo }
 				onRemove={ isSave ? undefined : onRemoveImage( i ) }
 				onSelect={ isSave ? undefined : onSelectImage( i ) }

@@ -1,7 +1,7 @@
 /**
  * External Dependencies
  */
-import { isBlobURL } from '@wordpress/blob'; // @TODO Add dep Jetpack-side
+import { isBlobURL } from '@wordpress/blob';
 import { RichText } from '@wordpress/editor';
 
 export default function GalleryImageSave( props ) {
@@ -35,13 +35,14 @@ export default function GalleryImageSave( props ) {
 
 	const img = (
 		<img
-			src={ url }
 			alt={ alt }
-			data-id={ id }
+			aria-label={ ariaLabel }
 			data-height={ height }
+			data-id={ id }
+			data-link={ link }
 			data-url={ origUrl }
 			data-width={ width }
-			aria-label={ ariaLabel }
+			src={ url }
 		/>
 	);
 

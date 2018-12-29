@@ -9,14 +9,6 @@ $tiled-gallery-max-column-count: 20;
 		border-radius: 50%;
 	}
 
-	[data-align='left'] &,
-	[data-align='right'] &,
-	&.alignleft,
-	&.alignright {
-		max-width: ( $tiled-gallery-content-width / 2 );
-		width: 100%;
-	}
-
 	&.is-style-square,
 	&.is-style-circle {
 		.tiled-gallery__row {
@@ -30,6 +22,12 @@ $tiled-gallery-max-column-count: 20;
 					}
 				}
 			}
+		}
+	}
+
+	&.is-style-rectangular {
+		.tiled-gallery__item {
+			display: flex;
 		}
 	}
 }
@@ -80,6 +78,8 @@ $tiled-gallery-max-column-count: 20;
 		height: auto;
 		max-width: 100%;
 		width: 100%;
+		object-fit: cover;
+		object-position: center;
 	}
 
 	figcaption {
@@ -92,7 +92,6 @@ $tiled-gallery-max-column-count: 20;
 		color: $white;
 		text-align: center;
 		font-size: $root-font-size;
-		// @TODO: conflicting linting rules
 		// stylelint-disable function-parentheses-space-inside
 		background: linear-gradient(
 			0deg,

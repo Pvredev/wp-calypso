@@ -94,6 +94,10 @@ $autobar-height: 20px;
 		color: var( --masterbar-color );
 	}
 
+	.gridicon {
+		fill: var( --masterbar-color ); // only because safari gets currentColor wrong
+	}
+
 	.gridicon + .masterbar__item-content {
 		padding: 0 0 0 6px;
 	}
@@ -109,7 +113,6 @@ $autobar-height: 20px;
 		.accessible-focus & {
 			box-shadow: inset 0 0 0 2px var( --color-primary-light );
 			color: var( --masterbar-color );
-			box-shadow: inset 0 0 0 2px var( --color-primary-light );
 		}
 	}
 
@@ -231,6 +234,10 @@ $autobar-height: 20px;
 		}
 	}
 
+	.gridicon {
+		fill: var( --color-primary ); // only because safari gets currentColor wrong
+	}
+
 	.masterbar__item-content {
 		color: var( --color-primary );
 		display: none;
@@ -343,7 +350,7 @@ $autobar-height: 20px;
 
 	&.has-unread .masterbar__notifications-bubble {
 		display: block;
-		background: var( --color-dot-indicator );
+		background: var( --color-accent-300 );
 	}
 
 	&.is-initial-load .masterbar__notifications-bubble {

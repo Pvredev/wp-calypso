@@ -98,6 +98,14 @@ export default {
 		},
 		defaultVariation: 'skip',
 	},
+	showConciergeSessionUpsellNonGSuite: {
+		datestamp: '20181228',
+		variations: {
+			skip: 90,
+			show: 10,
+		},
+		defaultVariation: 'skip',
+	},
 	builderReferralStatsNudge: {
 		datestamp: '20181218',
 		variations: {
@@ -121,5 +129,13 @@ export default {
 			original: 90,
 		},
 		defaultVariation: 'original',
+	},
+	removeDomainsStepFromOnboarding: {
+		datestamp: '20181221',
+		variations: {
+			keep: 100,
+			remove: 0,
+		},
+		defaultVariation: 'keep',
 	},
 };

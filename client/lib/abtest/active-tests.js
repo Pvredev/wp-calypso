@@ -73,14 +73,6 @@ export default {
 		allowExistingUsers: true,
 		localeTargets: 'any',
 	},
-	removeUsername: {
-		datestamp: '20181213',
-		variations: {
-			showUsername: 50,
-			hideUsername: 50,
-		},
-		defaultVariation: 'showUsername',
-	},
 	jetpackFreePlanButtonPosition: {
 		datestamp: '20181212',
 		variations: {
@@ -97,6 +89,7 @@ export default {
 			show: 10,
 		},
 		defaultVariation: 'skip',
+		allowExistingUsers: true,
 	},
 	showConciergeSessionUpsellNonGSuite: {
 		datestamp: '20181228',
@@ -105,6 +98,7 @@ export default {
 			show: 10,
 		},
 		defaultVariation: 'skip',
+		allowExistingUsers: true,
 	},
 	builderReferralStatsNudge: {
 		datestamp: '20181218',
@@ -137,5 +131,13 @@ export default {
 			remove: 0,
 		},
 		defaultVariation: 'keep',
+	},
+	domainSearchButtonStyles: {
+		datestamp: '20190119',
+		variations: {
+			allPrimary: 50,
+			onePrimary: 50,
+		},
+		defaultVariation: 'allPrimary',
 	},
 };

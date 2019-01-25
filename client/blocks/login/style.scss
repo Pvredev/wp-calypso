@@ -2,8 +2,8 @@
 .login {
 	&.is-jetpack {
 		.button.is-primary {
-			background-color: $green-jetpack;
-			border-color: darken( $green-jetpack, 5% );
+			background-color: var( --color-jetpack );
+			border-color: var( --color-jetpack-dark );
 		}
 	}
 }
@@ -67,6 +67,10 @@
 	margin-bottom: 24px;
 	margin-top: 16px;
 	text-align: center;
+
+	body.is-section-signup & {
+		color: var( --color-white );
+	}
 }
 
 .login__form-terms,

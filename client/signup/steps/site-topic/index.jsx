@@ -79,6 +79,7 @@ class SiteTopicStep extends Component {
 						<SiteVerticalsSuggestionSearch
 							onChange={ this.onSiteTopicChange }
 							initialValue={ siteTopic }
+							autoFocus={ true } // eslint-disable-line jsx-a11y/no-autofocus
 						/>
 						<Button type="submit" disabled={ ! siteTopic } primary>
 							{ translate( 'Continue' ) }
@@ -148,13 +149,20 @@ const mapDispatchToProps = ( dispatch, ownProps ) => ( {
 		goToNextStep( flowName );
 	},
 
-	setSiteVertical: ( { is_user_input_vertical, preview, vertical_name, vertical_slug } ) =>
+	setSiteVertical: ( {
+		is_user_input_vertical,
+		preview,
+		vertical_id,
+		vertical_name,
+		vertical_slug,
+	} ) =>
 		dispatch(
 			setSiteVertical( {
 				isUserInput: is_user_input_vertical,
 				name: vertical_name,
 				preview,
 				slug: vertical_slug,
+				id: vertical_id,
 			} )
 		),
 } );

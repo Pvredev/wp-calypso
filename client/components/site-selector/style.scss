@@ -33,6 +33,10 @@
 	}
 }
 
+.layout__secondary .site-selector.is-large .site-selector__sites {
+	border-color: var( --sidebar-border-color );
+}
+
 // Styles for Site elements within the Selector
 .site-selector .site,
 .site-selector .all-sites {
@@ -65,6 +69,11 @@
 			color: var( --sidebar-menu-selected-a-color );
 		}
 	}
+}
+
+.layout__secondary .all-sites .count {
+	color: var( --sidebar-text-color );
+	border-color: var( --sidebar-text-color );
 }
 
 // Highlight & hover effects
@@ -156,6 +165,10 @@
 	padding-left: 10px;
 }
 
+.layout__secondary .site-selector__add-new-site {
+	border-color: var( --sidebar-border-color );
+}
+
 .site-selector__add-new-site .button {
 	box-sizing: border-box;
 	display: inline-block;
@@ -183,6 +196,14 @@
 	}
 }
 
+.layout__secondary .site-selector__add-new-site .button {
+	color: var( --sidebar-heading-color );
+
+	&:hover {
+		color: var( --sidebar-text-color );
+	}
+}
+
 // Containers in the list of sites are larger
 .site-selector .site-action {
 	padding-top: 15px;
@@ -190,6 +211,10 @@
 
 .site-selector .all-sites {
 	border-bottom: 1px solid var( --color-neutral-100 );
+}
+
+.layout__secondary .site-selector .all-sites {
+	border-color: var( --sidebar-border-color );
 }
 
 .site-selector__recent {
@@ -200,14 +225,18 @@
 	}
 }
 
+.layout__secondary .site-selector__recent {
+	border-color: var( --sidebar-border-color );
+}
+
 .site-selector__hidden-sites-message {
-	color: $gray;
+	color: var( --sidebar-text-color );
 	display: block;
 	font-size: 12px;
 	padding: 16px 16px 24px;
 
 	.site-selector__manage-hidden-sites {
-		color: $gray;
+		color: var( --sidebar-text-color );
 		text-decoration: underline;
 	}
 }

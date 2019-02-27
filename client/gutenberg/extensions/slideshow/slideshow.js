@@ -1,10 +1,14 @@
 /**
  * External dependencies
  */
+import ResizeObserver from 'resize-observer-polyfill';
+import classnames from 'classnames';
 import { __ } from 'gutenberg/extensions/presets/jetpack/utils/i18n';
 import { Component, createRef } from '@wordpress/element';
+import { isBlobURL } from '@wordpress/blob';
 import { isEqual } from 'lodash';
-import ResizeObserver from 'resize-observer-polyfill';
+import { RichText } from '@wordpress/editor';
+import { Spinner } from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -59,7 +63,10 @@ class Slideshow extends Component {
 			delay !== prevProps.delay ||
 			images !== prevProps.images
 		) {
-			const realIndex = images !== prevProps.images ? 0 : this.swiperInstance.realIndex;
+			const realIndex =
+				images.length === prevProps.images.length
+					? this.swiperInstance.realIndex
+					: prevProps.images.length;
 			this.swiperInstance && this.swiperInstance.destroy( true, true );
 			this.buildSwiper( realIndex ).then( swiper => {
 				this.swiperInstance = swiper;
@@ -111,7 +118,14 @@ class Slideshow extends Component {
 				>
 					<ul className="wp-block-jetpack-slideshow_swiper-wrappper swiper-wrapper">
 						{ images.map( ( { alt, caption, id, url } ) => (
-							<li className="wp-block-jetpack-slideshow_slide swiper-slide" key={ id }>
+							<li
+								className={ classnames(
+									'wp-block-jetpack-slideshow_slide',
+									'swiper-slide',
+									isBlobURL( url ) && 'is-transient'
+								) }
+								key={ id }
+							>
 								<figure>
 									<img
 										alt={ alt }
@@ -121,10 +135,13 @@ class Slideshow extends Component {
 										data-id={ id }
 										src={ url }
 									/>
+									{ isBlobURL( url ) && <Spinner /> }
 									{ caption && (
-										<figcaption className="wp-block-jetpack-slideshow_caption gallery-caption">
-											{ caption }
-										</figcaption>
+										<RichText.Content
+											className="wp-block-jetpack-slideshow_caption gallery-caption"
+											tagName="figcaption"
+											value={ caption }
+										/>
 									) }
 								</figure>
 							</li>

@@ -10,7 +10,7 @@ import { __ } from 'gutenberg/extensions/presets/jetpack/utils/i18n';
 import renderMaterialIcon from 'gutenberg/extensions/presets/jetpack/utils/render-material-icon';
 
 import './editor.scss';
-import BusinessHoursEdit from './edit';
+import BusinessHours from './edit';
 
 /**
  * Block Registrations:
@@ -24,8 +24,9 @@ export const icon = renderMaterialIcon(
 
 export const settings = {
 	title: __( 'Business Hours' ),
+	description: __( 'Display opening hours for your business.' ),
 	icon,
-	category: 'widgets',
+	category: 'jetpack',
 	supports: {
 		html: true,
 	},
@@ -91,7 +92,7 @@ export const settings = {
 		},
 	},
 
-	edit: props => <BusinessHoursEdit { ...props } edit={ true } />,
+	edit: props => <BusinessHours { ...props } isEdit />,
 
-	save: props => <BusinessHoursEdit { ...props } edit={ false } />,
+	save: props => <BusinessHours { ...props } />,
 };

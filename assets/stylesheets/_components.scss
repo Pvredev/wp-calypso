@@ -209,7 +209,6 @@
 @import 'me/purchases/manage-purchase/style';
 @import 'me/purchases/manage-purchase/plan-details/style';
 @import 'me/purchases/remove-purchase/style';
-@import 'me/reauth-required/style';
 @import 'me/security/style';
 @import 'me/security-account-recovery/style';
 @import 'me/sidebar-navigation/style';
@@ -315,6 +314,7 @@
 @import 'notices/style';
 @import 'my-sites/domains/domain-management/style';
 @import 'my-sites/domains/domain-management/email/style';
+@import 'my-sites/email/email-forwarding/style';
 @import 'my-sites/domains/domain-management/components/email-verification/style';
 @import 'my-sites/domains/domain-management/components/inbound-transfer-verification/style';
 @import 'my-sites/domains/domain-management/components/icann-verification/style';

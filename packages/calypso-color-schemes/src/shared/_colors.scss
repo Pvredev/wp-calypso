@@ -1,5 +1,5 @@
 // The Muriel Color Palette
-@import '~color-studio/dist/color-variables';
+@import '../__color-studio/color-variables';
 
 // TODO: where possible we should replace the colors below with the Muriel Color Palette.
 // The goals is to eventually have a single source of truth for colors across all our products.
@@ -13,11 +13,7 @@ $gray: $muriel-gray-300;
 
 // See wordpress.com/design-handbook/colors/ for more info.
 
-// Secondary Accent (Oranges)
-$orange-jazzy: #f0821e;
-
 // Essentials
-$white: $muriel-white;
 $transparent: rgba( 255, 255, 255, 0 );
 
 // Layout

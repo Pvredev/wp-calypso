@@ -124,14 +124,6 @@ export default {
 		},
 		defaultVariation: 'keep',
 	},
-	domainSearchButtonStyles: {
-		datestamp: '20190119',
-		variations: {
-			allPrimary: 50,
-			onePrimary: 50,
-		},
-		defaultVariation: 'allPrimary',
-	},
 	twoYearPlanByDefault: {
 		datestamp: '20190207',
 		variations: {
@@ -170,6 +162,14 @@ export default {
 		variations: {
 			builderReferralLink: 10,
 			original: 90,
+		},
+		defaultVariation: 'original',
+	},
+	gSuiteContinueButtonCopy: {
+		datestamp: '20190307',
+		variations: {
+			purchase: 50,
+			original: 50,
 		},
 		defaultVariation: 'original',
 	},

@@ -1,8 +1,10 @@
 /**
  * External dependencies
  */
+const FilterWarningsPlugin = require( 'webpack-filter-warnings-plugin' );
 const MiniCssExtractPluginWithRTL = require( 'mini-css-extract-plugin-with-rtl' );
 const WebpackRTLPlugin = require( 'webpack-rtl-plugin' );
+const path = require( 'path' );
 
 /**
  * Return a webpack loader object containing our styling (Sass -> CSS) stack.
@@ -31,6 +33,7 @@ module.exports.loader = ( { preserveCssCustomProperties, includePaths, prelude }
 					ctx: {
 						preserveCssCustomProperties,
 					},
+					path: path.join( __dirname, '..' ),
 				},
 			},
 		},
@@ -57,6 +60,11 @@ module.exports.plugins = ( { cssFilename, minify } ) => [
 	new MiniCssExtractPluginWithRTL( {
 		filename: cssFilename,
 		rtlEnabled: true,
+	} ),
+	new FilterWarningsPlugin( {
+		// suppress conflicting order warnings from mini-css-extract-plugin.
+		// see https://github.com/webpack-contrib/mini-css-extract-plugin/issues/250
+		exclude: /mini-css-extract-plugin[^]*Conflicting order between:/,
 	} ),
 	new WebpackRTLPlugin( {
 		minify,

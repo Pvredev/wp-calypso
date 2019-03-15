@@ -24,6 +24,7 @@
         "postcss-custom-properties": "8.0.9",
         "postcss-loader": "3.0.0",
         "sass-loader": "7.1.0",
+        "terser-webpack-plugin": "1.2.3",
         "thread-loader": "2.1.2",
         "webpack-filter-warnings-plugin": "1.2.1",
         "webpack-rtl-plugin": "1.8.0"
@@ -7137,18 +7138,18 @@
       }
     },
     "enzyme-adapter-react-16": {
-      "version": "1.9.1",
-      "resolved": "https://registry.npmjs.org/enzyme-adapter-react-16/-/enzyme-adapter-react-16-1.9.1.tgz",
-      "integrity": "sha512-Egzogv1y77DUxdnq/CyHxLHaNxmSSKDDSDNNB/EiAXCZVFXdFibaNy2uUuRQ1n24T2m6KH/1Rw16XDRq+1yVEg==",
+      "version": "1.11.2",
+      "resolved": "https://registry.npmjs.org/enzyme-adapter-react-16/-/enzyme-adapter-react-16-1.11.2.tgz",
+      "integrity": "sha512-2ruTTCPRb0lPuw/vKTXGVZVBZqh83MNDnakMhzxhpJcIbneEwNy2Cv0KvL97pl57/GOazJHflWNLjwWhex5AAA==",
       "dev": true,
       "requires": {
-        "enzyme-adapter-utils": "^1.10.0",
-        "function.prototype.name": "^1.1.0",
+        "enzyme-adapter-utils": "^1.10.1",
         "object.assign": "^4.1.0",
         "object.values": "^1.1.0",
-        "prop-types": "^15.6.2",
-        "react-is": "^16.7.0",
-        "react-test-renderer": "^16.0.0-0"
+        "prop-types": "^15.7.2",
+        "react-is": "^16.8.4",
+        "react-test-renderer": "^16.0.0-0",
+        "semver": "^5.6.0"
       }
     },
     "enzyme-adapter-utils": {
@@ -7292,9 +7293,9 @@
       }
     },
     "eslint": {
-      "version": "5.14.1",
-      "resolved": "https://registry.npmjs.org/eslint/-/eslint-5.14.1.tgz",
-      "integrity": "sha512-CyUMbmsjxedx8B0mr79mNOqetvkbij/zrXnFeK2zc3pGRn3/tibjiNAv/3UxFEyfMDjh+ZqTrJrEGBFiGfD5Og==",
+      "version": "5.15.1",
+      "resolved": "https://registry.npmjs.org/eslint/-/eslint-5.15.1.tgz",
+      "integrity": "sha512-NTcm6vQ+PTgN3UBsALw5BMhgO6i5EpIjQF/Xb5tIh3sk9QhrFafujUOczGz4J24JBlzWclSB9Vmx8d+9Z6bFCg==",
       "dev": true,
       "requires": {
         "@babel/code-frame": "^7.0.0",
@@ -7303,7 +7304,7 @@
         "cross-spawn": "^6.0.5",
         "debug": "^4.0.1",
         "doctrine": "^3.0.0",
-        "eslint-scope": "^4.0.0",
+        "eslint-scope": "^4.0.2",
         "eslint-utils": "^1.3.1",
         "eslint-visitor-keys": "^1.0.0",
         "espree": "^5.0.1",

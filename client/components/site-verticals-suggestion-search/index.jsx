@@ -6,7 +6,7 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { debounce, find, get, noop, startsWith, trim, uniq, isEmpty } from 'lodash';
+import { find, get, noop, startsWith, trim, uniq, isEmpty } from 'lodash';
 import { localize } from 'i18n-calypso';
 
 /**
@@ -93,12 +93,6 @@ export class SiteVerticalsSuggestionSearch extends Component {
 		const valueLengthShouldTriggerSearch = valueLength >= this.props.charsToTriggerSearch;
 		const result = this.searchForVerticalMatches( value );
 
-		// Cancel delayed invocations in case of deletion
-		// and make sure the consuming component knows about it.
-		if ( ! hasValue || ! valueLengthShouldTriggerSearch ) {
-			this.props.requestVerticals.cancel();
-		}
-
 		if (
 			hasValue &&
 			valueLengthShouldTriggerSearch &&
@@ -157,7 +151,7 @@ export class SiteVerticalsSuggestionSearch extends Component {
 const SITE_VERTICALS_REQUEST_ID = 'site-verticals-search-results';
 const DEFAULT_SITE_VERTICAL_REQUEST_ID = 'default-site-verticals-search-results';
 
-const requestSiteVerticalHttpData = ( searchTerm, limit = 5, id = SITE_VERTICALS_REQUEST_ID ) =>
+const requestSiteVerticalHttpData = ( searchTerm, limit = 7, id = SITE_VERTICALS_REQUEST_ID ) =>
 	requestHttpData(
 		id,
 		http( {
@@ -179,8 +173,6 @@ const requestSiteVerticalHttpData = ( searchTerm, limit = 5, id = SITE_VERTICALS
 export const isVerticalSearchPending = () =>
 	'pending' === get( getHttpData( SITE_VERTICALS_REQUEST_ID ), 'state', false );
 
-const requestSiteVerticals = debounce( requestSiteVerticalHttpData, 333 );
-
 export default localize(
 	connect(
 		() => {
@@ -193,7 +185,7 @@ export default localize(
 			};
 		},
 		() => ( {
-			requestVerticals: requestSiteVerticals,
+			requestVerticals: requestSiteVerticalHttpData,
 			requestDefaultVertical: ( searchTerm = 'business' ) =>
 				requestSiteVerticalHttpData( searchTerm, 1, DEFAULT_SITE_VERTICAL_REQUEST_ID ),
 		} )

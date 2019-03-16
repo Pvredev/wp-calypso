@@ -8,12 +8,12 @@ import React from 'react';
 /**
  * Internal dependencies
  */
-import Button from 'components/forms/form-button';
+import ImporterActionButton from './action-button';
 
 export const StopButton = ( { translate } ) => (
-	<Button className="importer-header__action-button" disabled isPrimary scary>
+	<ImporterActionButton primary busy>
 		{ translate( 'Importing…' ) }
-	</Button>
+	</ImporterActionButton>
 );
 
 export default localize( StopButton );

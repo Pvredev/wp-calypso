@@ -9,7 +9,7 @@ import { localize } from 'i18n-calypso';
 import React from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
-import { flow, get, includes, noop } from 'lodash';
+import { flow, get, includes, noop, truncate } from 'lodash';
 import Gridicon from 'gridicons';
 
 /**
@@ -55,16 +55,16 @@ class UploadingPane extends React.PureComponent {
 			case appStates.READY_FOR_UPLOAD:
 			case appStates.UPLOAD_FAILURE:
 				return <p>{ this.props.translate( 'Drag a file here, or click to upload a file' ) }</p>;
-
+			case appStates.UPLOAD_PROCESSING:
 			case appStates.UPLOADING: {
 				const uploadPercent = percentComplete;
 				const progressClasses = classNames( 'importer__upload-progress', {
 					'is-complete': uploadPercent > 95,
 				} );
 				const uploaderPrompt =
-					uploadPercent < 99
+					importerState === appStates.UPLOADING && uploadPercent < 99
 						? this.props.translate( 'Uploading %(filename)s\u2026', {
-								args: { filename },
+								args: { filename: truncate( filename, { length: 40 } ) },
 						  } )
 						: this.props.translate( 'Processing uploaded file\u2026' );
 
@@ -152,11 +152,13 @@ class UploadingPane extends React.PureComponent {
 						site={ site }
 						isEnabled={ isEnabled }
 					/>
-					{ importerState === appStates.UPLOAD_SUCCESS && (
-						<ImporterActionButton onClick={ () => startMappingAuthors( importerId ) } primary>
-							{ this.props.translate( 'Continue' ) }
-						</ImporterActionButton>
-					) }
+					<ImporterActionButton
+						primary
+						disabled={ importerState !== appStates.UPLOAD_SUCCESS }
+						onClick={ () => startMappingAuthors( importerId ) }
+					>
+						{ this.props.translate( 'Continue' ) }
+					</ImporterActionButton>
 				</ImporterActionButtonContainer>
 			</div>
 		);

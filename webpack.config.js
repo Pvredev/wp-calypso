@@ -14,6 +14,7 @@ const AssetsWriter = require( './server/bundler/assets-writer' );
 const { BundleAnalyzerPlugin } = require( 'webpack-bundle-analyzer' );
 const CircularDependencyPlugin = require( 'circular-dependency-plugin' );
 const DuplicatePackageCheckerPlugin = require( 'duplicate-package-checker-webpack-plugin' );
+const FileConfig = require( '@automattic/calypso-build/webpack/file-loader' );
 const MomentTimezoneDataPlugin = require( 'moment-timezone-data-webpack-plugin' );
 const Minify = require( '@automattic/calypso-build/webpack/minify' );
 const SassConfig = require( '@automattic/calypso-build/webpack/sass' );
@@ -150,7 +151,7 @@ function getWebpackConfig( {
 		module: {
 			// avoids this warning:
 			// https://github.com/localForage/localForage/issues/577
-			noParse: /[\/\\]node_modules[\/\\]localforage[\/\\]dist[\/\\]localforage\.js$/,
+			noParse: /[/\\]node_modules[/\\]localforage[/\\]dist[/\\]localforage\.js$/,
 			rules: [
 				TranspileConfig.loader( {
 					workerCount,
@@ -160,7 +161,7 @@ function getWebpackConfig( {
 					exclude: /node_modules\//,
 				} ),
 				{
-					test: /node_modules[\/\\](redux-form|react-redux)[\/\\]es/,
+					test: /node_modules[/\\](redux-form|react-redux)[/\\]es/,
 					loader: 'babel-loader',
 					options: {
 						babelrc: false,
@@ -183,24 +184,13 @@ function getWebpackConfig( {
 					test: /\.html$/,
 					loader: 'html-loader',
 				},
-				{
-					test: /\.(?:gif|jpg|jpeg|png|svg)$/i,
-					use: [
-						{
-							loader: 'file-loader',
-							options: {
-								name: '[name]-[hash].[ext]',
-								outputPath: 'images/',
-							},
-						},
-					],
-				},
+				FileConfig.loader(),
 				{
 					include: require.resolve( 'tinymce/tinymce' ),
 					use: 'exports-loader?window=tinymce',
 				},
 				{
-					test: /node_modules[\/\\]tinymce/,
+					test: /node_modules[/\\]tinymce/,
 					use: 'imports-loader?this=>window',
 				},
 			],
@@ -211,7 +201,7 @@ function getWebpackConfig( {
 			alias: Object.assign(
 				{
 					'gridicons/example': 'gridicons/dist/example',
-					'react-virtualized': 'react-virtualized/dist/commonjs',
+					'react-virtualized': 'react-virtualized/dist/es',
 					'social-logos/example': 'social-logos/build/example',
 					debug: path.resolve( __dirname, 'node_modules/debug' ),
 					store: 'store/dist/store.modern',
@@ -231,7 +221,6 @@ function getWebpackConfig( {
 				global: 'window',
 			} ),
 			new webpack.NormalModuleReplacementPlugin( /^path$/, 'path-browserify' ),
-			new webpack.IgnorePlugin( /^props$/ ),
 			isCalypsoClient && new webpack.IgnorePlugin( /^\.\/locale$/, /moment$/ ),
 			...SassConfig.plugins( { cssFilename, minify: ! isDevelopment } ),
 			new AssetsWriter( {
@@ -289,7 +278,7 @@ function getWebpackConfig( {
 
 	if ( ! config.isEnabled( 'desktop' ) ) {
 		webpackConfig.plugins.push(
-			new webpack.NormalModuleReplacementPlugin( /^lib[\/\\]desktop$/, 'lodash/noop' )
+			new webpack.NormalModuleReplacementPlugin( /^lib[/\\]desktop$/, 'lodash/noop' )
 		);
 	}
 

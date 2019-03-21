@@ -1,6 +1,6 @@
 {
 	"name": "i18n-calypso",
-	"version": "4.0.0",
+	"version": "4.0.0-alpha.1",
 	"description": "i18n JavaScript library on top of Jed originally used in Calypso",
 	"main": "dist/cjs/index.js",
 	"module": "dist/esm/index.js",
@@ -37,7 +37,8 @@
 		"react-test-renderer": "^16.6.3"
 	},
 	"scripts": {
-		"build": "npx @automattic/calypso-build",
-		"clean": "npx rimraf dist"
+		"clean": "npx rimraf dist",
+		"prepublish": "npm run clean",
+		"prepare": "npx @automattic/calypso-build"
 	}
 }

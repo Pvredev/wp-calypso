@@ -2328,26 +2328,18 @@
 			"requires": {
 				"@sinonjs/commons": "^1",
 				"@sinonjs/samsam": "^3.1.0"
-			},
-			"dependencies": {
-				"@sinonjs/samsam": {
-					"version": "3.3.0",
-					"resolved": "https://registry.npmjs.org/@sinonjs/samsam/-/samsam-3.3.0.tgz",
-					"integrity": "sha512-beHeJM/RRAaLLsMJhsCvHK31rIqZuobfPLa/80yGH5hnD8PV1hyh9xJBJNFfNmO7yWqm+zomijHsXpI6iTQJfQ==",
-					"dev": true,
-					"requires": {
-						"@sinonjs/commons": "^1.0.2",
-						"array-from": "^2.1.1",
-						"lodash": "^4.17.11"
-					}
-				}
 			}
 		},
 		"@sinonjs/samsam": {
-			"version": "2.1.3",
-			"resolved": "https://registry.npmjs.org/@sinonjs/samsam/-/samsam-2.1.3.tgz",
-			"integrity": "sha512-8zNeBkSKhU9a5cRNbpCKau2WWPfan+Q2zDlcXvXyhn9EsMqgYs4qzo0XHNVlXC6ABQL8fT6nV+zzo5RTHJzyXw==",
-			"dev": true
+			"version": "3.3.0",
+			"resolved": "https://registry.npmjs.org/@sinonjs/samsam/-/samsam-3.3.0.tgz",
+			"integrity": "sha512-beHeJM/RRAaLLsMJhsCvHK31rIqZuobfPLa/80yGH5hnD8PV1hyh9xJBJNFfNmO7yWqm+zomijHsXpI6iTQJfQ==",
+			"dev": true,
+			"requires": {
+				"@sinonjs/commons": "^1.0.2",
+				"array-from": "^2.1.1",
+				"lodash": "^4.17.11"
+			}
 		},
 		"@sinonjs/text-encoding": {
 			"version": "0.7.1",
@@ -15322,14 +15314,25 @@
 			"integrity": "sha512-dye+7rERqNf/6mDT1iwps+4Gf42420xuZgygF33uX178DxffqcyeuHbBuJ382FIcB5iP6mMZOhfW7kI0uXwb/Q=="
 		},
 		"react": {
-			"version": "16.8.4",
-			"resolved": "https://registry.npmjs.org/react/-/react-16.8.4.tgz",
-			"integrity": "sha512-0GQ6gFXfUH7aZcjGVymlPOASTuSjlQL4ZtVC5YKH+3JL6bBLCVO21DknzmaPlI90LN253ojj02nsapy+j7wIjg==",
+			"version": "16.8.5",
+			"resolved": "https://registry.npmjs.org/react/-/react-16.8.5.tgz",
+			"integrity": "sha512-daCb9TD6FZGvJ3sg8da1tRAtIuw29PbKZW++NN4wqkbEvxL+bZpaaYb4xuftW/SpXmgacf1skXl/ddX6CdOlDw==",
 			"requires": {
 				"loose-envify": "^1.1.0",
 				"object-assign": "^4.1.1",
 				"prop-types": "^15.6.2",
-				"scheduler": "^0.13.4"
+				"scheduler": "^0.13.5"
+			},
+			"dependencies": {
+				"scheduler": {
+					"version": "0.13.5",
+					"resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.13.5.tgz",
+					"integrity": "sha512-K98vjkQX9OIt/riLhp6F+XtDPtMQhqNcf045vsh+pcuvHq+PHy1xCrH3pq1P40m6yR46lpVvVhKdEOtnimuUJw==",
+					"requires": {
+						"loose-envify": "^1.1.0",
+						"object-assign": "^4.1.1"
+					}
+				}
 			}
 		},
 		"react-addons-create-fragment": {
@@ -15398,14 +15401,25 @@
 			}
 		},
 		"react-dom": {
-			"version": "16.8.4",
-			"resolved": "https://registry.npmjs.org/react-dom/-/react-dom-16.8.4.tgz",
-			"integrity": "sha512-Ob2wK7XG2tUDt7ps7LtLzGYYB6DXMCLj0G5fO6WeEICtT4/HdpOi7W/xLzZnR6RCG1tYza60nMdqtxzA8FaPJQ==",
+			"version": "16.8.5",
+			"resolved": "https://registry.npmjs.org/react-dom/-/react-dom-16.8.5.tgz",
+			"integrity": "sha512-VIEIvZLpFafsfu4kgmftP5L8j7P1f0YThfVTrANMhZUFMDOsA6e0kfR6wxw/8xxKs4NB59TZYbxNdPCDW34x4w==",
 			"requires": {
 				"loose-envify": "^1.1.0",
 				"object-assign": "^4.1.1",
 				"prop-types": "^15.6.2",
-				"scheduler": "^0.13.4"
+				"scheduler": "^0.13.5"
+			},
+			"dependencies": {
+				"scheduler": {
+					"version": "0.13.5",
+					"resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.13.5.tgz",
+					"integrity": "sha512-K98vjkQX9OIt/riLhp6F+XtDPtMQhqNcf045vsh+pcuvHq+PHy1xCrH3pq1P40m6yR46lpVvVhKdEOtnimuUJw==",
+					"requires": {
+						"loose-envify": "^1.1.0",
+						"object-assign": "^4.1.1"
+					}
+				}
 			}
 		},
 		"react-is": {
@@ -15530,15 +15544,23 @@
 			}
 		},
 		"react-test-renderer": {
-			"version": "16.8.4",
-			"resolved": "https://registry.npmjs.org/react-test-renderer/-/react-test-renderer-16.8.4.tgz",
-			"integrity": "sha512-jQ9Tf/ilIGSr55Cz23AZ/7H3ABEdo9oy2zF9nDHZyhLHDSLKuoILxw2ifpBfuuwQvj4LCoqdru9iZf7gwFH28A==",
+			"version": "16.8.5",
+			"resolved": "https://registry.npmjs.org/react-test-renderer/-/react-test-renderer-16.8.5.tgz",
+			"integrity": "sha512-/pFpHYQH4f35OqOae/DgOCXJDxBqD3K3akVfDhLgR0qYHoHjnICI/XS9QDwIhbrOFHWL7okVW9kKMaHuKvt2ng==",
 			"dev": true,
 			"requires": {
 				"object-assign": "^4.1.1",
 				"prop-types": "^15.6.2",
-				"react-is": "^16.8.4",
-				"scheduler": "^0.13.4"
+				"react-is": "^16.8.5",
+				"scheduler": "^0.13.5"
+			},
+			"dependencies": {
+				"react-is": {
+					"version": "16.8.5",
+					"resolved": "https://registry.npmjs.org/react-is/-/react-is-16.8.5.tgz",
+					"integrity": "sha512-sudt2uq5P/2TznPV4Wtdi+Lnq3yaYW8LfvPKLM9BKD8jJNBkxMVyB0C9/GmVhLw7Jbdmndk/73n7XQGeN9A3QQ==",
+					"dev": true
+				}
 			}
 		},
 		"react-transition-group": {
@@ -16603,9 +16625,10 @@
 			"dev": true
 		},
 		"scheduler": {
-			"version": "0.13.4",
-			"resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.13.4.tgz",
-			"integrity": "sha512-cvSOlRPxOHs5dAhP9yiS/6IDmVAVxmk33f0CtTJRkmUWcb1Us+t7b1wqdzoC0REw2muC9V5f1L/w5R5uKGaepA==",
+			"version": "0.13.5",
+			"resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.13.5.tgz",
+			"integrity": "sha512-K98vjkQX9OIt/riLhp6F+XtDPtMQhqNcf045vsh+pcuvHq+PHy1xCrH3pq1P40m6yR46lpVvVhKdEOtnimuUJw==",
+			"dev": true,
 			"requires": {
 				"loose-envify": "^1.1.0",
 				"object-assign": "^4.1.1"
@@ -16910,20 +16933,18 @@
 			}
 		},
 		"sinon": {
-			"version": "7.1.1",
-			"resolved": "https://registry.npmjs.org/sinon/-/sinon-7.1.1.tgz",
-			"integrity": "sha512-iYagtjLVt1vN3zZY7D8oH7dkjNJEjLjyuzy8daX5+3bbQl8gaohrheB9VfH1O3L6LKuue5WTJvFluHiuZ9y3nQ==",
+			"version": "7.3.0",
+			"resolved": "https://registry.npmjs.org/sinon/-/sinon-7.3.0.tgz",
+			"integrity": "sha512-0pYvgRv46fODzT/PByqb79MVNpyxsxf38WEiXTABOF8RfIMcIARfZ+1ORuxwAmHkreZ/jST3UDBdKCRhUy/e1A==",
 			"dev": true,
 			"requires": {
-				"@sinonjs/commons": "^1.2.0",
-				"@sinonjs/formatio": "^3.0.0",
-				"@sinonjs/samsam": "^2.1.2",
+				"@sinonjs/commons": "^1.4.0",
+				"@sinonjs/formatio": "^3.2.1",
+				"@sinonjs/samsam": "^3.3.0",
 				"diff": "^3.5.0",
-				"lodash.get": "^4.4.2",
-				"lolex": "^3.0.0",
-				"nise": "^1.4.6",
-				"supports-color": "^5.5.0",
-				"type-detect": "^4.0.8"
+				"lolex": "^3.1.0",
+				"nise": "^1.4.10",
+				"supports-color": "^5.5.0"
 			}
 		},
 		"sinon-chai": {

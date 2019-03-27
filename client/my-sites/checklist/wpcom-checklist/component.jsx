@@ -26,7 +26,12 @@ import Task from 'components/checklist/task';
 import { successNotice } from 'state/notices/actions';
 import { getPostsForQuery } from 'state/posts/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
-import { getSiteOption, getSiteSlug, getSiteFrontPage } from 'state/sites/selectors';
+import {
+	getSiteOption,
+	getSiteSlug,
+	getSiteFrontPage,
+	isCurrentPlanPaid,
+} from 'state/sites/selectors';
 import { recordTracksEvent } from 'state/analytics/actions';
 import { requestGuidedTour } from 'state/ui/guided-tours/actions';
 import { requestSiteChecklistTaskUpdate } from 'state/checklist/actions';
@@ -44,6 +49,7 @@ import {
 	setChecklistPromptStep,
 } from 'state/inline-help/actions';
 import getEditorUrl from 'state/selectors/get-editor-url';
+import { emailManagement } from 'my-sites/email/paths';
 
 const userLib = userFactory();
 
@@ -186,9 +192,13 @@ class WpcomChecklistComponent extends PureComponent {
 			return;
 		}
 
-		const { siteId } = this.props;
+		const { siteId, domains, isPaidPlan, siteSlug } = this.props;
 
-		this.props.launchSite( siteId );
+		if ( isPaidPlan && domains.length > 1 ) {
+			this.props.launchSite( siteId );
+		} else {
+			location.href = `/start/launch-site?siteSlug=${ siteSlug }`;
+		}
 	};
 
 	verificationTaskButtonText() {
@@ -625,7 +635,7 @@ class WpcomChecklistComponent extends PureComponent {
 			: {
 					onClick: () => {
 						this.trackTaskStart( task );
-						page( `/domains/manage/email/${ siteSlug }` );
+						page( emailManagement( siteSlug ) );
 					},
 					onDismiss: this.handleTaskDismiss( task.id ),
 			  };
@@ -662,7 +672,7 @@ class WpcomChecklistComponent extends PureComponent {
 							link: (
 								<a
 									onClick={ () => this.trackTaskStart( task, { clicked_element: 'hyperlink' } ) }
-									href={ `/domains/manage/email/${ siteSlug }` }
+									href={ emailManagement( siteSlug ) }
 								/>
 							),
 						},
@@ -671,7 +681,7 @@ class WpcomChecklistComponent extends PureComponent {
 				completedButtonText={ translate( 'Upgrade' ) }
 				onClick={ () => {
 					this.trackTaskStart( task, { clicked_element: 'button' } );
-					page( `/domains/manage/email/${ siteSlug }` );
+					page( emailManagement( siteSlug ) );
 				} }
 				onDismiss={ this.handleTaskDismiss( task.id ) }
 			/>
@@ -1009,6 +1019,7 @@ export default connect(
 			needsVerification: ! isCurrentUserEmailVerified( state ),
 			isSiteUnlaunched: isUnlaunchedSite( state, siteId ),
 			domains: getDomainsBySiteId( state, siteId ),
+			isPaidPlan: isCurrentPlanPaid( state, siteId ),
 		};
 	},
 	{

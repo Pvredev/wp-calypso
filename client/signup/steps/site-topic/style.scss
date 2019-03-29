@@ -13,8 +13,7 @@ body.is-section-jetpack-connect .site-topic__content {
 		z-index: 1000; // I know, I know...
 		border-radius: 4px;
 		background: var( --color-white );
-		box-shadow: 0 3px 6px rgba( 0, 0, 0, 0.16 ),
-					0 3px 6px rgba( 0, 0, 0, 0.23 );
+		@include elevation ( 2dp );
 	}
 
 	.suggestion-search .gridicon {
@@ -49,21 +48,9 @@ body.is-section-jetpack-connect .site-topic__content {
 	}
 
 	.suggestions__wrapper {
-		/*
-		// Without the extra padding from the Card, we need
-		// to adjust the position of the suggestions.
-		top: 46px;
-
-		// On smaller screens the input gets bigger,
-		// so the suggestions need to move down a little.
-		@include breakpoint( '<660px' ) {
-			top: 52px;
-		}
-		*/
-
 		position: relative;
 		top: 0;
-		box-shadow: none;
+		@include elevation ( 0 );
 		margin-top: 3px;
 		margin-bottom: 0;
 		border-radius: 0 0 4px 4px;
@@ -80,5 +67,11 @@ body.is-section-jetpack-connect .site-topic__content {
 		position: absolute;
 		top: 3px;
 		right: 3px;
+		transition: all 150ms ease-in-out;
+		transition-delay: 150ms;
+
+		&[disabled] {
+			opacity: 0;
+		}
 	}
 }

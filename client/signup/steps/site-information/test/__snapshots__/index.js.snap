@@ -42,11 +42,16 @@ exports[`<SiteInformation /> should render 1`] = `
                 value="Ho ho ho!"
               />
               <Button
+                aria-label="Continue"
                 onClick={[Function]}
                 primary={true}
+                title="Continue"
                 type="submit"
               >
-                Continue
+                <t
+                  icon="arrow-right"
+                  size={24}
+                />
               </Button>
             </FormFieldset>
           </div>
@@ -78,11 +83,16 @@ exports[`<SiteInformation /> should render 1`] = `
                 value=""
               />
               <Button
+                aria-label="Continue"
                 onClick={[Function]}
                 primary={true}
+                title="Continue"
                 type="submit"
               >
-                Continue
+                <t
+                  icon="arrow-right"
+                  size={24}
+                />
               </Button>
             </FormFieldset>
           </div>
@@ -114,11 +124,16 @@ exports[`<SiteInformation /> should render 1`] = `
                 value=""
               />
               <Button
+                aria-label="Continue"
                 onClick={[Function]}
                 primary={true}
+                title="Continue"
                 type="submit"
               >
-                Continue
+                <t
+                  icon="arrow-right"
+                  size={24}
+                />
               </Button>
             </FormFieldset>
           </div>

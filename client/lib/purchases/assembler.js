@@ -28,6 +28,7 @@ function createPurchaseObject( purchase ) {
 		currencySymbol: purchase.currency_symbol,
 		description: purchase.description,
 		domain: purchase.domain,
+		domainRegistrationAgreementUrl: purchase.domain_registration_agreement_url || null,
 		error: null,
 		expiryDate: purchase.expiry_date,
 		expiryMoment: purchase.expiry_date ? i18n.moment( purchase.expiry_date ) : null,
@@ -58,6 +59,7 @@ function createPurchaseObject( purchase ) {
 		// only generate a moment if `renewDate` is present and positive
 		renewMoment:
 			purchase.renew_date && purchase.renew_date > '0' ? i18n.moment( purchase.renew_date ) : null,
+		saleAmount: purchase.sale_amount,
 		siteId: Number( purchase.blog_id ),
 		siteName: purchase.blogname,
 		subscribedDate: purchase.subscribed_date,

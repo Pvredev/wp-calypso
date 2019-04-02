@@ -60,14 +60,16 @@ class CalypsoifyIframe extends Component {
 		super( props );
 		this.iframeRef = React.createRef();
 		this.mediaSelectPort = null;
-		MediaStore.on( 'change', this.updateImageBlocks );
+		this.revisionsPort = null;
 	}
 
 	componentDidMount() {
+		MediaStore.on( 'change', this.updateImageBlocks );
 		window.addEventListener( 'message', this.onMessage, false );
 	}
 
 	componentWillUnmount() {
+		MediaStore.off( 'change', this.updateImageBlocks );
 		window.removeEventListener( 'message', this.onMessage, false );
 	}
 
@@ -85,20 +87,23 @@ class CalypsoifyIframe extends Component {
 		const { action } = data;
 
 		if ( 'loaded' === action ) {
-			const { port1: portToIframe, port2: portForIframe } = new MessageChannel();
+			const { port1: iframePortObject, port2: transferredPortObject } = new MessageChannel();
 
-			this.iframePort = portToIframe;
+			this.iframePort = iframePortObject;
 			this.iframePort.addEventListener( 'message', this.onIframePortMessage, false );
 			this.iframePort.start();
 
 			this.iframeRef.current.contentWindow.postMessage( { action: 'initPort' }, '*', [
-				portForIframe,
+				transferredPortObject,
 			] );
 
 			// Check if we're generating a post via Press This
 			this.pressThis();
 			return;
 		}
+
+		// this message comes from inside TinyMCE and therefore
+		// cannot be controlled like the others
 		if ( 'classicBlockOpenMediaModal' === action ) {
 			if ( data.imageId ) {
 				const { siteId } = this.props;
@@ -111,21 +116,21 @@ class CalypsoifyIframe extends Component {
 				isMediaModalVisible: true,
 			} );
 		}
+
+		// any other message is unknown and may indicate a bug
 	};
 
 	onIframePortMessage = ( { data, ports } ) => {
 		const { action, payload } = data;
 
-		if ( 'openMediaModal' === action ) {
+		if ( 'openMediaModal' === action && ports && ports[ 0 ] ) {
 			const { siteId } = this.props;
 			const { allowedTypes, gallery, multiple, value } = payload;
 
-			if ( ports && ports[ 0 ] ) {
-				// set imperatively on the instance because this is not
-				// the kind of assignment which causes re-renders and we
-				// want it set immediately
-				this.mediaSelectPort = ports[ 0 ];
-			}
+			// set imperatively on the instance because this is not
+			// the kind of assignment which causes re-renders and we
+			// want it set immediately
+			this.mediaSelectPort = ports[ 0 ];
 
 			if ( value ) {
 				const selectedItems = Array.isArray( value )
@@ -163,6 +168,13 @@ class CalypsoifyIframe extends Component {
 		}
 
 		if ( 'openRevisions' === action ) {
+			if ( ports && ports[ 0 ] ) {
+				// set imperatively on the instance because this is not
+				// the kind of assignment which causes re-renders and we
+				// want it set immediately
+				this.revisionsPort = ports[ 0 ];
+			}
+
 			this.props.openPostRevisionsDialog();
 		}
 
@@ -173,38 +185,45 @@ class CalypsoifyIframe extends Component {
 	};
 
 	loadRevision = revision => {
-		this.iframePort.postMessage( {
-			action: 'loadRevision',
-			payload: {
+		if ( this.revisionsPort ) {
+			this.revisionsPort.postMessage( {
 				title: revision.post_title,
 				excerpt: revision.post_excerpt,
 				content: revision.post_content,
-			},
-		} );
+			} );
+
+			// this is a once-only port
+			// after sending our message we want to close it out
+			// and prevent sending more messages (which will be ignored)
+			this.revisionsPort.close();
+			this.revisionsPort = null;
+		} else {
+			// this to be removed once we are reliably
+			// sending the new MessageChannel from the server
+			this.iframePort.postMessage( {
+				action: 'loadRevision',
+				payload: {
+					title: revision.post_title,
+					excerpt: revision.post_excerpt,
+					content: revision.post_content,
+				},
+			} );
+		}
 	};
 
 	closeMediaModal = media => {
-		if ( ! this.state.classicBlockEditorId && media && this.iframePort ) {
+		if ( ! this.state.classicBlockEditorId && media ) {
 			const { multiple } = this.state;
 			const formattedMedia = map( media.items, item => mediaCalypsoToGutenberg( item ) );
 			const payload = multiple ? formattedMedia : formattedMedia[ 0 ];
 
-			if ( this.mediaSelectPort ) {
-				this.mediaSelectPort.postMessage( payload );
+			this.mediaSelectPort.postMessage( payload );
 
-				// this is a once-only port
-				// after sending our message we want to close it out
-				// and prevent sending more messages (which will be ignored)
-				this.mediaSelectPort.close();
-				this.mediaSelectPort = null;
-			} else {
-				// this to be removed once we are reliably
-				// sending the new MessageChannel from the server
-				this.iframePort.postMessage( {
-					action: 'selectMedia',
-					payload,
-				} );
-			}
+			// this is a once-only port
+			// after sending our message we want to close it out
+			// and prevent sending more messages (which will be ignored)
+			this.mediaSelectPort.close();
+			this.mediaSelectPort = null;
 		}
 
 		this.setState( { classicBlockEditorId: null, isMediaModalVisible: false } );

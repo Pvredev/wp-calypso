@@ -172,9 +172,23 @@ class ImportURLStepComponent extends Component {
 		} );
 	};
 
+	renderNotice = () => {
+		const { showUrlMessage } = this.state;
+		const urlMessage = this.getUrlMessage();
+
+		if ( showUrlMessage && urlMessage ) {
+			return (
+				<Notice className="import-url__url-input-message" status="is-error" showDismiss={ false }>
+					{ urlMessage }
+				</Notice>
+			);
+		}
+
+		return <div className="import-url__notice-placeholder" />;
+	};
+
 	renderContent = () => {
 		const { isLoading, urlInputValue, translate } = this.props;
-		const { showUrlMessage } = this.state;
 		const urlMessage = this.getUrlMessage();
 
 		return (
@@ -211,17 +225,7 @@ class ImportURLStepComponent extends Component {
 								: translate( 'Continue' ) }
 						</FormButton>
 					</form>
-					{ showUrlMessage && urlMessage ? (
-						<Notice
-							className="import-url__url-input-message"
-							status="is-error"
-							showDismiss={ false }
-						>
-							{ urlMessage }
-						</Notice>
-					) : (
-						<div className="import-url__notice-placeholder" />
-					) }
+					{ this.renderNotice() }
 				</div>
 
 				<div className="import-url__example">

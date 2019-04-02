@@ -12,9 +12,14 @@
 	"bin": {
 		"calypso-sdk": "./bin/sdk-cli.js"
 	},
-	"browserslist": [
-		"extends @wordpress/browserslist-config"
-	],
+	"browserslist": {
+		"defaults": [
+			"extends @wordpress/browserslist-config"
+		],
+		"server": [
+			"current node"
+		]
+	},
 	"dependencies": {
 		"@automattic/format-currency": "file:./packages/format-currency",
 		"@automattic/tree-select": "file:./packages/tree-select",
@@ -138,7 +143,7 @@
 		"localforage": "1.7.3",
 		"lodash": "4.17.11",
 		"lru": "3.1.0",
-		"lunr": "2.3.5",
+		"lunr": "2.3.6",
 		"marked": "0.5.2",
 		"mkdirp": "0.5.1",
 		"moment": "2.24.0",
@@ -158,7 +163,7 @@
 		"prismjs": "1.15.0",
 		"prop-types": "15.7.2",
 		"qrcode.react": "0.9.3",
-		"qs": "6.6.0",
+		"qs": "6.7.0",
 		"react": "16.8.6",
 		"react-click-outside": "3.0.1",
 		"react-day-picker": "7.2.4",
@@ -200,7 +205,7 @@
 		"wpcom-oauth": "0.3.4",
 		"wpcom-proxy-request": "5.0.2",
 		"wpcom-xhr-request": "1.1.2",
-		"yargs": "12.0.5"
+		"yargs": "13.2.2"
 	},
 	"engines": {
 		"node": "^10.15.2",
@@ -225,8 +230,8 @@
 		"build-devdocs:index:_env": "node server/devdocs/bin/generate-devdocs-index",
 		"build-docker": "node bin/build-docker.js",
 		"prebuild-server": "mkdirp build",
-		"build-server": "cross-env-shell CALYPSO_SERVER=true NODE_PATH=$NODE_PATH:server:client:. webpack --display errors-only --config webpack.config.node.js",
-		"build-client": "cross-env-shell CALYPSO_CLIENT=true NODE_PATH=$NODE_PATH:server:client:. node $NODE_ARGS ./node_modules/webpack/bin/webpack.js --display errors-only",
+		"build-server": "cross-env-shell BROWSERSLIST_ENV=server NODE_PATH=$NODE_PATH:server:client:. webpack --display errors-only --config webpack.config.node.js",
+		"build-client": "cross-env-shell BROWSERSLIST_ENV=defaults NODE_PATH=$NODE_PATH:server:client:. node $NODE_ARGS ./node_modules/webpack/bin/webpack.js --display errors-only",
 		"build-client-if-prod": "node -e \"process.env.CALYPSO_ENV === 'production' && process.exit(1)\" || cross-env-shell NODE_ARGS=--max_old_space_size=8192 npm run build-client",
 		"build-client-if-desktop": "node -e \"process.env.CALYPSO_ENV === 'desktop' && process.exit(1)\" || npm run build-client",
 		"build-packages": "npx lerna run prepare --stream",
@@ -249,7 +254,7 @@
 		"lint:mixedindent": "mixedindentlint --ignore-comments \"client/**/*.scss\" \"assets/**/*.scss\" \"**/*.js\" \"**/*.jsx\" \"!build/**\" \"!node_modules/**\" \"!public/**\" \"!client/config/index.js\"",
 		"prestart": "npx check-node-version --package && npm run -s install-if-deps-outdated && node bin/welcome.js",
 		"start": "npm run -s build",
-		"poststart": "cross-env-shell CALYPSO_CLIENT=true NODE_PATH=$NODE_PATH:server:client:. node $NODE_ARGS --max_old_space_size=4096 build/bundle.js",
+		"poststart": "cross-env-shell BROWSERSLIST_ENV=defaults NODE_PATH=$NODE_PATH:server:client:. node $NODE_ARGS --max_old_space_size=4096 build/bundle.js",
 		"reformat-files": "./node_modules/.bin/prettier --ignore-path .eslintignore --write \"**/*.{js,jsx,json}\"",
 		"pretest": "npm run -s install-if-deps-outdated",
 		"test": "run-s -s test-client test-packages test-server",
@@ -285,7 +290,7 @@
 		"babel-plugin-dynamic-import-node": "2.2.0",
 		"chai": "4.2.0",
 		"chai-enzyme": "1.0.0-beta.1",
-		"check-node-version": "3.2.0",
+		"check-node-version": "3.3.0",
 		"color-studio": "github:automattic/color-studio#1.0.1",
 		"enzyme": "3.9.0",
 		"enzyme-adapter-react-16": "1.11.2",
@@ -324,7 +329,7 @@
 		"whybundled": "1.4.2"
 	},
 	"optionalDependencies": {
-		"fsevents": "2.0.1"
+		"fsevents": "2.0.3"
 	},
 	"husky": {
 		"hooks": {

@@ -23,7 +23,7 @@ import CompactCard from 'components/card/compact';
 import Button from 'components/button';
 import { addItem } from 'lib/upgrades/actions';
 import { cartItems } from 'lib/cart-values';
-import { isInPageBuilderTest, getEditHomeUrl } from 'lib/signup/page-builder';
+import { siteQualifiesForPageBuilder, getEditHomeUrl } from 'lib/signup/page-builder';
 import isEligibleForDotcomChecklist from 'state/selectors/is-eligible-for-dotcom-checklist';
 import { getCurrentUserCurrencyCode } from 'state/current-user/selectors';
 import { getSiteSlug } from 'state/sites/selectors';
@@ -186,7 +186,7 @@ export class ConciergeSessionNudge extends React.Component {
 								/>
 								<span className="concierge-session-nudge__checklist-item-text">
 									{ translate(
-										'{{b}}Traffic:{{/b}} How to get free search engine traffic with SEO tools.',
+										'{{b}}Traffic:{{/b}} How to make your site search-engine friendly.',
 										{
 											components: { b: <b /> },
 											comment: "This is a benefit listed on a 'Purchase a call with us' page",
@@ -305,7 +305,13 @@ export class ConciergeSessionNudge extends React.Component {
 	}
 
 	handleClickDecline = () => {
-		const { siteSlug, receiptId, isEligibleForChecklist, trackUpsellButtonClick } = this.props;
+		const {
+			siteSlug,
+			receiptId,
+			isEligibleForChecklist,
+			trackUpsellButtonClick,
+			redirectToPageBuilder,
+		} = this.props;
 
 		trackUpsellButtonClick( 'decline' );
 
@@ -313,7 +319,7 @@ export class ConciergeSessionNudge extends React.Component {
 			// Send the user to a generic page (not post-purchase related).
 			page( `/stats/day/${ siteSlug }` );
 		} else if ( isEligibleForChecklist ) {
-			if ( isInPageBuilderTest() ) {
+			if ( redirectToPageBuilder ) {
 				return page( getEditHomeUrl( siteSlug ) );
 			}
 			analytics.tracks.recordEvent( 'calypso_checklist_assign', {
@@ -356,6 +362,7 @@ export default connect(
 			hasSitePlans: sitePlans && sitePlans.length > 0,
 			siteSlug: getSiteSlug( state, selectedSiteId ),
 			isEligibleForChecklist: isEligibleForDotcomChecklist( state, selectedSiteId ),
+			redirectToPageBuilder: siteQualifiesForPageBuilder( state, selectedSiteId ),
 			productCost: getProductCost( state, 'concierge-session' ),
 			productDisplayCost: getProductDisplayCost( state, 'concierge-session' ),
 		};

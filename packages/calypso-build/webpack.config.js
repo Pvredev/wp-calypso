@@ -13,7 +13,7 @@ const FileConfig = require( './webpack/file-loader' );
 const Minify = require( './webpack/minify' );
 const SassConfig = require( './webpack/sass' );
 const TranspileConfig = require( './webpack/transpile' );
-const wordpressExternals = require( './webpack/wordpress-externals' );
+const WordPressExternalDependenciesPlugin = require( '@automattic/wordpress-external-dependencies-plugin' );
 
 /**
  * Internal dependencies
@@ -43,7 +43,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
  * @return {object}                                webpack config
  */
 function getWebpackConfig(
-	env,
+	env = {}, // eslint-disable-line no-unused-vars
 	{
 		entry,
 		'output-path': outputPath = path.join( __dirname, 'dist' ),
@@ -56,7 +56,6 @@ function getWebpackConfig(
 
 	const webpackConfig = {
 		bail: ! isDevelopment,
-		context: __dirname,
 		entry,
 		mode: isDevelopment ? 'development' : 'production',
 		devtool: process.env.SOURCEMAP || ( isDevelopment ? '#eval' : false ),
@@ -85,7 +84,7 @@ function getWebpackConfig(
 				TranspileConfig.loader( {
 					workerCount,
 					configFile: path.join( __dirname, 'babel.config.js' ),
-					cacheDirectory: path.join( __dirname, '.cache' ),
+					cacheDirectory: true,
 					exclude: /node_modules\//,
 				} ),
 				SassConfig.loader( {
@@ -109,8 +108,8 @@ function getWebpackConfig(
 			new webpack.IgnorePlugin( /^\.\/locale$/, /moment$/ ),
 			...SassConfig.plugins( { cssFilename, minify: ! isDevelopment } ),
 			new DuplicatePackageCheckerPlugin(),
+			new WordPressExternalDependenciesPlugin(),
 		],
-		externals: [ wordpressExternals, 'wp', 'lodash' ],
 	};
 
 	return webpackConfig;

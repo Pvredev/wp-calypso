@@ -183,6 +183,15 @@ export default {
 		defaultVariation: 'control',
 		allowExistingUsers: true,
 	},
+	conciergeQuickstartSession: {
+		datestamp: '20190409',
+		variations: {
+			controlSupportSession: 50,
+			variantQuickstartSession: 50,
+		},
+		defaultVariation: 'controlSupportSession',
+		allowExistingUsers: true,
+	},
 	gsuitePurchaseCtaOptions: {
 		datestamp: '20190411',
 		variations: {
@@ -192,6 +201,25 @@ export default {
 			showBusinessWithMonthlyPrices: 25,
 		},
 		defaultVariation: 'hideBusinessWithAnnualPrices',
+		allowExistingUsers: true,
+		countryCodeTargets: [ 'USD' ],
+	},
+	domainSuggestionsEnCheck: {
+		datestamp: '20190415',
+		variations: {
+			control: 50,
+			test: 50,
+		},
+		defaultVariation: 'control',
+		allowExistingUsers: true,
+	},
+  gsuiteDomainFlowOptions: {
+		datestamp: '20190415',
+		variations: {
+			hideMonthlyPrice: 50,
+			showMonthlyPrice: 50,
+		},
+		defaultVariation: 'hideMonthlyPrice',
 		allowExistingUsers: true,
 		countryCodeTargets: [ 'USD' ],
 	},

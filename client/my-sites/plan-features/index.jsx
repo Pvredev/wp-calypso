@@ -39,6 +39,7 @@ import {
 	getPlanPath,
 	isFreePlan,
 	getBiennialPlan,
+	getPlanClass,
 } from 'lib/plans';
 import {
 	getPlanDiscountedRawPrice,
@@ -58,8 +59,6 @@ import {
 	isBestValue,
 	isMonthly,
 	isNew,
-	getPlanFeaturesObject,
-	getPlanClass,
 	PLAN_FREE,
 	TYPE_BLOGGER,
 	TYPE_PERSONAL,
@@ -67,6 +66,7 @@ import {
 	TYPE_BUSINESS,
 	GROUP_WPCOM,
 } from 'lib/plans/constants';
+import { getPlanFeaturesObject } from 'lib/plans/features-list';
 import PlanFeaturesScroller from './scroller';
 
 export class PlanFeatures extends Component {
@@ -406,10 +406,6 @@ export class PlanFeatures extends Component {
 					default:
 						audience = planConstantObj.getAudience();
 				}
-			}
-
-			if ( withScroll && planConstantObj.getTwoLinesBillingTimeFrame ) {
-				billingTimeFrame = planConstantObj.getTwoLinesBillingTimeFrame();
 			}
 
 			if ( isInSignup && displayJetpackPlans ) {

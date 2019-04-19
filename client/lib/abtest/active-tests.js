@@ -8,6 +8,15 @@ export default {
 		},
 		defaultVariation: 'main',
 	},
+	streamlinedNavigationDrawer: {
+		datestamp: '20190321',
+		variations: {
+			test: 5,
+			control: 95,
+		},
+		defaultVariation: 'control',
+		allowExistingUsers: true,
+	},
 	cartNudgeUpdateToPremium: {
 		datestamp: '20180917',
 		variations: {
@@ -175,10 +184,10 @@ export default {
 		defaultVariation: 'original',
 	},
 	pageBuilderMVP: {
-		datestamp: '20190402',
+		datestamp: '20190418',
 		variations: {
-			control: 0,
-			test: 1,
+			control: 50,
+			test: 50,
 		},
 		defaultVariation: 'control',
 		allowExistingUsers: true,

@@ -194,6 +194,7 @@
 		.new-account {
 			padding-bottom: 0.48em;
 			background: var( --color-white );
+			// stylelint-disable-next-line selector-max-id
 			#content & {
 				font-size: 0.9em;
 			}
@@ -962,7 +963,7 @@
 	&.is-bottom {
 		margin: 14px 0 0;
 		@include breakpoint( '<480px' ) {
-			margin: 15px -8px 0 -8px;
+			margin: 15px -8px 0;
 		}
 	}
 
@@ -1027,21 +1028,40 @@
 .sharing-buttons-preview__panel-content .sharing-buttons-preview-button {
 	margin-top: 8px;
 	cursor: pointer;
+	opacity: 0.6;
 	@include breakpoint( '<480px' ) {
 		margin: 18px 18px 0 0;
 	}
 
+	&:hover {
+		opacity: 0.8;
+	}
+
+	&.style-icon {
+		opacity: 0.4;
+	}
+
 	&.style-icon:hover {
 		border: none;
-		opacity: 0.6;
+		opacity: 0.7;
 	}
 
 	&.is-enabled {
-		opacity: 0.3;
+		opacity: 1;
 	}
 
-	&.is-enabled.style-icon {
-		opacity: 0.2;
+	/* These icons have a light background and need special treatment to stay readable. */
+	&.style-icon.share-email,
+	&.style-icon.share-print {
+		opacity: 0.6;
+
+		&:hover {
+			opacity: 0.9;
+		}
+
+		&.is-enabled {
+			opacity: 1;
+		}
 	}
 }
 

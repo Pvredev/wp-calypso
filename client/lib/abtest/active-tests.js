@@ -109,8 +109,8 @@ export default {
 	removeDomainsStepFromOnboarding: {
 		datestamp: '20190412',
 		variations: {
-			keep: 50,
-			remove: 50,
+			keep: 100,
+			remove: 0,
 		},
 		defaultVariation: 'keep',
 	},
@@ -184,10 +184,10 @@ export default {
 		defaultVariation: 'original',
 	},
 	pageBuilderMVP: {
-		datestamp: '20190418',
+		datestamp: '20190419',
 		variations: {
-			control: 50,
-			test: 50,
+			control: 100,
+			test: 0,
 		},
 		defaultVariation: 'control',
 		allowExistingUsers: true,

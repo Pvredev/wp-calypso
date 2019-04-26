@@ -189,7 +189,6 @@ class AboutStep extends Component {
 			shouldHideSiteTitle,
 			shouldHideSiteGoals,
 			previousFlowName,
-			translate,
 			siteType,
 		} = this.props;
 
@@ -309,15 +308,11 @@ class AboutStep extends Component {
 
 		//Create site
 		SignupActions.submitSignupStep(
-			{
-				processingMessage: translate( 'Collecting your information' ),
-				stepName: stepName,
-			},
-			[],
+			{ stepName },
 			{
 				themeSlugWithRepo: themeRepo,
 				siteTitle: siteTitleValue,
-				designType: designType,
+				designType,
 				surveyQuestion: siteTopicInput,
 			}
 		);

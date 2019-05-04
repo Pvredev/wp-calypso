@@ -9,7 +9,8 @@ import { get } from 'lodash';
  * WordPress dependencies
  */
 import { IconButton, Placeholder, Toolbar } from '@wordpress/components';
-import { withState } from '@wordpress/compose';
+import { compose, withState } from '@wordpress/compose';
+import { withSelect } from '@wordpress/data';
 import { BlockControls } from '@wordpress/editor';
 import { Fragment, RawHTML } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -18,22 +19,33 @@ import { __, sprintf } from '@wordpress/i18n';
  * Internal dependencies
  */
 import PostAutocomplete from '../../components/post-autocomplete';
+import './style.scss';
 
-const ContentSlotEdit = withState( {
-	isEditing: false,
-	selectedPost: null,
-} )( ( { attributes, isEditing, selectedPost, setState } ) => {
-	const { align } = attributes;
+const TemplateEdit = compose(
+	withSelect( ( select, { attributes } ) => {
+		const { getEntityRecord } = select( 'core' );
+		const { selectedPostId, selectedPostType } = attributes;
+		return {
+			selectedPost: getEntityRecord( 'postType', selectedPostType, selectedPostId ),
+		};
+	} ),
+	withState( { isEditing: false } )
+)( ( { attributes, isEditing, selectedPost, setAttributes, setState } ) => {
+	const { align, selectedPostId } = attributes;
 
 	const toggleEditing = () => setState( { isEditing: ! isEditing } );
 
-	const onSelectPost = post => {
-		setState( { isEditing: false, selectedPost: post } );
+	const onSelectPost = ( { id, type } ) => {
+		setState( { isEditing: false } );
+		setAttributes( {
+			selectedPostId: id,
+			selectedPostType: type,
+		} );
 	};
 
-	const showToggleButton = ! isEditing || !! selectedPost;
-	const showPlaceholder = isEditing || ! selectedPost;
-	const showPreview = ! isEditing && !! selectedPost;
+	const showToggleButton = ! isEditing || !! selectedPostId;
+	const showPlaceholder = isEditing || ! selectedPostId;
+	const showContent = ! isEditing && !! selectedPostId;
 
 	return (
 		<Fragment>
@@ -44,7 +56,7 @@ const ContentSlotEdit = withState( {
 							className={ classNames( 'components-icon-button components-toolbar__control', {
 								'is-active': isEditing,
 							} ) }
-							label={ __( 'Change Preview' ) }
+							label={ __( 'Change Template Part' ) }
 							onClick={ toggleEditing }
 							icon="edit"
 						/>
@@ -52,18 +64,17 @@ const ContentSlotEdit = withState( {
 				</BlockControls>
 			) }
 			<div
-				className={ classNames( 'a8c-content-slot-block', {
+				className={ classNames( 'template-block', {
 					[ `align${ align }` ]: align,
 				} ) }
 			>
 				{ showPlaceholder && (
 					<Placeholder
 						icon="layout"
-						label={ __( 'Content Slot' ) }
-						instructions={ __( 'Placeholder for a post or a page.' ) }
+						label={ __( 'Template Part' ) }
+						instructions={ __( 'Select a template part to display' ) }
 					>
-						<div className="a8c-content-slot-block__selector">
-							<div>{ __( 'Select something to preview:' ) }</div>
+						<div className="template-block__selector">
 							<PostAutocomplete onSelectPost={ onSelectPost } />
 							{ !! selectedPost && (
 								<a href={ `?post=${ selectedPost.id }&action=edit` }>
@@ -73,8 +84,8 @@ const ContentSlotEdit = withState( {
 						</div>
 					</Placeholder>
 				) }
-				{ showPreview && (
-					<RawHTML className="a8c-content-slot-block__preview">
+				{ showContent && (
+					<RawHTML className="template-block__content">
 						{ get( selectedPost, 'content.rendered' ) }
 					</RawHTML>
 				) }
@@ -83,4 +94,4 @@ const ContentSlotEdit = withState( {
 	);
 } );
 
-export default ContentSlotEdit;
+export default TemplateEdit;

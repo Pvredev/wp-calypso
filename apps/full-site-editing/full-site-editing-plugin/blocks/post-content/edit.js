@@ -9,7 +9,8 @@ import { get } from 'lodash';
  * WordPress dependencies
  */
 import { IconButton, Placeholder, Toolbar } from '@wordpress/components';
-import { withState } from '@wordpress/compose';
+import { compose, withState } from '@wordpress/compose';
+import { withSelect } from '@wordpress/data';
 import { BlockControls } from '@wordpress/editor';
 import { Fragment, RawHTML } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -18,40 +19,35 @@ import { __, sprintf } from '@wordpress/i18n';
  * Internal dependencies
  */
 import PostAutocomplete from '../../components/post-autocomplete';
-import fetchPost from '../../lib/fetch-post';
-import './style.scss';
 
-const setSelectedPost = async ( attributes, setState ) => {
-	const { selectedPostId, selectedPostType } = attributes;
-	const selectedPost = await fetchPost( selectedPostId, selectedPostType );
-	setState( {
-		selectedPost,
-	} );
-};
-
-const TemplatePartEdit = withState( {
-	isEditing: false,
-	selectedPost: null,
-} )( ( { attributes, isEditing, selectedPost, setAttributes, setState } ) => {
-	const { align, selectedPostId } = attributes;
-
-	if ( !! selectedPostId && ! selectedPost ) {
-		setSelectedPost( attributes, setState );
-	}
+const PostContentEdit = compose(
+	withState( {
+		isEditing: false,
+		selectedPostId: undefined,
+		selectedPostType: undefined,
+	} ),
+	withSelect( ( select, { selectedPostId, selectedPostType } ) => {
+		const { getEntityRecord } = select( 'core' );
+		return {
+			selectedPost: getEntityRecord( 'postType', selectedPostType, selectedPostId ),
+		};
+	} )
+)( ( { attributes, isEditing, selectedPost, setState } ) => {
+	const { align } = attributes;
 
 	const toggleEditing = () => setState( { isEditing: ! isEditing } );
 
-	const onSelectPost = post => {
-		setState( { isEditing: false, selectedPost: post } );
-		setAttributes( {
-			selectedPostId: get( post, 'id' ),
-			selectedPostType: get( post, 'type' ),
+	const onSelectPost = ( { id, type } ) => {
+		setState( {
+			isEditing: false,
+			selectedPostId: id,
+			selectedPostType: type,
 		} );
 	};
 
-	const showToggleButton = ! isEditing || !! selectedPostId;
-	const showPlaceholder = isEditing || ! selectedPostId;
-	const showContent = ! isEditing && !! selectedPostId;
+	const showToggleButton = ! isEditing || !! selectedPost;
+	const showPlaceholder = isEditing || ! selectedPost;
+	const showPreview = ! isEditing && !! selectedPost;
 
 	return (
 		<Fragment>
@@ -62,7 +58,7 @@ const TemplatePartEdit = withState( {
 							className={ classNames( 'components-icon-button components-toolbar__control', {
 								'is-active': isEditing,
 							} ) }
-							label={ __( 'Change Template Part' ) }
+							label={ __( 'Change Preview' ) }
 							onClick={ toggleEditing }
 							icon="edit"
 						/>
@@ -70,17 +66,18 @@ const TemplatePartEdit = withState( {
 				</BlockControls>
 			) }
 			<div
-				className={ classNames( 'a8c-template-part-block', {
+				className={ classNames( 'post-content-block', {
 					[ `align${ align }` ]: align,
 				} ) }
 			>
 				{ showPlaceholder && (
 					<Placeholder
 						icon="layout"
-						label={ __( 'Template Part' ) }
-						instructions={ __( 'Select a template part to display' ) }
+						label={ __( 'Content Slot' ) }
+						instructions={ __( 'Placeholder for a post or a page.' ) }
 					>
-						<div className="a8c-template-part-block__selector">
+						<div className="post-content-block__selector">
+							<div>{ __( 'Select something to preview:' ) }</div>
 							<PostAutocomplete onSelectPost={ onSelectPost } />
 							{ !! selectedPost && (
 								<a href={ `?post=${ selectedPost.id }&action=edit` }>
@@ -90,8 +87,8 @@ const TemplatePartEdit = withState( {
 						</div>
 					</Placeholder>
 				) }
-				{ showContent && (
-					<RawHTML className="a8c-template-part-block__content">
+				{ showPreview && (
+					<RawHTML className="post-content-block__preview">
 						{ get( selectedPost, 'content.rendered' ) }
 					</RawHTML>
 				) }
@@ -100,4 +97,4 @@ const TemplatePartEdit = withState( {
 	);
 } );
 
-export default TemplatePartEdit;
+export default PostContentEdit;

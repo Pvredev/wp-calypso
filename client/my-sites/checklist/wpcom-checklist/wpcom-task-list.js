@@ -31,6 +31,7 @@ function getTasks( { taskStatuses, designType, isSiteUnlaunched, siteSegment, si
 		tasks.push( task );
 	};
 
+	addTask( 'email_verified' );
 	addTask( 'site_created', true );
 
 	if ( 'business' === segmentSlug ) {
@@ -63,7 +64,6 @@ function getTasks( { taskStatuses, designType, isSiteUnlaunched, siteSegment, si
 		}
 	}
 
-	addTask( 'email_verified' );
 	addTask( 'custom_domain_registered' );
 	addTask( 'mobile_app_installed' );
 

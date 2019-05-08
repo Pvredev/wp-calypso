@@ -40,16 +40,21 @@ import { getEditorPostId } from 'state/ui/editor/selectors';
 import { protectForm, ProtectedFormProps } from 'lib/protect-form';
 
 /**
+ * Types
+ */
+import * as T from 'types';
+
+/**
  * Style dependencies
  */
 import './style.scss';
 
 interface Props {
-	duplicatePostId: number;
-	postId: number;
-	postType: string;
+	duplicatePostId: T.PostId;
+	postId: T.PostId;
+	postType: T.PostType;
 	pressThis: any;
-	siteAdminUrl: string | null;
+	siteAdminUrl: T.URL | null;
 }
 
 interface State {
@@ -61,8 +66,8 @@ interface State {
 	isMediaModalVisible: boolean;
 	isPreviewVisible: boolean;
 	multiple?: any;
-	postUrl?: string;
-	previewUrl: string;
+	postUrl?: T.URL;
+	previewUrl: T.URL;
 }
 
 enum WindowActions {
@@ -409,7 +414,6 @@ const mapStateToProps = ( state, { postId, postType, duplicatePostId }: Props ) 
 	const currentRoute = getCurrentRoute( state );
 	const postTypeTrashUrl = getPostTypeTrashUrl( state, postType );
 	const siteOption = isJetpackSite( state, siteId ) ? 'jetpack_frame_nonce' : 'frame_nonce';
-	const frameNonce = getSiteOption( state, siteId, siteOption ) || '';
 
 	let queryArgs = pickBy( {
 		post: postId,
@@ -417,7 +421,7 @@ const mapStateToProps = ( state, { postId, postType, duplicatePostId }: Props ) 
 		post_type: postType !== 'post' && postType, // Use postType if it's different than post.
 		calypsoify: 1,
 		'block-editor': 1,
-		'frame-nonce': frameNonce,
+		'frame-nonce': getSiteOption( state, siteId, siteOption ) || '',
 		'jetpack-copy': duplicatePostId,
 		origin: window.location.origin,
 	} );
@@ -438,7 +442,7 @@ const mapStateToProps = ( state, { postId, postType, duplicatePostId }: Props ) 
 		allPostsUrl: getPostTypeAllPostsUrl( state, postType ),
 		currentRoute,
 		editedPostId: getEditorPostId( state ),
-		frameNonce,
+		frameNonce: getSiteOption( state, siteId, 'frame_nonce' ) || '',
 		iframeUrl,
 		postTypeTrashUrl,
 		shouldLoadIframe,

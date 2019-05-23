@@ -33,6 +33,7 @@
 	"features": {
 		"async-payments": true,
 		"account-recovery": true,
+		"autorenewal-toggle": true,
 		"ad-tracking": false,
 		"automated-transfer": true,
 		"blogger-plan": true,
@@ -115,7 +116,6 @@
 		"manage/themes/details": true,
 		"manage/themes/details/jetpack": true,
 		"manage/themes/logged-out": true,
-		"marketing/tools": true,
 		"me/account": true,
 		"me/account-close": true,
 		"me/account/color-scheme-picker": true,

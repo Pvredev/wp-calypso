@@ -88,6 +88,12 @@ export class MySitesSidebar extends Component {
 	}
 
 	tools() {
+		const { canUserManageOptions } = this.props;
+
+		if ( ! canUserManageOptions ) {
+			return null;
+		}
+
 		return (
 			<ToolsMenu
 				siteId={ this.props.siteId }
@@ -498,7 +504,7 @@ export class MySitesSidebar extends Component {
 		const adminUrl =
 			this.props.isJetpack && ! this.props.isAtomicSite && ! this.props.isVip
 				? formatUrl( {
-						...parseUrl( site.options.admin_url ),
+						...parseUrl( site.options.admin_url + 'admin.php' ),
 						query: { page: 'jetpack' },
 						hash: '/my-plan',
 				  } )
@@ -602,6 +608,7 @@ export class MySitesSidebar extends Component {
 			);
 		}
 
+		const tools = !! this.tools() || !! this.marketing() || !! this.earn() || !! this.activity();
 		const manage = !! this.upgrades() || !! this.users() || !! this.siteSettings();
 
 		return (
@@ -634,17 +641,19 @@ export class MySitesSidebar extends Component {
 					</ExpandableSidebarMenu>
 				) : null }
 
-				<ExpandableSidebarMenu
-					onClick={ this.props.toggleMySitesSidebarToolsMenu }
-					expanded={ this.props.isToolsOpen }
-					title={ this.props.translate( 'Tools' ) }
-					materialIcon="build"
-				>
-					{ this.tools() }
-					{ this.marketing() }
-					{ this.earn() }
-					{ this.activity() }
-				</ExpandableSidebarMenu>
+				{ tools && (
+					<ExpandableSidebarMenu
+						onClick={ this.props.toggleMySitesSidebarToolsMenu }
+						expanded={ this.props.isToolsOpen }
+						title={ this.props.translate( 'Tools' ) }
+						materialIcon="build"
+					>
+						{ this.tools() }
+						{ this.marketing() }
+						{ this.earn() }
+						{ this.activity() }
+					</ExpandableSidebarMenu>
+				) }
 
 				{ manage && (
 					<ExpandableSidebarMenu

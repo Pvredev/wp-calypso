@@ -6,7 +6,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { defer, endsWith, get, includes, isEmpty } from 'lodash';
+import { defer, endsWith, get, isEmpty } from 'lodash';
 import { localize, getLocaleSlug } from 'i18n-calypso';
 
 /**
@@ -22,7 +22,6 @@ import { getStepUrl } from 'signup/utils';
 import StepWrapper from 'signup/step-wrapper';
 import { cartItems } from 'lib/cart-values';
 import { DOMAINS_WITH_PLANS_ONLY } from 'state/current-user/constants';
-import { getSurveyVertical } from 'state/signup/steps/survey/selectors.js';
 import { getUsernameSuggestion } from 'lib/signup/step-actions';
 import {
 	recordAddDomainButtonClick,
@@ -42,6 +41,7 @@ import QueryProductsList from 'components/data/query-products-list';
 import { getAvailableProductsList } from 'state/products-list/selectors';
 import { getSuggestionsVendor } from 'lib/domains/suggestions';
 import { getSite } from 'state/sites/selectors';
+import { getVerticalForDomainSuggestions } from 'state/signup/steps/site-vertical/selectors';
 import { getSiteTypePropertyValue } from 'lib/signup/site-type';
 
 /**
@@ -65,6 +65,7 @@ class DomainsStep extends React.Component {
 		stepName: PropTypes.string.isRequired,
 		stepSectionName: PropTypes.string,
 		selectedSite: PropTypes.object,
+		vertical: PropTypes.string,
 	};
 
 	static contextTypes = {
@@ -409,13 +410,13 @@ class DomainsStep extends React.Component {
 				includeDotBlogSubdomain={ this.shouldIncludeDotBlogSubdomain() }
 				isSignupStep
 				showExampleSuggestions={ showExampleSuggestions }
-				surveyVertical={ this.props.surveyVertical }
 				suggestion={ initialQuery }
 				designType={ this.getDesignType() }
 				vendor={ getSuggestionsVendor() }
 				deemphasiseTlds={ this.props.flowName === 'ecommerce' ? [ 'blog' ] : [] }
 				selectedSite={ this.props.selectedSite }
 				showSkipButton={ this.props.showSkipButton }
+				vertical={ this.props.vertical }
 				onSkip={ this.handleSkip }
 			/>
 		);
@@ -518,19 +519,11 @@ class DomainsStep extends React.Component {
 	};
 
 	getSubHeaderText() {
-		const { flowName, siteType, translate } = this.props;
-		const onboardingSubHeaderCopy =
-			siteType &&
-			includes( [ 'onboarding-for-business', 'onboarding' ], flowName ) &&
-			getSiteTypePropertyValue( 'slug', siteType, 'domainsStepSubheader' );
+		const { siteType, stepSectionName } = this.props;
 
-		if ( onboardingSubHeaderCopy ) {
-			return onboardingSubHeaderCopy;
-		}
-
-		return 'transfer' === this.props.stepSectionName || 'mapping' === this.props.stepSectionName
-			? translate( 'Use a domain you already own with your new WordPress.com site.' )
-			: translate( "Enter your site's name or some keywords that describe it to get started." );
+		return 'transfer' === stepSectionName || 'mapping' === stepSectionName
+			? getSiteTypePropertyValue( 'slug', siteType, 'domainsStepTransferringSubheader' )
+			: getSiteTypePropertyValue( 'slug', siteType, 'domainsStepSubheader' );
 	}
 
 	getHeaderText() {
@@ -679,9 +672,9 @@ export default connect(
 			productsList,
 			productsLoaded,
 			siteGoals: getSiteGoals( state ),
-			surveyVertical: getSurveyVertical( state ),
-			selectedSite: getSite( state, ownProps.signupDependencies.siteSlug ),
 			siteType: getSiteType( state ),
+			vertical: getVerticalForDomainSuggestions( state ),
+			selectedSite: getSite( state, ownProps.signupDependencies.siteSlug ),
 		};
 	},
 	{

@@ -106,12 +106,13 @@ export function generateFlows( {
 				'site-type',
 				'site-topic-with-preview',
 				'site-title-with-preview',
+				'site-style-with-preview',
 				'domains-with-preview',
 				'plans',
 			],
 			destination: getChecklistDestination,
 			description: 'The improved onboarding flow.',
-			lastModified: '2019-04-30',
+			lastModified: '2019-06-05',
 		},
 
 		// We don't yet show the previews for the 'blog' segment
@@ -119,21 +120,6 @@ export function generateFlows( {
 			steps: [ 'user', 'site-type', 'site-topic', 'site-title', 'domains', 'plans' ],
 			destination: getChecklistDestination,
 			description: 'The improved onboarding flow.',
-			lastModified: '2019-04-30',
-		},
-
-		'onboarding-for-business': {
-			steps: [
-				'user',
-				'site-type',
-				'site-topic-with-preview',
-				'site-title-with-preview',
-				'site-style-with-preview',
-				'domains-with-preview',
-				'plans',
-			],
-			destination: getChecklistDestination,
-			description: 'The improved onboarding flow for business site types.',
 			lastModified: '2019-04-30',
 		},
 
@@ -344,7 +330,7 @@ export function generateFlows( {
 					'from-site': ( importSiteUrl && encodeURIComponent( importSiteUrl ) ) || null,
 					signup: 1,
 				},
-				`/settings/import/${ siteSlug }`
+				`/import/${ siteSlug }`
 			),
 		description: 'A flow to kick off an import during signup',
 		disallowResume: true,

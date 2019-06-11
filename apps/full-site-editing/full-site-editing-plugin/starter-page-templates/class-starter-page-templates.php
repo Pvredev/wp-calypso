@@ -22,6 +22,7 @@ class Starter_Page_Templates {
 	 */
 	private function __construct() {
 		add_action( 'init', array( $this, 'register_scripts' ) );
+		add_action( 'init', array( $this, 'register_meta_field' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_assets' ) );
 	}
 
@@ -49,6 +50,23 @@ class Starter_Page_Templates {
 			filemtime( plugin_dir_path( __FILE__ ) . 'dist/starter-page-templates.js' ),
 			true
 		);
+	}
+
+	/**
+	 * Register meta field for storing the template identifier.
+	 */
+	public function register_meta_field() {
+		$args = array(
+			'type'           => 'string',
+			'description'    => 'Selected template',
+			'single'         => true,
+			'show_in_rest'   => true,
+			'object_subtype' => 'page',
+			'auth_callback'  => function() {
+				return current_user_can( 'edit_posts' );
+			},
+		);
+		register_meta( 'post', '_starter_page_template', $args );
 	}
 
 	/**
@@ -91,11 +109,11 @@ class Starter_Page_Templates {
 			$this->pass_error_to_frontend( __( 'No data received from the vertical API. Skipped showing modal window with template selection.', 'full-site-editing' ) );
 			return;
 		}
-		$vertical_name      = $vertical_data['vertical'];
+		$vertical           = $vertical_data['vertical'];
 		$vertical_templates = $vertical_data['templates'];
 
 		// Bail early if we have no templates to offer.
-		if ( empty( $vertical_templates ) ) {
+		if ( empty( $vertical_templates ) || empty( $vertical ) ) {
 			$this->pass_error_to_frontend( __( 'No templates available. Skipped showing modal window with template selection.', 'full-site-editing' ) );
 			return;
 		}
@@ -105,7 +123,7 @@ class Starter_Page_Templates {
 
 		$default_info      = array(
 			'title'    => get_bloginfo( 'name' ),
-			'vertical' => $vertical_name,
+			'vertical' => $vertical['name'],
 		);
 		$default_templates = array(
 			array(
@@ -118,6 +136,7 @@ class Starter_Page_Templates {
 		$config    = array(
 			'siteInformation' => array_merge( $default_info, $site_info ),
 			'templates'       => array_merge( $default_templates, $vertical_templates ),
+			'vertical'        => $vertical,
 		);
 		wp_localize_script( 'starter-page-templates', 'starterPageTemplatesConfig', $config );
 

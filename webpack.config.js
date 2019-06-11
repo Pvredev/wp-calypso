@@ -41,7 +41,6 @@ const shouldMinify =
 const shouldEmitStats = process.env.EMIT_STATS && process.env.EMIT_STATS !== 'false';
 const shouldEmitStatsWithReasons = process.env.EMIT_STATS === 'withreasons';
 const shouldCheckForCycles = process.env.CHECK_CYCLES === 'true';
-const codeSplit = config.isEnabled( 'code-splitting' );
 const isCalypsoClient = process.env.BROWSERSLIST_ENV !== 'server';
 const isDesktop = calypsoEnv === 'desktop' || calypsoEnv === 'desktop-development';
 
@@ -108,6 +107,7 @@ const nodeModulesToTranspile = [
 	'd3-array/',
 	'd3-scale/',
 	'debug/',
+	'@wordpress/',
 ];
 /**
  * Check to see if we should transpile certain files in node_modules
@@ -171,12 +171,12 @@ const webpackConfig = {
 	},
 	optimization: {
 		splitChunks: {
-			chunks: codeSplit ? 'all' : 'async',
+			chunks: 'all',
 			name: !! ( isDevelopment || shouldEmitStats ),
 			maxAsyncRequests: 20,
 			maxInitialRequests: 5,
 		},
-		runtimeChunk: codeSplit ? { name: 'manifest' } : false,
+		runtimeChunk: isDesktop ? false : { name: 'manifest' },
 		moduleIds: 'named',
 		chunkIds: isDevelopment || shouldEmitStats ? 'named' : 'natural',
 		minimize: shouldMinify,
@@ -208,14 +208,6 @@ const webpackConfig = {
 				cacheIdentifier,
 				include: shouldTranspileDependency,
 			} ),
-			{
-				test: /node_modules[/\\](redux-form|react-redux)[/\\]es/,
-				loader: 'babel-loader',
-				options: {
-					babelrc: false,
-					plugins: [ path.join( __dirname, 'server', 'bundler', 'babel', 'babel-lodash-es' ) ],
-				},
-			},
 			SassConfig.loader( {
 				preserveCssCustomProperties: true,
 				includePaths: [ path.join( __dirname, 'client' ) ],
@@ -260,7 +252,6 @@ const webpackConfig = {
 	},
 	node: false,
 	plugins: _.compact( [
-		! codeSplit && new webpack.optimize.LimitChunkCountPlugin( { maxChunks: 1 } ),
 		new webpack.DefinePlugin( {
 			'process.env.NODE_ENV': JSON.stringify( bundleEnv ),
 			global: 'window',
@@ -318,7 +309,7 @@ if ( isDevelopment ) {
 
 if ( ! config.isEnabled( 'desktop' ) ) {
 	webpackConfig.plugins.push(
-		new webpack.NormalModuleReplacementPlugin( /^lib[/\\]desktop$/, 'lodash/noop' )
+		new webpack.NormalModuleReplacementPlugin( /^lib[/\\]desktop$/, 'lodash-es/noop' )
 	);
 }
 
@@ -336,7 +327,7 @@ const polyfillsSkippedInEvergreen = [
 if ( browserslistEnv === 'evergreen' ) {
 	for ( const polyfill of polyfillsSkippedInEvergreen ) {
 		webpackConfig.plugins.push(
-			new webpack.NormalModuleReplacementPlugin( polyfill, 'lodash/noop' )
+			new webpack.NormalModuleReplacementPlugin( polyfill, 'lodash-es/noop' )
 		);
 	}
 }

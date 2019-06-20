@@ -45,6 +45,7 @@ import withTrackingTool from 'lib/analytics/with-tracking-tool';
  * Style dependencies
  */
 import './style.scss';
+import { getTaskList } from 'my-sites/checklist/wpcom-checklist/wpcom-task-list';
 
 interface ChecklistTaskState {
 	[taskId: string]: {
@@ -68,7 +69,7 @@ class JetpackChecklist extends PureComponent< Props > {
 	}
 
 	isComplete( taskId: string ): boolean {
-		return get( this.props.taskStatuses, [ taskId, 'completed' ], false );
+		return getTaskList( this.props ).isCompleted( taskId );
 	}
 
 	handleTaskStart = ( { taskId, tourId }: { taskId: string; tourId?: string } ) => () => {
@@ -101,7 +102,9 @@ class JetpackChecklist extends PureComponent< Props > {
 				? // Force render all the tasks from this development-only list
 				  // @todo Remove this branch when API returns performance task statuses
 				  Object.keys( JETPACK_PERFORMANCE_CHECKLIST_TASKS )
-				: Object.keys( this.props.taskStatuses ).filter( taskId => taskId in checklistTasks );
+				: getTaskList( this.props )
+						.getIds()
+						.filter( taskId => taskId in checklistTasks );
 
 		return taskIds.map( taskId => {
 			const task = checklistTasks[ taskId ];
@@ -116,16 +119,23 @@ class JetpackChecklist extends PureComponent< Props > {
 					description={ task.description }
 					duration={ task.duration }
 					href={ task.getUrl( this.props.siteSlug, isComplete ) }
+					id={ taskId }
+					key={ taskId }
 					onClick={ this.handleTaskStart( {
 						taskId,
 						tourId: get( task, [ 'tourId' ] ),
 					} ) }
 					title={ task.title }
-					key={ taskId }
 				/>
 			);
 		} );
 	}
+
+	trackExpandTask = ( { id }: { id: string } ) =>
+		void this.props.recordTracksEvent( 'calypso_checklist_task_expand', {
+			step_name: id,
+			product: 'Jetpack',
+		} );
 
 	render() {
 		const {
@@ -158,6 +168,7 @@ class JetpackChecklist extends PureComponent< Props > {
 				<Checklist
 					className="jetpack-checklist"
 					isPlaceholder={ ! taskStatuses }
+					onExpandTask={ this.trackExpandTask }
 					progressText={ translate( 'Your Jetpack setup progress' ) }
 				>
 					<Task
@@ -196,6 +207,7 @@ class JetpackChecklist extends PureComponent< Props > {
 							target="_blank"
 						/>
 					) }
+
 					{ this.renderTaskSet( JETPACK_SECURITY_CHECKLIST_TASKS ) }
 					{ isEnabled( 'jetpack/checklist/performance' ) &&
 						this.renderTaskSet( JETPACK_PERFORMANCE_CHECKLIST_TASKS ) }
@@ -216,6 +228,7 @@ class JetpackChecklist extends PureComponent< Props > {
 									? `/media/videos/${ siteSlug }`
 									: `/settings/performance/${ siteSlug }`
 							}
+							id="video-hosting"
 							onClick={ this.handleTaskStart( {
 								taskId: 'jetpack_video_hosting',
 								tourId: 'jetpackVideoHosting',
@@ -239,6 +252,7 @@ class JetpackChecklist extends PureComponent< Props > {
 									? this.props.widgetCustomizerPaneUrl
 									: `/settings/performance/${ siteSlug }`
 							}
+							id="enhanced-search"
 							onClick={ this.handleTaskStart( {
 								taskId: 'jetpack_search',
 								tourId: 'jetpackSearch',
@@ -290,10 +304,13 @@ const connectComponent = connect(
 			isProfessional,
 			isPaidPlan,
 			rewindState,
+			// `phase2: true` is passed to `getTaskList()` in the component and makes it possible to use
+			// the array-based checklist data format
+			phase2: true,
 			productInstallStatus,
 			siteId,
 			siteSlug: getSiteSlug( state, siteId ),
-			taskStatuses: get( getSiteChecklist( state, siteId ), [ 'tasks' ] ),
+			taskStatuses: get( getSiteChecklist( state, siteId ), 'tasks' ),
 			wpAdminUrl,
 		};
 	},

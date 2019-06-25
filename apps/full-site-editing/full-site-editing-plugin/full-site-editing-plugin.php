@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Full Site Editing
  * Description: Enhances your page creation workflow within the Block Editor.
- * Version: 0.2.1
+ * Version: 0.2.2
  * Author: Automattic
  * Author URI: https://automattic.com/wordpress-plugins/
  * License: GPLv2 or later
@@ -18,7 +18,7 @@
  *
  * @var string
  */
-define( 'A8C_FSE_VERSION', '0.2.1' );
+define( 'A8C_FSE_VERSION', '0.2.2' );
 
 /**
  * Load Full Site Editing.
@@ -45,7 +45,6 @@ function a8c_load_full_site_editing() {
 	require_once __DIR__ . '/full-site-editing/class-a8c-rest-templates-controller.php';
 	require_once __DIR__ . '/full-site-editing/class-full-site-editing.php';
 	require_once __DIR__ . '/full-site-editing/utils/class-a8c-wp-template.php';
-	require_once __DIR__ . '/full-site-editing/utils/replace-template-parts.php';
 
 	Full_Site_Editing::get_instance();
 }

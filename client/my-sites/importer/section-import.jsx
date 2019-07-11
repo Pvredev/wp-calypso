@@ -13,6 +13,7 @@ import { filter, find, flow, get, isEmpty, memoize, once } from 'lodash';
  */
 import CompactCard from 'components/card/compact';
 import DocumentHead from 'components/data/document-head';
+import SidebarNavigation from 'my-sites/sidebar-navigation';
 import ImporterStore, { getState as getImporterState } from 'lib/importer/store';
 import Interval, { EVERY_FIVE_SECONDS } from 'lib/interval';
 import WordPressImporter from 'my-sites/importer/importer-wordpress';
@@ -39,7 +40,6 @@ import FormattedHeader from 'components/formatted-header';
 import JetpackImporter from 'my-sites/importer/jetpack-importer';
 import ExternalLink from 'components/external-link';
 import canCurrentUser from 'state/selectors/can-current-user';
-import SidebarNavigation from 'my-sites/sidebar-navigation';
 import EmptyContent from 'components/empty-content';
 
 /**
@@ -299,6 +299,7 @@ class SectionImport extends Component {
 		return (
 			<Main>
 				<DocumentHead title={ translate( 'Import' ) } />
+				<SidebarNavigation />
 				<FormattedHeader
 					className="importer__section-header"
 					headerText={ headerText }

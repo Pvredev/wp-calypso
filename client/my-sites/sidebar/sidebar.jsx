@@ -44,6 +44,7 @@ import {
 	canCurrentUserUseAds,
 	canCurrentUserUseEarn,
 	canCurrentUserUseStore,
+	canCurrentUserUseChecklistMenu,
 } from 'state/sites/selectors';
 import canCurrentUserManagePlugins from 'state/selectors/can-current-user-manage-plugins';
 import { getStatsPathForTab } from 'lib/route';
@@ -55,6 +56,7 @@ import {
 } from 'state/my-sites/sidebar/actions';
 import { canCurrentUserUpgradeSite } from '../../state/sites/selectors';
 import isVipSite from 'state/selectors/is-vip-site';
+import isSiteUsingFullSiteEditing from 'state/selectors/is-site-using-full-site-editing';
 import {
 	SIDEBAR_SECTION_SITE,
 	SIDEBAR_SECTION_DESIGN,
@@ -155,6 +157,31 @@ export class MySitesSidebar extends Component {
 		/* eslint-enable wpcalypso/jsx-classname-namespace */
 	}
 
+	trackChecklistClick = () => {
+		this.trackMenuItemClick( 'checklist' );
+		this.onNavigate();
+	};
+
+	checklist() {
+		const { canUserUseChecklistMenu, path, siteSuffix, siteId, translate } = this.props;
+
+		if ( ! siteId || ! canUserUseChecklistMenu ) {
+			return null;
+		}
+
+		const checklistLink = '/checklist' + siteSuffix;
+		return (
+			<SidebarItem
+				tipTarget="menus"
+				label={ translate( 'Checklist' ) }
+				selected={ itemLinkMatches( [ '/checklist' ], path ) }
+				link={ checklistLink }
+				onNavigate={ this.trackChecklistClick }
+				materialIcon="check_circle"
+			/>
+		);
+	}
+
 	trackActivityClick = () => {
 		this.trackMenuItemClick( 'activity' );
 		this.onNavigate();
@@ -240,7 +267,7 @@ export class MySitesSidebar extends Component {
 	}
 
 	design() {
-		const { path, site, translate, canUserEditThemeOptions } = this.props,
+		const { path, site, translate, canUserEditThemeOptions, showCustomizerLink } = this.props,
 			jetpackEnabled = isEnabled( 'manage/themes-jetpack' );
 		let themesLink;
 
@@ -258,16 +285,18 @@ export class MySitesSidebar extends Component {
 
 		return (
 			<ul>
-				<SidebarItem
-					label={ translate( 'Customize' ) }
-					selected={ itemLinkMatches( '/customize', path ) }
-					link={ this.props.customizeUrl }
-					onNavigate={ this.trackCustomizeClick }
-					icon="customize"
-					preloadSectionName="customize"
-					forceInternalLink
-					expandSection={ this.expandDesignSection }
-				/>
+				{ showCustomizerLink && (
+					<SidebarItem
+						label={ translate( 'Customize' ) }
+						selected={ itemLinkMatches( '/customize', path ) }
+						link={ this.props.customizeUrl }
+						onNavigate={ this.trackCustomizeClick }
+						icon="customize"
+						preloadSectionName="customize"
+						forceInternalLink
+						expandSection={ this.expandDesignSection }
+					/>
+				) }
 				<SidebarItem
 					label={ translate( 'Themes' ) }
 					selected={ itemLinkMatches( themesLink, path ) }
@@ -632,6 +661,7 @@ export class MySitesSidebar extends Component {
 			<div className="sidebar__menu-wrapper">
 				<SidebarMenu>
 					<ul>
+						{ this.checklist() }
 						{ this.stats() }
 						{ this.plan() }
 						{ this.store() }
@@ -731,6 +761,7 @@ function mapStateToProps( state ) {
 		canUserPublishPosts: canCurrentUser( state, siteId, 'publish_posts' ),
 		canUserViewStats: canCurrentUser( state, siteId, 'view_stats' ),
 		canUserManagePlugins: canCurrentUserManagePlugins( state ),
+		canUserUseChecklistMenu: canCurrentUserUseChecklistMenu( state, siteId ),
 		canUserUseStore: canCurrentUserUseStore( state, siteId ),
 		canUserUseEarn: canCurrentUserUseEarn( state, siteId ),
 		canUserUseAds: canCurrentUserUseAds( state, siteId ),
@@ -746,6 +777,7 @@ function mapStateToProps( state ) {
 		isManageSectionOpen,
 		isAtomicSite: !! isSiteAutomatedTransfer( state, selectedSiteId ),
 		isVip: isVipSite( state, selectedSiteId ),
+		showCustomizerLink: ! isSiteUsingFullSiteEditing( state, selectedSiteId ),
 		siteId,
 		site,
 		siteSuffix: site ? '/' + site.slug : '',

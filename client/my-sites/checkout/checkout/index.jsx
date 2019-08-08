@@ -93,6 +93,7 @@ import isAtomicSite from 'state/selectors/is-site-automated-transfer';
 import getPreviousPath from 'state/selectors/get-previous-path.js';
 import config from 'config';
 import { abtest } from 'lib/abtest';
+import { loadTrackingTool } from 'state/analytics/actions';
 import {
 	persistSignupDestination,
 	retrieveSignupDestination,
@@ -111,6 +112,7 @@ export class Checkout extends React.Component {
 		couponCode: PropTypes.string,
 		isJetpackNotAtomic: PropTypes.bool,
 		selectedFeature: PropTypes.string,
+		loadTrackingTool: PropTypes.func.isRequired,
 	};
 
 	state = {
@@ -139,6 +141,7 @@ export class Checkout extends React.Component {
 			applyCoupon( this.props.couponCode );
 		}
 
+		this.props.loadTrackingTool( 'HotJar' );
 		window.scrollTo( 0, 0 );
 	}
 
@@ -453,6 +456,13 @@ export class Checkout extends React.Component {
 				: '/checkout/thank-you/plans';
 		}
 
+		// If cart is empty, then send the user to a generic page (not post-purchase related).
+		// For example, this case arises when a Skip button is clicked on a concierge upsell
+		// nudge opened by a direct link to /offer-support-session.
+		if ( ':receiptId' === pendingOrReceiptId && isEmpty( getAllCartItems( cart ) ) ) {
+			return signupDestination;
+		}
+
 		if ( cart.create_new_blog ) {
 			return `${ signupDestination }/${ pendingOrReceiptId }`;
 		}
@@ -461,24 +471,13 @@ export class Checkout extends React.Component {
 			return '/checkout/thank-you/features';
 		}
 
-		// If cart is empty, then send the user to a generic page (not post-purchase related).
-		// For example, this case arises when a Skip button is clicked on a concierge upsell
-		// nudge opened by a direct link to /offer-support-session.
-		if (
-			':receiptId' === pendingOrReceiptId &&
-			isEmpty( getAllCartItems( cart ) ) &&
-			! previousRoute.includes( '/checkout' )
-		) {
-			return `/stats/day/${ selectedSiteSlug }`;
-		}
-
 		if ( this.props.isJetpackNotAtomic ) {
 			// @FIXME temporary fix for plans purcahsed via `/plans` or WP Admin for connected sites
 			// @see https://github.com/Automattic/wp-calypso/issues/35068
 			// Do not use the fallback `/` route after checkout
 			if ( selectedSiteSlug && signupDestination === '/' ) {
 				// Matches route from client/my-sites/checkout/checkout-thank-you/index.jsx:445
-				return `/plans/my-plan/${ selectedSiteSlug }?thank-you`;
+				return `/plans/my-plan/${ selectedSiteSlug }?thank-you&install=all`;
 			}
 			return signupDestination;
 		}
@@ -535,7 +534,7 @@ export class Checkout extends React.Component {
 			// A user just purchased one of the qualifying plans
 			// Show them the concierge session upsell page
 			if ( 'offer' === abtest( 'conciergeUpsellDial' ) ) {
-				return `/checkout/${ selectedSiteSlug }/offer-quickstart-session/${ pendingOrReceiptId }`;
+				return `/checkout/offer-quickstart-session/${ pendingOrReceiptId }/${ selectedSiteSlug }`;
 			}
 		}
 
@@ -902,5 +901,6 @@ export default connect(
 		clearSitePlans,
 		fetchReceiptCompleted,
 		requestSite,
+		loadTrackingTool,
 	}
 )( localize( Checkout ) );

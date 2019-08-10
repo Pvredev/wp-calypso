@@ -50,6 +50,7 @@ import SecurePaymentComponent from '../lib/components/secure-payment-component.j
 import NavBarComponent from '../lib/components/nav-bar-component';
 import SideBarComponent from '../lib/components/sidebar-component';
 import NoSitesComponent from '../lib/components/no-sites-component';
+import StepWrapperComponent from '../lib/components/step-wrapper-component';
 
 import * as SlackNotifier from '../lib/slack-notifier';
 
@@ -1041,6 +1042,23 @@ describe( `[${ host }] Sign Up  (${ screenSize }, ${ locale })`, function() {
 			);
 		} );
 
+		step(
+			'Can see the "Site Type" page, and select online store, and switch flows',
+			async function() {
+				const siteTypePage = await SiteTypePage.Expect( driver );
+				return await siteTypePage.selectOnlineStoreType();
+			}
+		);
+
+		step(
+			'Can see the domains page, and click the back navigation link, returning to original flow',
+			async function() {
+				await FindADomainComponent.Expect( driver );
+				const stepWrapperComponent = await StepWrapperComponent.Expect( driver );
+				await stepWrapperComponent.goBack();
+			}
+		);
+
 		step( 'Can see the "Site Type" page, and enter some site information', async function() {
 			const siteTypePage = await SiteTypePage.Expect( driver );
 			return await siteTypePage.selectBusinessType();
@@ -1726,6 +1744,23 @@ describe( `[${ host }] Sign Up  (${ screenSize }, ${ locale })`, function() {
 				}
 			}
 		} );
+
+		step(
+			'Can see the domains page prefilled with a suggested domain, and select a free domain',
+			async function() {
+				const findADomainComponent = await FindADomainComponent.Expect( driver );
+				const domainSearch = await findADomainComponent.getSearchInputValue();
+
+				assert.strictEqual(
+					domainSearch,
+					'eat-here-its-good',
+					"The suggested domain doesn't match the import site url"
+				);
+
+				await findADomainComponent.waitForResults();
+				return await findADomainComponent.selectFreeAddress();
+			}
+		);
 
 		step(
 			'Can then see the sign up processing page which will finish automatically move along',

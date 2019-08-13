@@ -1,5 +1,6 @@
 .post-type-wp_template {
-	.editor-post-title {
+	.editor-post-title,
+	.editor-post-trash {
 		display: none;
 	}
 
@@ -10,6 +11,15 @@
 
 	.editor-post-switch-to-draft {
 		display: none;
+	}
+
+	.editor-block-list__layout {
+		padding-top: 28px;
+	}
+
+	.editor-styles-wrapper [data-block] {
+		margin-top: 15px;
+		margin-bottom: 15px;
 	}
 }
 

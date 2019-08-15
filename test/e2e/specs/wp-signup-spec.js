@@ -1398,7 +1398,7 @@ describe( `[${ host }] Sign Up  (${ screenSize }, ${ locale })`, function() {
 		} );
 	} );
 
-	describe.skip( 'Sign up for free subdomain site @parallel', function() {
+	describe( 'Sign up for free subdomain site @parallel', function() {
 		const blogName = dataHelper.getNewBlogName();
 		const expectedDomainName = `${ blogName }.art.blog`;
 
@@ -1444,6 +1444,11 @@ describe( `[${ host }] Sign Up  (${ screenSize }, ${ locale })`, function() {
 		step( 'Can see the "Site title" page, and enter the site title', async function() {
 			const siteTitlePage = await SiteTitlePage.Expect( driver );
 			await siteTitlePage.enterSiteTitle( blogName );
+			return await siteTitlePage.submitForm();
+		} );
+
+		step( 'Can see the "Site style" page, and continue with the default style', async function() {
+			const siteTitlePage = await SiteStylePage.Expect( driver );
 			return await siteTitlePage.submitForm();
 		} );
 
@@ -1761,6 +1766,11 @@ describe( `[${ host }] Sign Up  (${ screenSize }, ${ locale })`, function() {
 				return await findADomainComponent.selectFreeAddress();
 			}
 		);
+
+		step( 'Can see the plans page and pick the free plan', async function() {
+			const pickAPlanPage = await PickAPlanPage.Expect( driver );
+			return await pickAPlanPage.selectFreePlan();
+		} );
 
 		step(
 			'Can then see the sign up processing page which will finish automatically move along',

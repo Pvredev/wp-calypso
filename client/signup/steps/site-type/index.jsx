@@ -40,24 +40,20 @@ class SiteType extends Component {
 	submitStep = siteTypeValue => {
 		this.props.submitSiteType( siteTypeValue );
 
-		// This hack ensures that users in the moveUserStepPosition A/B Test
-		// reach a compatible flow when selecting the online-store site type.
-		if (
-			abtest( 'moveUserStepPosition' ) === 'last' &&
-			this.props.flowName === 'onboarding-user-last' &&
-			siteTypeValue === 'online-store'
-		) {
-			this.props.goToNextStep( 'ecommerce-store-onboarding' );
+		// Modify the flowname if the site type matches an override.
+		let flowName;
+		if ( 'import-onboarding' === this.props.flowName ) {
+			flowName = siteTypeToFlowname[ siteTypeValue ] || 'onboarding';
 		} else {
-			// Modify the flowname if the site type matches an override.
-			this.props.goToNextStep( siteTypeToFlowname[ siteTypeValue ] || this.props.flowName );
+			flowName = siteTypeToFlowname[ siteTypeValue ] || this.props.flowName;
 		}
+
+		this.props.goToNextStep( flowName );
 	};
 
 	renderImportButton() {
 		if (
 			! isEnabled( 'signup/import-flow' ) ||
-			'last' === abtest( 'moveUserStepPosition' ) ||
 			'show' !== abtest( 'showImportFlowInSiteTypeStep' )
 		) {
 			return null;

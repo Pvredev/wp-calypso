@@ -61,10 +61,7 @@ const TemplateEdit = compose(
 				}
 
 				const templateBlocks = parse( get( template, [ 'content', 'raw' ], '' ) );
-				const templateBlock =
-					templateBlocks.length === 1
-						? templateBlocks[ 0 ]
-						: createBlock( 'core/template', {}, templateBlocks );
+				const templateBlock = createBlock( 'core/template', {}, templateBlocks );
 
 				receiveBlocks( [ templateBlock ] );
 				setState( { templateClientId: templateBlock.clientId } );
@@ -127,11 +124,11 @@ const TemplateEdit = compose(
 		const { align, className } = attributes;
 
 		const save = event => {
+			setNavigateToTemplate( true );
 			if ( ! isDirty ) {
 				return;
 			}
 			event.preventDefault();
-			setNavigateToTemplate( true );
 			savePost();
 		};
 
@@ -155,8 +152,19 @@ const TemplateEdit = compose(
 						</Disabled>
 						{ isSelected && (
 							<Placeholder className="template-block__overlay">
-								<Button href={ editTemplateUrl } onClick={ save } isDefault ref={ navButton }>
-									{ navigateToTemplate ? <Spinner /> : sprintf( __( 'Edit %s' ), templateTitle ) }
+								{ navigateToTemplate && (
+									<div className="template-block__loading">
+										<Spinner /> { sprintf( __( 'Loading %s Editor' ), templateTitle ) }
+									</div>
+								) }
+								<Button
+									className={ navigateToTemplate ? 'hidden' : null }
+									href={ editTemplateUrl }
+									onClick={ save }
+									isDefault
+									ref={ navButton }
+								>
+									{ sprintf( __( 'Edit %s' ), templateTitle ) }
 								</Button>
 							</Placeholder>
 						) }

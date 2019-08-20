@@ -304,7 +304,7 @@ export function generateFlows( {
 	flows[ 'import-onboarding' ] = {
 		// IMPORTANT: steps should match the onboarding flow through the `site-type` step to prevent issues
 		// when switching from the onboarding flow.
-		steps: [ 'user', 'site-type', 'import-url', ...importSteps ],
+		steps: [ 'user', 'site-type', 'import-url', 'import-preview', ...importSteps ],
 		destination: importDestination,
 		description: 'Import flow that can be used from the onboarding flow',
 		disallowResume: true,
@@ -332,30 +332,6 @@ export function generateFlows( {
 		destination: getSiteDestination,
 		description: 'Allow users to select a plan without a domain',
 		lastModified: '2018-12-12',
-	};
-
-	// Used by moveUserStepPosition A/B test.
-	flows[ 'onboarding-user-last' ] = {
-		steps: [
-			'site-type',
-			'site-topic-with-preview',
-			'site-title-with-preview',
-			'site-style-with-preview',
-			'domains-with-preview',
-			'plans',
-			'user',
-		],
-		destination: getSignupDestination,
-		description: 'Variant of the onboarding flow, but with the user step in the last position.',
-		lastModified: '2019-07-19',
-	};
-
-	// Used by moveUserStepPosition A/B test.
-	flows[ 'ecommerce-store-onboarding' ] = {
-		steps: [ 'site-type', 'domains', 'plans-ecommerce', 'user' ],
-		destination: getSiteDestination,
-		description: 'Signup flow for creating an online store, with user step in last position',
-		lastModified: '2019-07-19',
 	};
 
 	if ( isEnabled( 'signup/full-site-editing' ) ) {

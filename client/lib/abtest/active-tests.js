@@ -98,7 +98,7 @@ export default {
 		defaultVariation: 'siteType',
 	},
 	skippableDomainStep: {
-		datestamp: '20190717',
+		datestamp: '20290717',
 		variations: {
 			skippable: 0,
 			notSkippable: 100,
@@ -141,15 +141,6 @@ export default {
 			hide: 50,
 		},
 		defaultVariation: 'show',
-		allowExistingUsers: true,
-	},
-	moveUserStepPosition: {
-		datestamp: '20190719',
-		variations: {
-			first: 50,
-			last: 50,
-		},
-		defaultVariation: 'first',
 		allowExistingUsers: true,
 	},
 	removeBlogFlow: {

@@ -13,7 +13,6 @@ import hasInitializedSites from 'state/selectors/has-initialized-sites';
 import Button from 'components/button';
 import SiteTypeForm from './form';
 import StepWrapper from 'signup/step-wrapper';
-import { isEnabled } from 'config';
 import { getSiteType } from 'state/signup/steps/site-type/selectors';
 import { submitSiteType } from 'state/signup/steps/site-type/actions';
 import { saveSignupStep } from 'state/signup/progress/actions';
@@ -52,17 +51,14 @@ class SiteType extends Component {
 	};
 
 	renderImportButton() {
-		if (
-			! isEnabled( 'signup/import-flow' ) ||
-			'show' !== abtest( 'showImportFlowInSiteTypeStep' )
-		) {
+		if ( 'show' !== abtest( 'showImportFlowInSiteTypeStep' ) ) {
 			return null;
 		}
 
 		return (
 			<div className="site-type__import-button">
 				<Button borderless onClick={ this.handleImportFlowClick }>
-					{ this.props.translate( 'Already have a website?' ) }
+					{ this.props.translate( 'Already have a website? Import your content here.' ) }
 				</Button>
 			</div>
 		);

@@ -76,7 +76,6 @@
 		"manage/site-settings/analytics": true,
 		"manage/site-settings/categories": true,
 		"manage/stats": true,
-		"manage/stats/file-downloads": true,
 		"manage/themes-jetpack": true,
 		"manage/themes/details": true,
 		"manage/themes/details/jetpack": true,
@@ -157,6 +156,7 @@
 		"woocommerce/extension-settings-tax": true,
 		"woocommerce/extension-wcservices": true,
 		"woocommerce/extension-wcservices/international-labels": true,
+		"woocommerce/onboarding-oauth": false,
 		"woocommerce/store-on-non-atomic-sites": true,
 		"wpcom-user-bootstrap": true
 	},

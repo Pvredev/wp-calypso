@@ -14,10 +14,8 @@ import { isEnabled } from 'config';
 
 import ChecklistMain from './main';
 import { getSelectedSiteId, getSelectedSiteSlug } from 'state/ui/selectors';
-import {
-	canCurrentUserUseCustomerHome,
-	canCurrentUserUseChecklistMenu,
-} from 'state/sites/selectors';
+import { canCurrentUserUseChecklistMenu } from 'state/sites/selectors';
+import canCurrentUserUseCustomerHome from 'state/sites/selectors/can-current-user-use-customer-home';
 
 export function show( context, next ) {
 	const displayMode = get( context, 'query.d' );
@@ -29,8 +27,10 @@ export function maybeRedirect( context, next ) {
 	const state = context.store.getState();
 	const siteId = getSelectedSiteId( state );
 	const slug = getSelectedSiteSlug( state );
+	const queryString = context.querystring ? `?${ context.querystring }` : '';
+
 	if ( isEnabled( 'customer-home' ) && canCurrentUserUseCustomerHome( state, siteId ) ) {
-		page.redirect( `/home/${ slug }` );
+		page.redirect( `/home/${ slug }${ queryString }` );
 		return;
 	}
 

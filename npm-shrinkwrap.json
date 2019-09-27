@@ -1357,6 +1357,11 @@
 				}
 			}
 		},
+		"@github/webauthn-json": {
+			"version": "0.3.6",
+			"resolved": "https://registry.npmjs.org/@github/webauthn-json/-/webauthn-json-0.3.6.tgz",
+			"integrity": "sha512-0yTfZ8mbmaGv7jck0DfkCP9vXcAAkKKWVrScSGp314gIcuNiYluHLSCnl+lTS8q2UIWZeEamqHCQw6dQ327nNg=="
+		},
 		"@jest/console": {
 			"version": "24.9.0",
 			"resolved": "https://registry.npmjs.org/@jest/console/-/console-24.9.0.tgz",
@@ -3091,6 +3096,12 @@
 				"@types/node": "*",
 				"@types/unist": "*"
 			}
+		},
+		"@types/webpack-env": {
+			"version": "1.14.0",
+			"resolved": "https://registry.npmjs.org/@types/webpack-env/-/webpack-env-1.14.0.tgz",
+			"integrity": "sha512-Fv+0gYJzE/czLoRKq+gnXWr4yBpPM3tO3C8pDLFwqVKlMICQUq5OsxwwFZYDaVr7+L6mgNDp16iOcJHEz3J5RQ==",
+			"dev": true
 		},
 		"@types/yargs": {
 			"version": "13.0.2",

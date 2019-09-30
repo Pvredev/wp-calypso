@@ -125,6 +125,15 @@ export default {
 		defaultVariation: 'hide',
 		assignmentMethod: 'userId',
 	},
+	signupWithBasicSite: {
+		datestamp: '20190930',
+		variations: {
+			variant: 50,
+			control: 50,
+		},
+		defaultVariation: 'control',
+		allowExistingUsers: true,
+	},
 	placesApiInCheckout: {
 		datestamp: '20190923',
 		variations: {
@@ -132,5 +141,13 @@ export default {
 			placesApi: 50,
 		},
 		defaultVariation: 'original',
+	},
+	passwordlessSignup: {
+		datestamp: '20190927',
+		variations: {
+			passwordless: 0,
+			default: 100,
+		},
+		defaultVariation: 'default',
 	},
 };

@@ -98,24 +98,6 @@ export default {
 		defaultVariation: 'notSkippable',
 		allowExistingUsers: true,
 	},
-	showPlanUpsellGSuite: {
-		datestamp: '20190805',
-		variations: {
-			variantShowPlanBump: 50,
-			control: 50,
-		},
-		defaultVariation: 'control',
-		allowExistingUsers: true,
-	},
-	showPlanUpsellConcierge: {
-		datestamp: '20190805',
-		variations: {
-			variantShowPlanBump: 100,
-			control: 0,
-		},
-		defaultVariation: 'control',
-		allowExistingUsers: true,
-	},
 	customerHomePage: {
 		datestamp: '20190903',
 		variations: {
@@ -141,13 +123,5 @@ export default {
 			placesApi: 50,
 		},
 		defaultVariation: 'original',
-	},
-	passwordlessSignup: {
-		datestamp: '20190927',
-		variations: {
-			passwordless: 0,
-			default: 100,
-		},
-		defaultVariation: 'default',
 	},
 };

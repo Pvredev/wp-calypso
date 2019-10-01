@@ -60,7 +60,9 @@ const debug = debugFactory( 'calypso:signup:step-actions' );
 export function createSiteOrDomain( callback, dependencies, data, reduxStore ) {
 	const { siteId, siteSlug } = data;
 	const { cartItem, designType, siteUrl, themeSlugWithRepo } = dependencies;
-	let { domainItem } = dependencies;
+	const domainItem = dependencies.domainItem
+		? addPrivacyProtectionIfSupported( dependencies.domainItem, reduxStore )
+		: null;
 
 	if ( designType === 'domain' ) {
 		const cartKey = 'no-site';
@@ -70,14 +72,6 @@ export function createSiteOrDomain( callback, dependencies, data, reduxStore ) {
 			themeSlugWithRepo: null,
 			domainItem,
 		};
-
-		if ( domainItem ) {
-			const { product_slug: productSlug } = domainItem;
-			const productsList = getProductsList( reduxStore.getState() );
-			if ( supportsPrivacyProtectionPurchase( productSlug, productsList ) ) {
-				domainItem = updatePrivacyForDomain( domainItem, true );
-			}
-		}
 
 		const domainChoiceCart = [ domainItem ];
 		SignupCart.createCart( cartKey, domainChoiceCart, error =>
@@ -307,24 +301,12 @@ function processItemCart(
 	themeSlugWithRepo
 ) {
 	const addToCartAndProceed = () => {
-		let privacyItem = null;
-		const state = reduxStore.getState();
-		const { domainItem } = newCartItems;
+		const newCartItemsToAdd = newCartItems.map( item =>
+			addPrivacyProtectionIfSupported( item, reduxStore )
+		);
 
-		if ( domainItem ) {
-			const { product_slug: productSlug } = domainItem;
-			const productsList = getProductsList( state );
-			if ( supportsPrivacyProtectionPurchase( productSlug, productsList ) ) {
-				privacyItem = updatePrivacyForDomain( domainItem, true );
-
-				if ( privacyItem ) {
-					newCartItems.push( privacyItem );
-				}
-			}
-		}
-
-		if ( newCartItems.length ) {
-			SignupCart.addToCart( siteSlug, newCartItems, function( cartError ) {
+		if ( newCartItemsToAdd.length ) {
+			SignupCart.addToCart( siteSlug, newCartItemsToAdd, function( cartError ) {
 				callback( cartError, providedDependencies );
 			} );
 		} else {
@@ -345,6 +327,16 @@ function processItemCart(
 	} else {
 		addToCartAndProceed();
 	}
+}
+
+function addPrivacyProtectionIfSupported( item, reduxStore ) {
+	const { product_slug: productSlug } = item;
+	const productsList = getProductsList( reduxStore.getState() );
+	if ( supportsPrivacyProtectionPurchase( productSlug, productsList ) ) {
+		return updatePrivacyForDomain( item, true );
+	}
+
+	return item;
 }
 
 export function launchSiteApi( callback, dependencies ) {
@@ -422,7 +414,7 @@ export function createAccount(
 					nux_q_question_primary: siteVertical,
 					nux_q_question_experience: userExperience || undefined,
 					// url sent in the confirmation email
-					jetpack_redirect: get( queryArgs, 'jetpack_redirect' ),
+					jetpack_redirect: queryArgs.jetpack_redirect,
 				},
 				oauth2Signup
 					? {
@@ -655,24 +647,6 @@ export function isSiteTopicFulfilled( stepName, defaultDependencies, nextProps )
 }
 
 /**
- * Creates a user account using an email only and logs them in immediately.
- * It differs from `createPasswordlessUser` in that we don't require a verification step before the user can continue with onboarding.
- * Returns the dependencies for the step.
- *
- * @param {function} callback API callback function
- * @param {object}   data     An object sent via POST to WPCOM API with the following values: `email`
- */
-export function createUserAccountFromEmailAddress( callback, { email } ) {
-	wpcom
-		.undocumented()
-		.createUserAccountFromEmailAddress( { email }, null )
-		.then( response =>
-			callback( null, { username: response.username, bearer_token: response.token.access_token } )
-		)
-		.catch( err => callback( err ) );
-}
-
-/**
  * Creates a user account and sends the user a verification code via email to confirm the account.
  * Returns the dependencies for the step.
  *
@@ -693,7 +667,7 @@ export function createPasswordlessUser( callback, { email } ) {
  * @param {function} callback Callback function
  * @param {object}   data     POST data object
  */
-export function verifyPasswordlessUser( callback, { email, code } ) {
+export async function verifyPasswordlessUser( callback, { email, code } ) {
 	wpcom
 		.undocumented()
 		.usersEmailVerification( { email, code }, null )

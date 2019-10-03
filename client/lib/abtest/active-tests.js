@@ -124,4 +124,22 @@ export default {
 		},
 		defaultVariation: 'original',
 	},
+	prefillDomainStepValue: {
+		datestamp: '20190929',
+		variations: {
+			test: 50,
+			control: 50,
+		},
+		defaultVariation: 'control',
+		allowExistingUsers: true,
+	},
+	domainSuggestionsEn: {
+		datestamp: '20191003',
+		variations: {
+			control: 50,
+			test: 50,
+		},
+		defaultVariation: 'control',
+		allowExistingUsers: true,
+	},
 };

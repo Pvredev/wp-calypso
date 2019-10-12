@@ -95,6 +95,12 @@
 					"requires": {
 						"lodash": "^4.17.12"
 					}
+				},
+				"typescript": {
+					"version": "3.4.3",
+					"resolved": "https://registry.npmjs.org/typescript/-/typescript-3.4.3.tgz",
+					"integrity": "sha512-FFgHdPt4T/duxx6Ndf7hwgMZZjZpB+U0nMNGVCYPq0rEzWKjEDobm4J6yb3CS7naZ0yURFqdw9Gwc7UOh/P9oQ==",
+					"dev": true
 				}
 			}
 		},
@@ -2970,9 +2976,9 @@
 			}
 		},
 		"@types/lodash": {
-			"version": "4.14.123",
-			"resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.123.tgz",
-			"integrity": "sha512-pQvPkc4Nltyx7G1Ww45OjVqUsJP4UsZm+GWJpigXgkikZqJgRm4c48g027o6tdgubWHwFRF15iFd+Y4Pmqv6+Q==",
+			"version": "4.14.144",
+			"resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.144.tgz",
+			"integrity": "sha512-ogI4g9W5qIQQUhXAclq6zhqgqNUr7UlFaqDHbch7WLSLeeM/7d3CRaw7GLajxvyFvhJqw4Rpcz5bhoaYtIx6Tg==",
 			"dev": true
 		},
 		"@types/minimatch": {
@@ -22569,9 +22575,9 @@
 			"integrity": "sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c="
 		},
 		"typescript": {
-			"version": "3.4.3",
-			"resolved": "https://registry.npmjs.org/typescript/-/typescript-3.4.3.tgz",
-			"integrity": "sha512-FFgHdPt4T/duxx6Ndf7hwgMZZjZpB+U0nMNGVCYPq0rEzWKjEDobm4J6yb3CS7naZ0yURFqdw9Gwc7UOh/P9oQ==",
+			"version": "3.6.4",
+			"resolved": "https://registry.npmjs.org/typescript/-/typescript-3.6.4.tgz",
+			"integrity": "sha512-unoCll1+l+YK4i4F8f22TaNVPRHcD9PA3yCuZ8g5e0qGqlVlJ/8FSateOLLSagn+Yg5+ZwuPkL8LFUc0Jcvksg==",
 			"dev": true
 		},
 		"ua-parser-js": {

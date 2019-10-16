@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Full Site Editing
  * Description: Enhances your page creation workflow within the Block Editor.
- * Version: 0.11
+ * Version: 0.12
  * Author: Automattic
  * Author URI: https://automattic.com/wordpress-plugins/
  * License: GPLv2 or later
@@ -20,7 +20,7 @@ namespace A8C\FSE;
  *
  * @var string
  */
-define( 'PLUGIN_VERSION', '0.11' );
+define( 'PLUGIN_VERSION', '0.12' );
 
 // Themes which are supported by Full Site Editing (not the same as the SPT themes).
 const SUPPORTED_THEMES = [ 'maywood' ];
@@ -44,6 +44,7 @@ function load_full_site_editing() {
 	require_once __DIR__ . '/full-site-editing/templates/class-rest-templates-controller.php';
 	require_once __DIR__ . '/full-site-editing/templates/class-wp-template.php';
 	require_once __DIR__ . '/full-site-editing/templates/class-wp-template-inserter.php';
+	require_once __DIR__ . '/full-site-editing/templates/class-template-image-inserter.php';
 	require_once __DIR__ . '/full-site-editing/serialize-block-fallback.php';
 
 	Full_Site_Editing::get_instance();
@@ -178,6 +179,7 @@ add_action( 'plugins_loaded', __NAMESPACE__ . '\load_starter_page_templates' );
  */
 function populate_wp_template_data() {
 	require_once __DIR__ . '/full-site-editing/class-full-site-editing.php';
+	require_once __DIR__ . '/full-site-editing/templates/class-template-image-inserter.php';
 	require_once __DIR__ . '/full-site-editing/templates/class-wp-template-inserter.php';
 
 	$fse = Full_Site_Editing::get_instance();

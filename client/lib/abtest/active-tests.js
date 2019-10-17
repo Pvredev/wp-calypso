@@ -98,15 +98,6 @@ export default {
 		defaultVariation: 'notSkippable',
 		allowExistingUsers: true,
 	},
-	customerHomePage: {
-		datestamp: '20190903',
-		variations: {
-			show: 50,
-			hide: 50,
-		},
-		defaultVariation: 'hide',
-		assignmentMethod: 'userId',
-	},
 	signupWithBasicSite: {
 		datestamp: '20190930',
 		variations: {
@@ -160,5 +151,13 @@ export default {
 		},
 		defaultVariation: 'control',
 		allowExistingUsers: true,
+	},
+	passwordlessSignup: {
+		datestamp: '20191013',
+		variations: {
+			passwordless: 0,
+			default: 100,
+		},
+		defaultVariation: 'default',
 	},
 };

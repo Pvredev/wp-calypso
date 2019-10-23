@@ -7,8 +7,6 @@
 // export * from './checkout';
 // etc…
 
-export { submitTransaction } from './checkout';
-
 export {
 	acceptTransfer,
 	addDns,
@@ -30,8 +28,6 @@ export {
 	updateSiteRedirect,
 	requestGdprConsentManagementLink,
 } from './domain-management';
-
-export { goToDomainCheckout } from './domain-search';
 
 export {
 	cancelAndRefundPurchase,

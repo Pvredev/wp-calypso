@@ -5,25 +5,52 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-const Label = styled.label`
+export default function RadioButton( { checked, name, value, onChange, children, label, id } ) {
+	const [ isFocused, changeFocus ] = useState( false );
+	return (
+		<RadioButtonWrapper isFocused={ isFocused } checked={ checked }>
+			<Radio
+				type="radio"
+				name={ name }
+				id={ id }
+				value={ value }
+				checked={ checked }
+				onChange={ onChange }
+				onFocus={ () => {
+					changeFocus( true );
+				} }
+				onBlur={ () => {
+					changeFocus( false );
+				} }
+				readOnly={ ! onChange }
+			/>
+			<Label checked={ checked } htmlFor={ id }>
+				{ label }
+			</Label>
+			{ children }
+		</RadioButtonWrapper>
+	);
+}
+
+RadioButton.propTypes = {
+	name: PropTypes.string.isRequired,
+	id: PropTypes.string.isRequired,
+	label: PropTypes.node.isRequired,
+	checked: PropTypes.bool,
+	value: PropTypes.string.isRequired,
+	onChange: PropTypes.func,
+};
+
+const RadioButtonWrapper = styled.div`
 	position: relative;
-	padding: 16px 14px;
 	margin-top: 8px;
 	border-radius: 3px;
 	box-sizing: border-box;
 	width: 100%;
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-between;
-	align-items: center;
 	outline: ${getOutline};
 
 	:first-child {
 		margin: 0;
-	}
-
-	:hover {
-		cursor: pointer;
 	}
 
 	:before {
@@ -53,19 +80,25 @@ const Label = styled.label`
 `;
 
 const Radio = styled.input`
-	margin-right: 7px;
-	position: relative;
-	display: inline-block;
+	position: absolute;
 	opacity: 0;
 `;
 
-const LabelContent = styled.span`
-	flex: 1;
-	display: flex;
-	justify-content: space-between;
+const Label = styled.label`
 	position: relative;
+	padding: 16px 14px 16px 40px;
+	border-radius: 3px;
+	box-sizing: border-box;
+	width: 100%;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
 	font-size: 14px;
-	transform: translateY( -1px );
+
+	:hover {
+		cursor: pointer;
+	}
 
 	:after {
 		display: block;
@@ -74,17 +107,18 @@ const LabelContent = styled.span`
 		content: '';
 		border: ${getRadioBorderWidth} solid ${getBorderColor};
 		border-radius: 100%;
-		top: 01px;
-		left: -23px;
+		top: 50%;
+		transform: translateY( -50% );
+		left: 16px;
 		position: absolute;
-		background: ${props => props.theme.colors.white};
+		background: ${props => props.theme.colors.surface};
 		box-sizing: border-box;
 		z-index: 2;
 	}
 `;
 
 function getBorderColor( { checked, theme } ) {
-	return checked ? theme.colors.highlight : theme.colors.gray20;
+	return checked ? theme.colors.highlight : theme.colors.borderColor;
 }
 
 function getBorderWidth( { checked } ) {
@@ -105,33 +139,3 @@ function getOutline( { isFocused, theme } ) {
 	}
 	return '0';
 }
-
-export default function RadioButton( { checked, name, value, onChange, children } ) {
-	const [ isFocused, changeFocus ] = useState( false );
-	return (
-		<Label isFocused={ isFocused } checked={ checked }>
-			<Radio
-				type="radio"
-				name={ name }
-				value={ value }
-				checked={ checked }
-				onChange={ onChange }
-				onFocus={ () => {
-					changeFocus( true );
-				} }
-				onBlur={ () => {
-					changeFocus( false );
-				} }
-				readOnly={ ! onChange }
-			/>
-			<LabelContent checked={ checked }>{ children }</LabelContent>
-		</Label>
-	);
-}
-
-RadioButton.propTypes = {
-	name: PropTypes.string.isRequired,
-	checked: PropTypes.bool,
-	value: PropTypes.string.isRequired,
-	onChange: PropTypes.func,
-};

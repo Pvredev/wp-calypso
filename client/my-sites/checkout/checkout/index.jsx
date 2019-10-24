@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { connect } from 'react-redux';
-import { flatten, filter, find, get, isEmpty, isEqual, reduce, startsWith } from 'lodash';
+import { flatten, filter, find, get, includes, isEmpty, isEqual, reduce, startsWith } from 'lodash';
 import { localize } from 'i18n-calypso';
 import page from 'page';
 import PropTypes from 'prop-types';
@@ -37,7 +37,9 @@ import {
 	hasPlan,
 	hasOnlyRenewalItems,
 	hasTransferProduct,
+	jetpackProductItem,
 } from 'lib/cart-values/cart-items';
+import { JETPACK_BACKUP_PRODUCTS } from 'lib/products-values/constants';
 import PendingPaymentBlocker from './pending-payment-blocker';
 import { clearSitePlans } from 'state/sites/plans/actions';
 import { clearPurchases } from 'state/purchases/actions';
@@ -295,6 +297,10 @@ export class Checkout extends React.Component {
 			cartItem = ! hasConciergeSession( cart ) && conciergeSessionItem();
 		}
 
+		if ( startsWith( this.props.product, 'jetpack_backup' ) ) {
+			cartItem = jetpackProductItem( this.props.product );
+		}
+
 		if ( cartItem ) {
 			addItem( cartItem );
 		}
@@ -378,7 +384,7 @@ export class Checkout extends React.Component {
 	}
 
 	getFallbackDestination( pendingOrReceiptId ) {
-		const { selectedSiteSlug, selectedFeature, cart, isJetpackNotAtomic } = this.props;
+		const { selectedSiteSlug, selectedFeature, cart, isJetpackNotAtomic, product } = this.props;
 
 		const isCartEmpty = isEmpty( getAllCartItems( cart ) );
 		const isReceiptEmpty = ':receiptId' === pendingOrReceiptId;
@@ -387,7 +393,10 @@ export class Checkout extends React.Component {
 		// - has a receipt number
 		// - does not have a receipt number but has an item in cart(as in the case of paying with a redirect payment type)
 		if ( selectedSiteSlug && ( ! isReceiptEmpty || ! isCartEmpty ) ) {
-			if ( isJetpackNotAtomic ) {
+			const isJetpackProduct = product && includes( JETPACK_BACKUP_PRODUCTS, product );
+
+			// If we just purchased a Jetpack plan (not a Jetpack product), redirect to the Jetpack onboarding plugin install flow.
+			if ( isJetpackNotAtomic && ! isJetpackProduct ) {
 				return `/plans/my-plan/${ selectedSiteSlug }?thank-you&install=all`;
 			}
 			return selectedFeature && isValidFeatureKey( selectedFeature )

@@ -3,18 +3,95 @@
  */
 import React from 'react';
 import styled from 'styled-components';
+import PropTypes from 'prop-types';
 
 /**
  * Internal dependencies
  */
 import Button from './button';
 
+export default function Field( {
+	type,
+	id,
+	className,
+	isError,
+	onChange,
+	label,
+	value,
+	icon,
+	iconAction,
+	isIconVisible,
+	placeholder,
+	tabIndex,
+	description,
+	errorMessage,
+} ) {
+	const fieldOnChange = event => {
+		if ( onChange ) {
+			onChange( event.target.value );
+		}
+
+		return null;
+	};
+
+	const onBlurField = () => {
+		return null;
+	};
+
+	return (
+		<div className={ className }>
+			<Label htmlFor={ id } isError={ isError }>
+				{ label }
+			</Label>
+			<InputWrapper>
+				<Input
+					id={ id }
+					icon={ icon }
+					value={ value }
+					type={ type }
+					onChange={ fieldOnChange }
+					onBlur={ onBlurField }
+					placeholder={ placeholder }
+					tabIndex={ tabIndex }
+				/>
+				<RenderedIcon icon={ icon } iconAction={ iconAction } isIconVisible={ isIconVisible } />
+			</InputWrapper>
+			<RenderedDescription
+				isError={ isError }
+				description={ description }
+				errorMessage={ errorMessage }
+			/>
+		</div>
+	);
+}
+
+Field.propTypes = {
+	type: PropTypes.string,
+	id: PropTypes.string.isRequired,
+	className: PropTypes.string,
+	isError: PropTypes.bool,
+	onChange: PropTypes.func,
+	label: PropTypes.string.isRequired,
+	value: PropTypes.string,
+	icon: PropTypes.node,
+	iconAction: PropTypes.func,
+	isIconVisible: PropTypes.bool,
+	placeholder: PropTypes.string,
+	tabIndex: PropTypes.string,
+	description: PropTypes.string,
+	errorMessage: PropTypes.string,
+};
+
 const Label = styled.label`
 	display: block;
-	color: ${props => ( props.isError ? props.theme.colors.red50 : props.theme.colors.gray80 )};
+	color: ${props => ( props.isError ? props.theme.colors.warning : props.theme.colors.textColor )};
 	font-weight: 700;
 	font-size: 14px;
 	margin-bottom: 8px;
+
+	:hover {
+		cursor: pointer;
+	}
 `;
 
 const Input = styled.input`
@@ -22,7 +99,7 @@ const Input = styled.input`
 	width: 100%;
 	box-sizing: border-box;
 	font-size: 16px;
-	border: 1px solid ${props => props.theme.colors.gray20};
+	border: 1px solid ${props => props.theme.colors.borderColor};
 	padding: 12px ${props => ( props.icon ? '40px' : '10px' )} 12px 10px;
 
 	::-webkit-inner-spin-button,
@@ -70,7 +147,8 @@ const ButtonIconUI = styled.div`
 
 const Description = styled.p`
 	margin: 8px 0 0 0;
-	color: ${props => ( props.isError ? props.theme.colors.red50 : props.theme.colors.gray50 )};
+	color: ${props =>
+		props.isError ? props.theme.colors.warning : props.theme.colors.textColorLight};
 	font-style: italic;
 	font-size: 14px;
 `;
@@ -100,59 +178,4 @@ function RenderedDescription( { description, isError, errorMessage } ) {
 		return <Description isError={ isError }>{ isError ? errorMessage : description }</Description>;
 	}
 	return null;
-}
-
-export default function Field( {
-	type,
-	id,
-	className,
-	isError,
-	onChange,
-	label,
-	value,
-	icon,
-	iconAction,
-	isIconVisible,
-	placeholder,
-	tabIndex,
-	description,
-	errorMessage,
-} ) {
-	const fieldOnChange = event => {
-		if ( onChange ) {
-			onChange( event.target.value );
-		}
-
-		return null;
-	};
-
-	const onBlurField = () => {
-		return null;
-	};
-
-	return (
-		<div className={ className }>
-			<Label htmlFor={ value } isError={ isError }>
-				{ label }
-			</Label>
-			<InputWrapper>
-				<Input
-					id={ id }
-					icon={ icon }
-					value={ value }
-					type={ type }
-					onChange={ fieldOnChange }
-					onBlur={ onBlurField }
-					placeholder={ placeholder }
-					tabIndex={ tabIndex }
-				/>
-				<RenderedIcon icon={ icon } iconAction={ iconAction } isIconVisible={ isIconVisible } />
-			</InputWrapper>
-			<RenderedDescription
-				isError={ isError }
-				description={ description }
-				errorMessage={ errorMessage }
-			/>
-		</div>
-	);
 }

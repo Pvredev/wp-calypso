@@ -1,16 +1,18 @@
 /**
  * External dependencies
  */
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
+import page from 'page';
 import { connect } from 'react-redux';
-import { find, flattenDeep, flowRight as compose, includes, isEmpty, map, uniq } from 'lodash';
+import { find, flowRight as compose, includes, isEmpty, map } from 'lodash';
 import { localize } from 'i18n-calypso';
 
 /**
  * Internal dependencies
  */
 import ProductCard from 'components/product-card';
+import ProductCardAction from 'components/product-card/action';
 import ProductCardOptions from 'components/product-card/options';
 import QueryProductsList from 'components/data/query-products-list';
 import QuerySitePurchases from 'components/data/query-site-purchases';
@@ -19,6 +21,7 @@ import { getAvailableProductsList } from 'state/products-list/selectors';
 import { getCurrentUserCurrencyCode } from 'state/current-user/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import { getSitePurchases } from 'state/purchases/selectors';
+import { getSiteSlug } from 'state/sites/selectors';
 import { withLocalizedMoment } from 'components/localized-moment';
 
 export class ProductSelector extends Component {
@@ -94,17 +97,49 @@ export class ProductSelector extends Component {
 		} );
 	}
 
+	handleCheckoutForProduct = productObject => {
+		const { selectedSiteSlug } = this.props;
+
+		return () => {
+			page( '/checkout/' + selectedSiteSlug + '/' + productObject.product_slug );
+		};
+	};
+
 	handleProductOptionSelect( stateKey, productSlug ) {
 		this.setState( {
 			[ stateKey ]: productSlug,
 		} );
 	}
 
+	renderCheckoutButton( productObject ) {
+		const { translate } = this.props;
+
+		return (
+			<ProductCardAction
+				onClick={ this.handleCheckoutForProduct( productObject ) }
+				label={ translate( 'Upgrade to %(productName)s', {
+					args: {
+						productName: productObject.product_name,
+					},
+				} ) }
+			/>
+		);
+	}
+
 	renderProducts() {
 		const { currencyCode, intervalType, products, storeProducts } = this.props;
 
 		if ( isEmpty( storeProducts ) ) {
-			return null;
+			return map( products, product => {
+				return (
+					<ProductCard
+						key={ product.id }
+						title={ product.title }
+						isPlaceholder={ true }
+						description={ product.description ? product.description : null }
+					/>
+				);
+			} );
 		}
 
 		return map( products, product => {
@@ -119,20 +154,24 @@ export class ProductSelector extends Component {
 					title={ product.title }
 					billingTimeFrame={ this.getBillingTimeFrameLabel() }
 					fullPrice={ productObject.cost }
-					description={ <p>{ product.description }</p> }
+					description={ product.description }
 					currencyCode={ currencyCode }
 					purchase={ purchase }
 					subtitle={ this.getSubtitleByProduct( product ) }
 				>
 					{ ! purchase && (
-						<ProductCardOptions
-							optionsLabel={ product.optionsLabel }
-							options={ this.getProductOptions( product ) }
-							selectedSlug={ this.state[ stateKey ] }
-							handleSelect={ productSlug =>
-								this.handleProductOptionSelect( stateKey, productSlug )
-							}
-						/>
+						<Fragment>
+							<ProductCardOptions
+								optionsLabel={ product.optionsLabel }
+								options={ this.getProductOptions( product ) }
+								selectedSlug={ this.state[ stateKey ] }
+								handleSelect={ productSlug =>
+									this.handleProductOptionSelect( stateKey, productSlug )
+								}
+							/>
+
+							{ this.renderCheckoutButton( productObject ) }
+						</Fragment>
 					) }
 				</ProductCard>
 			);
@@ -179,7 +218,7 @@ ProductSelector.propTypes = {
 
 const connectComponent = connect( ( state, { products, siteId } ) => {
 	const selectedSiteId = siteId || getSelectedSiteId( state );
-	const productSlugs = uniq( flattenDeep( products.map( extractProductSlugs ) ) );
+	const productSlugs = extractProductSlugs( products );
 	const availableProducts = getAvailableProductsList( state );
 
 	return {
@@ -187,6 +226,7 @@ const connectComponent = connect( ( state, { products, siteId } ) => {
 		productSlugs,
 		purchases: getSitePurchases( state, selectedSiteId ),
 		selectedSiteId,
+		selectedSiteSlug: getSiteSlug( state, selectedSiteId ),
 		storeProducts: filterByProductSlugs( availableProducts, productSlugs ),
 	};
 } );

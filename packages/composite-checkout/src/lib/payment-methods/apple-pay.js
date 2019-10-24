@@ -2,14 +2,15 @@
  * External dependencies
  */
 import React from 'react';
+import styled from 'styled-components';
 
 /**
  * Internal dependencies
  */
 import { useLocalize } from '../../lib/localize';
 import { useCheckoutLineItems, renderDisplayValueMarkdown } from '../../index';
-import { BillingFormFields, FormField } from '../../components/basics';
 import Button from '../../components/button';
+import Field from '../../components/field';
 
 export function ApplePayLabel() {
 	return (
@@ -51,6 +52,17 @@ export function ApplePayBillingForm( {
 	);
 }
 
+const BillingFormFields = styled.div`
+	margin-bottom: 16px;
+`;
+
+const FormField = styled( Field )`
+	margin-top: 16px;
+	:first-child {
+		margin-top: 0;
+	}
+`;
+
 export function ApplePaySubmitButton() {
 	const localize = useLocalize();
 	const [ , total ] = useCheckoutLineItems();
@@ -82,7 +94,14 @@ function ApplePayBillingFormSummary( { paymentData } ) {
 
 function ApplePayIcon() {
 	return (
-		<svg width="38" height="16" viewBox="0 0 38 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<svg
+			width="38"
+			height="16"
+			viewBox="0 0 38 16"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+			aria-hidden="true"
+		>
 			<path
 				d="M7.41541 2.16874C7.85525 1.626 8.15372 0.897268 8.075 0.152588C7.43114 0.184172 6.64544 0.571647 6.19055 1.11481C5.78212 1.57994 5.42062 2.33919 5.51486 3.05265C6.23762 3.1145 6.95971 2.69625 7.41541 2.16874Z"
 				fill="black"

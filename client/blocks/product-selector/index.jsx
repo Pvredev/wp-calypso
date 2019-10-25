@@ -81,18 +81,35 @@ export class ProductSelector extends Component {
 		} );
 	}
 
+	getProductName( product, productSlug ) {
+		if ( product.optionNames && product.optionNames[ productSlug ] ) {
+			return product.optionNames[ productSlug ];
+		}
+
+		const { storeProducts } = this.props;
+		if ( ! storeProducts ) {
+			return null;
+		}
+
+		const productObject = storeProducts[ productSlug ];
+
+		return productObject.product_name;
+	}
+
 	getProductOptions( product ) {
 		const { intervalType, storeProducts } = this.props;
 		const productSlugs = product.options[ intervalType ];
 
 		return productSlugs.map( productSlug => {
 			const productObject = storeProducts[ productSlug ];
+
 			return {
 				billingTimeFrame: this.getBillingTimeFrameLabel(),
 				currencyCode: productObject.currency_code,
-				fullPrice: productObject.cost,
+				fullPrice: this.getProductOptionFullPrice( productSlug ),
+				discountedPrice: this.getProductOptionDiscountedPrice( productSlug ),
 				slug: productSlug,
-				title: productObject.product_name,
+				title: this.getProductName( product, productSlug ),
 			};
 		} );
 	}
@@ -111,19 +128,55 @@ export class ProductSelector extends Component {
 		} );
 	}
 
-	renderCheckoutButton( productObject ) {
-		const { translate } = this.props;
+	renderCheckoutButton( product ) {
+		const { intervalType, storeProducts, translate } = this.props;
+		const selectedProductSlug = this.state[ this.getStateKey( product.id, intervalType ) ];
+		const productObject = storeProducts[ selectedProductSlug ];
 
 		return (
 			<ProductCardAction
 				onClick={ this.handleCheckoutForProduct( productObject ) }
-				label={ translate( 'Upgrade to %(productName)s', {
+				label={ translate( 'Get %(productName)s', {
 					args: {
-						productName: productObject.product_name,
+						productName: this.getProductName( product, productObject.product_slug ),
 					},
 				} ) }
 			/>
 		);
+	}
+
+	getProductOptionFullPrice( productSlug ) {
+		const { productPriceMatrix, storeProducts } = this.props;
+
+		if ( isEmpty( storeProducts ) ) {
+			return null;
+		}
+
+		const productObject = storeProducts[ productSlug ];
+		const relatedProductObject = productPriceMatrix[ productSlug ];
+
+		if ( relatedProductObject ) {
+			return storeProducts[ relatedProductObject.relatedProduct ].cost * relatedProductObject.ratio;
+		}
+
+		return productObject.cost;
+	}
+
+	getProductOptionDiscountedPrice( productSlug ) {
+		const { productPriceMatrix, storeProducts } = this.props;
+
+		if ( isEmpty( storeProducts ) ) {
+			return null;
+		}
+
+		const productObject = storeProducts[ productSlug ];
+		const relatedProductObject = productPriceMatrix[ productSlug ];
+
+		if ( relatedProductObject ) {
+			return productObject.cost;
+		}
+
+		return null;
 	}
 
 	renderProducts() {
@@ -153,7 +206,8 @@ export class ProductSelector extends Component {
 					key={ product.id }
 					title={ product.title }
 					billingTimeFrame={ this.getBillingTimeFrameLabel() }
-					fullPrice={ productObject.cost }
+					fullPrice={ this.getProductOptionFullPrice( selectedProductSlug ) }
+					discountedPrice={ this.getProductOptionDiscountedPrice( selectedProductSlug ) }
 					description={ product.description }
 					currencyCode={ currencyCode }
 					purchase={ purchase }
@@ -170,7 +224,7 @@ export class ProductSelector extends Component {
 								}
 							/>
 
-							{ this.renderCheckoutButton( productObject ) }
+							{ this.renderCheckoutButton( product ) }
 						</Fragment>
 					) }
 				</ProductCard>
@@ -197,9 +251,16 @@ ProductSelector.propTypes = {
 	products: PropTypes.arrayOf(
 		PropTypes.shape( {
 			title: PropTypes.string,
+			id: PropTypes.string,
+			description: PropTypes.oneOfType( [ PropTypes.string, PropTypes.element ] ),
 			options: PropTypes.objectOf( PropTypes.arrayOf( PropTypes.string ) ).isRequired,
+			optionsLabel: PropTypes.string,
 		} )
 	).isRequired,
+	productPriceMatrix: PropTypes.shape( {
+		relatedProduct: PropTypes.string,
+		ratio: PropTypes.number,
+	} ),
 	siteId: PropTypes.number,
 
 	// Connected props

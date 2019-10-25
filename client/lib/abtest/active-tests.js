@@ -107,16 +107,6 @@ export default {
 		defaultVariation: 'control',
 		allowExistingUsers: true,
 	},
-	checkoutCollectPhoneNumber: {
-		datestamp: '20191007',
-		variations: {
-			show: 50,
-			hide: 50,
-		},
-		defaultVariation: 'hide',
-		allowExistingUsers: true,
-		localeTargets: 'any',
-	},
 	verticalSuggestedThemes: {
 		datestamp: '20191011',
 		variations: {
@@ -129,18 +119,9 @@ export default {
 	passwordlessSignup: {
 		datestamp: '20191013',
 		variations: {
-			passwordless: 0,
-			default: 100,
+			passwordless: 10,
+			default: 90,
 		},
 		defaultVariation: 'default',
-	},
-	prefillSiteTitleWithDomainQuery: {
-		datestamp: '20191017',
-		variations: {
-			variant: 50,
-			control: 50,
-		},
-		defaultVariation: 'control',
-		allowExistingUsers: true,
 	},
 };

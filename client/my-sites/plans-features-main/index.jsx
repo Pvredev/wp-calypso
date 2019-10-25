@@ -28,9 +28,14 @@ import {
 	GROUP_JETPACK,
 } from 'lib/plans/constants';
 import {
+	JETPACK_BACKUP_PRODUCT_NAMES,
 	JETPACK_BACKUP_PRODUCTS_MONTHLY,
 	JETPACK_BACKUP_PRODUCTS_YEARLY,
 	PRODUCT_JETPACK_BACKUP,
+	PRODUCT_JETPACK_BACKUP_DAILY,
+	PRODUCT_JETPACK_BACKUP_DAILY_MONTHLY,
+	PRODUCT_JETPACK_BACKUP_REALTIME,
+	PRODUCT_JETPACK_BACKUP_REALTIME_MONTHLY,
 } from 'lib/products-values/constants';
 import { addQueryArgs } from 'lib/url';
 import JetpackFAQ from './jetpack-faq';
@@ -57,6 +62,7 @@ import ProductSelector from 'blocks/product-selector';
 import FormattedHeader from 'components/formatted-header';
 import HappychatConnection from 'components/happychat/connection-connected';
 import isHappychatAvailable from 'state/happychat/selectors/is-happychat-available';
+import isSiteAtomic from 'state/selectors/is-site-automated-transfer';
 import { getDiscountByName } from 'lib/discounts';
 import { getDecoratedSiteDomains } from 'state/sites/domains/selectors';
 import { getSiteOption, getSitePlan, getSiteSlug, isJetpackSite } from 'state/sites/selectors';
@@ -87,9 +93,23 @@ const jetpackProducts = [
 			yearly: JETPACK_BACKUP_PRODUCTS_YEARLY,
 			monthly: JETPACK_BACKUP_PRODUCTS_MONTHLY,
 		},
+		optionNames: {
+			...JETPACK_BACKUP_PRODUCT_NAMES,
+		},
 		optionsLabel: 'Backup options',
 	},
 ];
+
+const jetpackProductPriceMatrix = {
+	[ PRODUCT_JETPACK_BACKUP_DAILY ]: {
+		relatedProduct: PRODUCT_JETPACK_BACKUP_DAILY_MONTHLY,
+		ratio: 12,
+	},
+	[ PRODUCT_JETPACK_BACKUP_REALTIME ]: {
+		relatedProduct: PRODUCT_JETPACK_BACKUP_REALTIME_MONTHLY,
+		ratio: 12,
+	},
+};
 
 export class PlansFeaturesMain extends Component {
 	componentDidUpdate( prevProps ) {
@@ -410,10 +430,11 @@ export class PlansFeaturesMain extends Component {
 			return null;
 		}
 
-		const { intervalType, isJetpack } = this.props;
-		if ( ! isJetpack ) {
+		const { intervalType, isAtomicSite, isInSignup, isJetpack } = this.props;
+		if ( ( ! isInSignup && ! isJetpack ) || isAtomicSite ) {
 			return null;
 		}
+
 		// @todo: Add translations in FormattedHeader once the final copy is provided.
 		return (
 			<div className="plans-features-main__group is-narrow">
@@ -422,7 +443,11 @@ export class PlansFeaturesMain extends Component {
 					subHeaderText="Just looking for backups? We’ve got you covered."
 					compactOnMobile
 				/>
-				<ProductSelector products={ jetpackProducts } intervalType={ intervalType } />
+				<ProductSelector
+					products={ jetpackProducts }
+					intervalType={ intervalType }
+					productPriceMatrix={ jetpackProductPriceMatrix }
+				/>
 			</div>
 		);
 	}
@@ -526,6 +551,7 @@ export default connect(
 			plansWithScroll: ! props.displayJetpackPlans && props.plansWithScroll,
 			customerType,
 			domains: getDecoratedSiteDomains( state, siteId ),
+			isAtomicSite: isSiteAtomic( state, siteId ),
 			isChatAvailable: isHappychatAvailable( state ),
 			isJetpack: isJetpackSite( state, siteId ),
 			siteId,

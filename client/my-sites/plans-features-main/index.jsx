@@ -31,11 +31,8 @@ import {
 	JETPACK_BACKUP_PRODUCT_NAMES,
 	JETPACK_BACKUP_PRODUCTS_MONTHLY,
 	JETPACK_BACKUP_PRODUCTS_YEARLY,
+	JETPACK_PRODUCT_PRICE_MATRIX,
 	PRODUCT_JETPACK_BACKUP,
-	PRODUCT_JETPACK_BACKUP_DAILY,
-	PRODUCT_JETPACK_BACKUP_DAILY_MONTHLY,
-	PRODUCT_JETPACK_BACKUP_REALTIME,
-	PRODUCT_JETPACK_BACKUP_REALTIME_MONTHLY,
 } from 'lib/products-values/constants';
 import { addQueryArgs } from 'lib/url';
 import JetpackFAQ from './jetpack-faq';
@@ -62,7 +59,6 @@ import ProductSelector from 'blocks/product-selector';
 import FormattedHeader from 'components/formatted-header';
 import HappychatConnection from 'components/happychat/connection-connected';
 import isHappychatAvailable from 'state/happychat/selectors/is-happychat-available';
-import isSiteAtomic from 'state/selectors/is-site-automated-transfer';
 import { getDiscountByName } from 'lib/discounts';
 import { getDecoratedSiteDomains } from 'state/sites/domains/selectors';
 import { getSiteOption, getSitePlan, getSiteSlug, isJetpackSite } from 'state/sites/selectors';
@@ -99,17 +95,6 @@ const jetpackProducts = [
 		optionsLabel: 'Backup options',
 	},
 ];
-
-const jetpackProductPriceMatrix = {
-	[ PRODUCT_JETPACK_BACKUP_DAILY ]: {
-		relatedProduct: PRODUCT_JETPACK_BACKUP_DAILY_MONTHLY,
-		ratio: 12,
-	},
-	[ PRODUCT_JETPACK_BACKUP_REALTIME ]: {
-		relatedProduct: PRODUCT_JETPACK_BACKUP_REALTIME_MONTHLY,
-		ratio: 12,
-	},
-};
 
 export class PlansFeaturesMain extends Component {
 	componentDidUpdate( prevProps ) {
@@ -447,7 +432,7 @@ export class PlansFeaturesMain extends Component {
 				<ProductSelector
 					products={ jetpackProducts }
 					intervalType={ intervalType }
-					productPriceMatrix={ jetpackProductPriceMatrix }
+					productPriceMatrix={ JETPACK_PRODUCT_PRICE_MATRIX }
 				/>
 			</div>
 		);
@@ -552,7 +537,6 @@ export default connect(
 			plansWithScroll: ! props.displayJetpackPlans && props.plansWithScroll,
 			customerType,
 			domains: getDecoratedSiteDomains( state, siteId ),
-			isAtomicSite: isSiteAtomic( state, siteId ),
 			isChatAvailable: isHappychatAvailable( state ),
 			isJetpack: isJetpackSite( state, siteId ),
 			siteId,

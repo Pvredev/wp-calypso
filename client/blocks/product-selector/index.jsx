@@ -81,9 +81,20 @@ export class ProductSelector extends Component {
 		} );
 	}
 
+	getDescriptionByProduct( product ) {
+		const { description, optionDescriptions } = product;
+		const purchase = this.getPurchaseByProduct( product );
+
+		if ( ! purchase || ! optionDescriptions || ! optionDescriptions[ purchase.productSlug ] ) {
+			return description;
+		}
+
+		return optionDescriptions[ purchase.productSlug ];
+	}
+
 	getProductName( product, productSlug ) {
-		if ( product.optionNames && product.optionNames[ productSlug ] ) {
-			return product.optionNames[ productSlug ];
+		if ( product.optionShortNames && product.optionShortNames[ productSlug ] ) {
+			return product.optionShortNames[ productSlug ];
 		}
 
 		const { storeProducts } = this.props;
@@ -94,6 +105,21 @@ export class ProductSelector extends Component {
 		const productObject = storeProducts[ productSlug ];
 
 		return productObject.product_name;
+	}
+
+	getProductDisplayName( product ) {
+		const { title, optionDisplayNames } = product;
+		const purchase = this.getPurchaseByProduct( product );
+
+		if ( ! purchase ) {
+			return title;
+		}
+
+		if ( ! optionDisplayNames || ! optionDisplayNames[ purchase.productSlug ] ) {
+			return title;
+		}
+
+		return optionDisplayNames[ purchase.productSlug ];
 	}
 
 	getProductOptions( product ) {
@@ -203,11 +229,11 @@ export class ProductSelector extends Component {
 			return (
 				<ProductCard
 					key={ product.id }
-					title={ product.title }
+					title={ this.getProductDisplayName( product ) }
 					billingTimeFrame={ this.getBillingTimeFrameLabel() }
 					fullPrice={ this.getProductOptionFullPrice( selectedProductSlug ) }
 					discountedPrice={ this.getProductOptionDiscountedPrice( selectedProductSlug ) }
-					description={ product.description }
+					description={ this.getDescriptionByProduct( product ) }
 					currencyCode={ currencyCode }
 					purchase={ purchase }
 					subtitle={ this.getSubtitleByProduct( product ) }
@@ -253,6 +279,7 @@ ProductSelector.propTypes = {
 			id: PropTypes.string,
 			description: PropTypes.oneOfType( [ PropTypes.string, PropTypes.element ] ),
 			options: PropTypes.objectOf( PropTypes.arrayOf( PropTypes.string ) ).isRequired,
+			optionDescriptions: PropTypes.objectOf( [ PropTypes.string, PropTypes.element ] ),
 			optionsLabel: PropTypes.string,
 		} )
 	).isRequired,

@@ -98,20 +98,11 @@ export default {
 		defaultVariation: 'control',
 		allowExistingUsers: true,
 	},
-	domainSuggestionsEn: {
-		datestamp: '20191003',
-		variations: {
-			control: 50,
-			test: 50,
-		},
-		defaultVariation: 'control',
-		allowExistingUsers: true,
-	},
 	verticalSuggestedThemes: {
-		datestamp: '20191011',
+		datestamp: '20191029',
 		variations: {
-			control: 100,
-			test: 0,
+			control: 90,
+			test: 10,
 		},
 		defaultVariation: 'control',
 		allowExistingUsers: true,

@@ -15,8 +15,8 @@ const products = [
 		title: 'Jetpack Backup',
 		description: (
 			<p>
-				Automatic scanning and one-click fixes keep your site one step ahead of security threats.{' '}
-				<a href="https://jetpack.com/">More info</a>
+				Always-on backups ensure you never lose your site. Choose from real-time or daily backups.{' '}
+				<a href="https://jetpack.com/upgrade/backup/">Which one do I need?</a>
 			</p>
 		),
 		id: 'jetpack_backup',
@@ -24,7 +24,7 @@ const products = [
 			yearly: [ 'jetpack_backup_daily', 'jetpack_backup_realtime' ],
 			monthly: [ 'jetpack_backup_daily_monthly', 'jetpack_backup_realtime_monthly' ],
 		},
-		optionNames: {
+		optionShortNames: {
 			jetpack_backup_daily: 'Daily Backups',
 			jetpack_backup_daily_monthly: 'Daily Backups',
 			jetpack_backup_realtime: 'Real-Time Backups',

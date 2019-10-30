@@ -51,13 +51,37 @@ The following props can be passed to the Product Selector block:
 			monthly: [ 'jetpack_backup_daily_monthly', 'jetpack_backup_realtime_monthly' ],
 		}
 		```
-	* `optionNames`: ( object ) Optional names of the product options. Each key is a product slug, and the value is the corresponding title. Example:
+	* `optionDescriptions`: ( object ) Optional descriptions for the product options.
+	They replace a default `description` in case a given option (represented by the object's key) has been purchased.
+	Each key is a product slug, and the value is the corresponding copy. Example:
 		```
-		optionsNames: {
-			jetpack_backup_daily: 'Daily Backups',
-			jetpack_backup_daily_monthly: 'Daily Backups',
-			jetpack_backup_realtime: 'Real-Time Backups',
-			jetpack_backup_realtime_monthly: 'Real-Time Backups',
+		optionDescriptions: {
+			jetpack_backup_daily: translate( 'Looking for more? Get unlimited real-time backup archives' ),
+			jetpack_backup_daily_monthly: translate( 'Looking for more? Get unlimited real-time backup archives' ),
+			jetpack_backup_realtime: translate( 'Your changes are saved as you edit and you have unlimited backup archives' ),
+			jetpack_backup_realtime_monthly: translate( 'Your changes are saved as you edit and you have unlimited backup archives' ),
+		}
+		```
+	* `optionDisplayNames`: ( object ) Optional display names of the product options.
+	They replace a default `title` in case a given option (represented by the object's key) has been purchased.
+	Each key is a product slug, and the value is the corresponding title. Example:
+		```
+		optionDisplayNames: {
+			jetpack_backup_daily: translate( 'Jetpack Backup Daily' ),
+			jetpack_backup_daily_monthly: translate( 'Jetpack Backup Daily' ),
+			jetpack_backup_realtime: translate( 'Jetpack Backup Real-Time' ),
+			jetpack_backup_realtime_monthly: translate( 'Jetpack Backup Real-Time' ),
+		}
+		```
+	* `optionShortNames`: ( object ) Optional short names of the product options.
+	They are used in the product card options listing and in action button (when upgrading).
+	Each key is a product slug, and the value is the corresponding title. Example:
+		```
+		optionShortNames: {
+			jetpack_backup_daily: translate( 'Daily Backups' ),
+			jetpack_backup_daily_monthly: translate( 'Daily Backups' ),
+			jetpack_backup_realtime: translate( 'Real-Time Backups' ),
+			jetpack_backup_realtime_monthly: translate( 'Real-Time Backups' ),
 		}
 		```
 	* `optionsLabel`: ( string ) Title of the product options section.

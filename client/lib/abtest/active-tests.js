@@ -108,7 +108,7 @@ export default {
 		allowExistingUsers: true,
 	},
 	passwordlessSignup: {
-		datestamp: '20191013',
+		datestamp: '20191029',
 		variations: {
 			passwordless: 10,
 			default: 90,
@@ -124,5 +124,14 @@ export default {
 		defaultVariation: 'tabs',
 		allowExistingUsers: true,
 		localeTargets: 'any',
+	},
+	showPlanUpsellConcierge: {
+		datestamp: '20191029',
+		variations: {
+			variantShowPlanBump: 50,
+			control: 50,
+		},
+		defaultVariation: 'control',
+		allowExistingUsers: true,
 	},
 };

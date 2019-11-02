@@ -77,7 +77,7 @@ CheckoutProvider.propTypes = {
 	failureRedirectUrl: PropTypes.string.isRequired,
 };
 
-export const useCheckoutLineItems = () => {
+export const useLineItems = () => {
 	const { total, items } = useContext( CheckoutContext );
 	return [ items, total ];
 };
@@ -129,7 +129,10 @@ function paymentStateHandler( { type, payload }, dispatch, setPaymentData ) {
 			dispatch( { type: 'PAYMENT_DATA_UPDATE', payload: { stripeTransactionStatus: 'complete' } } );
 			return;
 		case 'STRIPE_TRANSACTION_AUTH':
-			dispatch( { type: 'PAYMENT_DATA_UPDATE', payload: { stripeTransactionStatus: 'auth' } } );
+			dispatch( {
+				type: 'PAYMENT_DATA_UPDATE',
+				payload: { stripeTransactionStatus: 'auth', stripeTransactionAuthData: payload },
+			} );
 			return;
 		case 'STRIPE_TRANSACTION_REDIRECT':
 			dispatch( { type: 'PAYMENT_DATA_UPDATE', payload: { stripeTransactionStatus: 'redirect' } } );

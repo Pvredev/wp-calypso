@@ -5,12 +5,13 @@ import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import page from 'page';
 import { connect } from 'react-redux';
-import { find, flowRight as compose, includes, isEmpty, map } from 'lodash';
+import { find, findKey, flowRight as compose, includes, isEmpty, map } from 'lodash';
 import { localize } from 'i18n-calypso';
 
 /**
  * Internal dependencies
  */
+import PlanIntervalDiscount from 'my-sites/plan-interval-discount';
 import ProductCard from 'components/product-card';
 import ProductCardAction from 'components/product-card/action';
 import ProductCardOptions from 'components/product-card/options';
@@ -20,10 +21,10 @@ import { extractProductSlugs, filterByProductSlugs } from './utils';
 import { getAvailableProductsList } from 'state/products-list/selectors';
 import { getCurrentUserCurrencyCode } from 'state/current-user/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
-import { getCurrentPlan, getPlansBySiteId, getSitePlanSlug } from 'state/sites/plans/selectors';
+import { getPlansBySiteId, getSitePlanSlug } from 'state/sites/plans/selectors';
 import { getSitePurchases, isFetchingSitePurchases } from 'state/purchases/selectors';
 import { getSiteSlug } from 'state/sites/selectors';
-import { planHasFeature } from 'lib/plans';
+import { getPlan, planHasFeature } from 'lib/plans';
 import { withLocalizedMoment } from 'components/localized-moment';
 
 export class ProductSelector extends Component {
@@ -109,10 +110,6 @@ export class ProductSelector extends Component {
 		return productObject.product_name;
 	}
 
-	getShortPlanName( planName ) {
-		return planName.replace( 'Jetpack ', '' );
-	}
-
 	getProductDisplayName( product ) {
 		const { title, optionDisplayNames } = product;
 		const purchase = this.getPurchaseByProduct( product );
@@ -168,12 +165,60 @@ export class ProductSelector extends Component {
 		return (
 			<ProductCardAction
 				onClick={ this.handleCheckoutForProduct( productObject ) }
+				intro={ this.getIntervalDiscount( selectedProductSlug ) }
 				label={ translate( 'Get %(productName)s', {
 					args: {
 						productName: this.getProductName( product, productObject.product_slug ),
 					},
 				} ) }
 			/>
+		);
+	}
+
+	getIntervalDiscount( selectedProductSlug ) {
+		const { basePlansPath, currencyCode, intervalType, siteSlug } = this.props;
+
+		if ( ! basePlansPath ) {
+			return null;
+		}
+
+		const isYearly = 'yearly' === intervalType;
+		const discountedProductSlug = isYearly
+			? selectedProductSlug
+			: this.getRelatedYearlyProductSlug( selectedProductSlug );
+
+		if ( ! discountedProductSlug ) {
+			return null;
+		}
+
+		const discountedPrice = this.getProductOptionDiscountedPrice( discountedProductSlug );
+		const fullPrice = this.getProductOptionFullPrice( discountedProductSlug );
+
+		return (
+			discountedPrice &&
+			fullPrice && (
+				<PlanIntervalDiscount
+					basePlansPath={ basePlansPath }
+					currencyCode={ currencyCode }
+					discountPrice={ discountedPrice }
+					isYearly={ isYearly }
+					originalPrice={ fullPrice }
+					siteSlug={ siteSlug }
+				/>
+			)
+		);
+	}
+
+	getRelatedYearlyProductSlug( monthlyProductSlug ) {
+		const { productPriceMatrix } = this.props;
+
+		if ( ! productPriceMatrix ) {
+			return null;
+		}
+
+		return findKey(
+			productPriceMatrix,
+			relatedMonthlyProduct => relatedMonthlyProduct.relatedProduct === monthlyProductSlug
 		);
 	}
 
@@ -289,7 +334,7 @@ export class ProductSelector extends Component {
 			return null;
 		}
 
-		const planName = this.getShortPlanName( planUpsellProduct.product_name );
+		const planName = getPlan( planUpsellProduct.product_slug ).getTitle();
 		const productUpsellSlug = this.getProductUpsell( product );
 		const productUpsellObject = storeProducts[ productUpsellSlug ];
 		const productUpsellName = this.getProductName( product, productUpsellObject.product_slug );
@@ -315,7 +360,6 @@ export class ProductSelector extends Component {
 	renderProducts() {
 		const {
 			currencyCode,
-			currentPlan,
 			currentPlanSlug,
 			fetchingSitePurchases,
 			intervalType,
@@ -338,6 +382,8 @@ export class ProductSelector extends Component {
 			} );
 		}
 
+		const currentPlan = currentPlanSlug && getPlan( currentPlanSlug );
+
 		return map( products, product => {
 			const selectedProductSlug = this.state[ this.getStateKey( product.id, intervalType ) ];
 			const stateKey = this.getStateKey( product.id, intervalType );
@@ -350,13 +396,12 @@ export class ProductSelector extends Component {
 				billingTimeFrame = null;
 				fullPrice = null;
 				discountedPrice = null;
-				subtitle = translate( 'Included in your {{planLink/}} plan', {
+				subtitle = translate( 'Included in your {{planLink}}%(planName)s plan{{/planLink}}', {
+					args: {
+						planName: currentPlan.getTitle(),
+					},
 					components: {
-						planLink: (
-							<a href={ `/plans/my-plan/${ selectedSiteSlug }` }>
-								{ this.getShortPlanName( currentPlan.productName ) }
-							</a>
-						),
+						planLink: <a href={ `/plans/my-plan/${ selectedSiteSlug }` } />,
 					},
 				} );
 			} else {
@@ -414,6 +459,7 @@ export class ProductSelector extends Component {
 }
 
 ProductSelector.propTypes = {
+	basePlansPath: PropTypes.string,
 	intervalType: PropTypes.string.isRequired,
 	products: PropTypes.arrayOf(
 		PropTypes.shape( {
@@ -472,7 +518,6 @@ const connectComponent = connect( ( state, { products, siteId } ) => {
 	return {
 		availableProducts,
 		currencyCode: getCurrentUserCurrencyCode( state ),
-		currentPlan: getCurrentPlan( state, selectedSiteId ),
 		currentPlanSlug: getSitePlanSlug( state, selectedSiteId ),
 		fetchingSitePurchases: isFetchingSitePurchases( state ),
 		productSlugs,

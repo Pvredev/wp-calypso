@@ -399,6 +399,11 @@ export class Checkout extends React.Component {
 			if ( isJetpackNotAtomic && ! isJetpackProduct ) {
 				return `/plans/my-plan/${ selectedSiteSlug }?thank-you&install=all`;
 			}
+			// If we just purchased a Jetpack product, redirect to the my plans page.
+			if ( isJetpackNotAtomic ) {
+				return `/plans/my-plan/${ selectedSiteSlug }`;
+			}
+
 			return selectedFeature && isValidFeatureKey( selectedFeature )
 				? `/checkout/thank-you/features/${ selectedFeature }/${ selectedSiteSlug }/${ pendingOrReceiptId }`
 				: `/checkout/thank-you/${ selectedSiteSlug }/${ pendingOrReceiptId }`;
@@ -441,7 +446,7 @@ export class Checkout extends React.Component {
 		return;
 	}
 
-	maybeRedirectToConciergeNudge( pendingOrReceiptId ) {
+	maybeRedirectToConciergeNudge( pendingOrReceiptId, stepResult ) {
 		const { cart, selectedSiteSlug, previousRoute } = this.props;
 
 		// For a user purchasing a qualifying plan, show either a plan upgrade upsell or concierge upsell.
@@ -450,6 +455,8 @@ export class Checkout extends React.Component {
 		// then skip this section so that we do not show further upsells.
 		if (
 			config.isEnabled( 'upsell/concierge-session' ) &&
+			stepResult &&
+			isEmpty( stepResult.failed_purchases ) &&
 			! hasConciergeSession( cart ) &&
 			! hasJetpackPlan( cart ) &&
 			( hasBloggerPlan( cart ) || hasPersonalPlan( cart ) || hasPremiumPlan( cart ) ) &&
@@ -579,7 +586,10 @@ export class Checkout extends React.Component {
 			return redirectPathForGSuiteUpsell;
 		}
 
-		const redirectPathForConciergeUpsell = this.maybeRedirectToConciergeNudge( pendingOrReceiptId );
+		const redirectPathForConciergeUpsell = this.maybeRedirectToConciergeNudge(
+			pendingOrReceiptId,
+			stepResult
+		);
 		if ( redirectPathForConciergeUpsell ) {
 			return redirectPathForConciergeUpsell;
 		}

@@ -30,7 +30,7 @@ export default function Button( {
 Button.propTypes = {
 	buttonState: PropTypes.string,
 	buttonType: PropTypes.string,
-	onClick: PropTypes.func.isRequired,
+	onClick: PropTypes.func,
 	fullWidth: PropTypes.bool,
 };
 
@@ -155,8 +155,12 @@ function getTextColor( { buttonState, theme } ) {
 			return colors.surface;
 		case 'secondary':
 			return colors.surface;
+		case 'text-button':
+			return colors.highlight;
 		case 'disabled':
 			return colors.disabledButtons;
+		case 'text-button':
+			return colors.highlight;
 		default:
 			return colors.textColor;
 	}

@@ -13,7 +13,7 @@ import { getCurrencyDefaults } from '@automattic/format-currency';
  */
 import config from 'config';
 import { submitSurvey } from 'lib/purchases/actions';
-import Dialog from 'components/dialog';
+import { Dialog } from '@automattic/components';
 import FormFieldset from 'components/forms/form-fieldset';
 import FormLegend from 'components/forms/form-legend';
 import FormLabel from 'components/forms/form-label';
@@ -340,7 +340,7 @@ class CancelPurchaseForm extends React.Component {
 		appendRadioOption( 'anotherReasonOne', translate( 'Another reason…' ), ' ' );
 
 		return (
-			<div class="cancel-purchase-form__question">
+			<div className="cancel-purchase-form__question">
 				<FormLegend>{ translate( 'Please tell us why you are canceling:' ) }</FormLegend>
 				{ questionOneOrder.map( question => reasons[ question ] ) }
 			</div>
@@ -402,7 +402,7 @@ class CancelPurchaseForm extends React.Component {
 		appendRadioOption( 'anotherReasonTwo', translate( 'Another reason…' ), ' ' );
 
 		return (
-			<div class="cancel-purchase-form__question">
+			<div className="cancel-purchase-form__question">
 				<FormLegend>{ translate( 'Where is your next adventure taking you?' ) }</FormLegend>
 				{ questionTwoOrder.map( question => reasons[ question ] ) }
 			</div>
@@ -444,7 +444,7 @@ class CancelPurchaseForm extends React.Component {
 		);
 
 		return (
-			<div class="cancel-purchase-form__question">
+			<div className="cancel-purchase-form__question">
 				<FormLegend>
 					{ translate( 'You imported from another site. How did the import go?' ) }
 				</FormLegend>

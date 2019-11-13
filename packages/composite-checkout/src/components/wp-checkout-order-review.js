@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 
 /**
  * Internal dependencies
@@ -16,6 +16,7 @@ import {
 	OrderReviewSection,
 } from './order-review-line-items';
 import Coupon from './coupon';
+import WPTermsAndConditions from './wp-terms-and-conditions';
 
 export default function WPCheckoutOrderReview( { className } ) {
 	const [ items, total ] = useLineItems();
@@ -32,6 +33,8 @@ export default function WPCheckoutOrderReview( { className } ) {
 			<OrderReviewSection>
 				<OrderReviewTotal total={ total } />
 			</OrderReviewSection>
+
+			<WPTermsAndConditions />
 		</div>
 	);
 }

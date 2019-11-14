@@ -154,7 +154,7 @@ export function createStripeMethod( {
 	};
 }
 
-function StripeCreditCardFields( { isActive, summary } ) {
+function StripeCreditCardFields() {
 	const localize = useLocalize();
 	const theme = useTheme();
 	const { onFailure } = useCheckoutHandlers();
@@ -201,9 +201,6 @@ function StripeCreditCardFields( { isActive, summary } ) {
 		},
 	};
 
-	if ( ! isActive || summary ) {
-		return null;
-	}
 	if ( stripeLoadingError ) {
 		return <span>Error!</span>;
 	}
@@ -294,7 +291,7 @@ const CreditCardFieldsWrapper = styled.div`
 const CreditCardField = styled( Field )`
 	margin-top: 16px;
 
-	:first-child {
+	:first-of-type {
 		margin-top: 0;
 	}
 `;
@@ -360,7 +357,7 @@ const LockIconGraphic = styled( LockIcon )`
 	display: block;
 	position: absolute;
 	right: 10px;
-	top: 14px
+	top: 14px;
 	width: 20px;
 	height: 20px;
 `;

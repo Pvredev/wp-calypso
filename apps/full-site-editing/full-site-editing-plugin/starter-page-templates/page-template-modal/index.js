@@ -12,7 +12,7 @@ import { registerPlugin } from '@wordpress/plugins';
 import { withDispatch, withSelect } from '@wordpress/data';
 import { Component } from '@wordpress/element';
 import { parse as parseBlocks } from '@wordpress/blocks';
-
+import { PluginDocumentSettingPanel } from '@wordpress/edit-post';
 /**
  * Internal dependencies
  */
@@ -22,6 +22,7 @@ import TemplateSelectorPreview from './components/template-selector-preview';
 import { trackDismiss, trackSelection, trackView, initializeWithIdentity } from './utils/tracking';
 import replacePlaceholders from './utils/replace-placeholders';
 import ensureAssets from './utils/ensure-assets';
+import SidebarTemplatesPlugin from './components/sidebar-modal-opener';
 /* eslint-enable import/no-extraneous-dependencies */
 
 // Load config passed from backend.
@@ -31,6 +32,7 @@ const {
 	segment,
 	tracksUserData,
 	siteInformation = {},
+	screenAction,
 } = window.starterPageTemplatesConfig;
 
 class PageTemplateModal extends Component {
@@ -127,6 +129,11 @@ class PageTemplateModal extends Component {
 		}
 
 		this.setTemplate( slug );
+
+		// Turn off sidebar's instance of modal
+		if ( this.props.isPromptedFromSidebar ) {
+			this.props.toggleTemplateModal();
+		}
 	};
 
 	previewTemplate = slug => this.setState( { previewedTemplate: slug } );
@@ -156,7 +163,7 @@ class PageTemplateModal extends Component {
 	render() {
 		/* eslint-disable no-shadow */
 		const { previewedTemplate, isOpen, isLoading, blocksByTemplateSlug } = this.state;
-		const { templates } = this.props;
+		const { templates, isPromptedFromSidebar } = this.props;
 		/* eslint-enable no-shadow */
 
 		if ( ! isOpen ) {
@@ -165,7 +172,7 @@ class PageTemplateModal extends Component {
 
 		return (
 			<Modal
-				title={ __( 'Select Page Template', 'full-site-editing' ) }
+				title={ __( 'Select Page Layout', 'full-site-editing' ) }
 				className="page-template-modal"
 				overlayClassName="page-template-modal-screen-overlay"
 				shouldCloseOnClickOutside={ false }
@@ -173,28 +180,37 @@ class PageTemplateModal extends Component {
 				isDismissable={ false }
 				isDismissible={ false }
 			>
-				<IconButton
-					className="page-template-modal__close-button components-icon-button"
-					onClick={ this.closeModal }
-					icon="arrow-left-alt2"
-					label={ __( 'Go back' ) }
-				/>
+				{ isPromptedFromSidebar ? (
+					<IconButton
+						className="page-template-modal__close-button components-icon-button"
+						onClick={ this.props.toggleTemplateModal }
+						icon="no-alt"
+						label={ __( 'Close Layout Selector' ) }
+					/>
+				) : (
+					<IconButton
+						className="page-template-modal__close-button components-icon-button"
+						onClick={ this.closeModal }
+						icon="arrow-left-alt2"
+						label={ __( 'Go back' ) }
+					/>
+				) }
 
 				<div className="page-template-modal__inner">
 					{ isLoading ? (
 						<div className="page-template-modal__loading">
 							<Spinner />
-							{ __( 'Inserting template…', 'full-site-editing' ) }
+							{ __( 'Adding layout…', 'full-site-editing' ) }
 						</div>
 					) : (
 						<>
 							<form className="page-template-modal__form">
 								<fieldset className="page-template-modal__list">
 									<legend className="page-template-modal__form-title">
-										{ __( 'Choose a template…', 'full-site-editing' ) }
+										{ __( 'Choose a layout…', 'full-site-editing' ) }
 									</legend>
 									<TemplateSelectorControl
-										label={ __( 'Template', 'full-site-editing' ) }
+										label={ __( 'Layout', 'full-site-editing' ) }
 										templates={ templates }
 										blocksByTemplates={ blocksByTemplateSlug }
 										onTemplateSelect={ this.previewTemplate }
@@ -225,7 +241,7 @@ class PageTemplateModal extends Component {
 						onClick={ this.handleConfirmation }
 					>
 						{ sprintf(
-							__( 'Use %s template', 'full-site-editing' ),
+							__( 'Use %s layout', 'full-site-editing' ),
 							this.getTitleByTemplateSlug( previewedTemplate )
 						) }
 					</Button>
@@ -235,7 +251,7 @@ class PageTemplateModal extends Component {
 	}
 }
 
-const PageTemplatesPlugin = compose(
+export const PageTemplatesPlugin = compose(
 	withSelect( select => ( {
 		getMeta: () => select( 'core/editor' ).getEditedPostAttribute( 'meta' ),
 		postContentBlock: select( 'core/editor' )
@@ -262,12 +278,11 @@ const PageTemplatesPlugin = compose(
 				// Set post title.
 				editorDispatcher.editPost( { title } );
 
-				// Insert blocks.
+				// Replace blocks.
 				const postContentBlock = ownProps.postContentBlock;
-				dispatch( 'core/block-editor' ).insertBlocks(
-					blocks,
-					0,
+				dispatch( 'core/block-editor' ).replaceInnerBlocks(
 					postContentBlock ? postContentBlock.clientId : '',
+					blocks,
 					false
 				);
 			},
@@ -279,15 +294,39 @@ if ( tracksUserData ) {
 	initializeWithIdentity( tracksUserData );
 }
 
-registerPlugin( 'page-templates', {
+// Open plugin only if we are creating new page.
+if ( screenAction === 'add' ) {
+	registerPlugin( 'page-templates', {
+		render: () => {
+			return (
+				<PageTemplatesPlugin
+					shouldPrefetchAssets={ false }
+					templates={ templates }
+					vertical={ vertical }
+					segment={ segment }
+				/>
+			);
+		},
+	} );
+}
+
+// Always register ability to open from document sidebar.
+registerPlugin( 'page-templates-sidebar', {
 	render: () => {
 		return (
-			<PageTemplatesPlugin
-				shouldPrefetchAssets={ false }
-				templates={ templates }
-				vertical={ vertical }
-				segment={ segment }
-			/>
+			<PluginDocumentSettingPanel
+				name="Template Modal Opener"
+				title={ __( 'Page Layout' ) }
+				className="page-template-modal__sidebar"
+				icon="admin-page"
+			>
+				<SidebarTemplatesPlugin
+					templates={ templates }
+					vertical={ vertical }
+					segment={ segment }
+					siteInformation={ siteInformation }
+				/>
+			</PluginDocumentSettingPanel>
 		);
 	},
 } );

@@ -9,8 +9,8 @@ import PropTypes from 'prop-types';
 /**
  * Internal dependencies
  */
-import { useLocalize } from '../lib/localize';
-import joinClasses from '../lib/join-classes';
+import { useLocalize } from '../lib/localize'; // TODO: remove this
+import joinClasses from './join-classes';
 import Field from './field';
 import Button from './button';
 
@@ -89,6 +89,7 @@ const ApplyButton = styled( Button )`
 	right: 4px;
 	padding: 7px;
 	animation: ${animateIn} 0.2s ease-out;
+	animation-fill-mode: backwards;
 	margin: 0;
 `;
 

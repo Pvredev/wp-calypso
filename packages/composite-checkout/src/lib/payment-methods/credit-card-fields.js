@@ -7,13 +7,13 @@ import styled from '@emotion/styled';
 /**
  * Internal dependencies
  */
-import Field from './field';
-import GridRow from './grid-row';
-import { useLocalize } from '../lib/localize';
-import { AmexLogo, VisaLogo, MastercardLogo } from './payment-logos';
-import { useSelect, useDispatch } from '../public-api';
+import Field from '../../components/field';
+import GridRow from '../../components/grid-row';
+import { useLocalize } from '../localize';
+import { AmexLogo, VisaLogo, MastercardLogo } from '../../components/payment-logos';
+import { useSelect, useDispatch } from '../../public-api';
 
-export default function CreditCardFields() {
+export default function CreditCardFields( { disabled } ) {
 	const localize = useLocalize();
 	const [ paymentIcon, setPaymentIcon ] = useState( <LockIcon /> );
 	const paymentData = useSelect( select => select( 'checkout' ).getPaymentData() );
@@ -68,30 +68,33 @@ export default function CreditCardFields() {
 				onChange={ value => {
 					handleCreditCardNumberChange( value );
 				} }
+				disabled={ disabled }
 			/>
 			<FieldRow gap="4%" columnWidths="48% 48%">
 				<Field
 					id="card-expiry"
 					type="Number"
-					label={ localize( 'Expiry Date' ) }
+					label={ localize( 'Expiry date' ) }
 					placeholder="MM / YY"
 					autoComplete="cc-exp"
 					value={ currentCreditCardData.cardExpiry || '' }
 					onChange={ value => {
 						updateCreditCard( 'cardExpiry', value );
 					} }
+					disabled={ disabled }
 				/>
 				<GridRow gap="4%" columnWidths="67% 29%">
 					<Field
 						id="card-cvc"
 						type="Number"
-						label={ localize( 'Security Code' ) }
-						placeholder="111"
+						label={ localize( 'Security code' ) }
+						placeholder="CVC"
 						autoComplete="cc-csc"
 						value={ currentCreditCardData.cardCvc || '' }
 						onChange={ value => {
 							updateCreditCard( 'cardCvc', value );
 						} }
+						disabled={ disabled }
 					/>
 					<CVVImage />
 				</GridRow>
@@ -101,12 +104,13 @@ export default function CreditCardFields() {
 				id="card-holder-name"
 				type="Text"
 				label={ localize( 'Cardholder name' ) }
-				description={ localize( 'Enter your name as it’s written on the card' ) }
+				description={ localize( "Enter your name as it's written on the card" ) }
 				autoComplete="cc-name"
 				value={ currentCreditCardData.cardHolderName || '' }
 				onChange={ value => {
 					updateCreditCard( 'cardHolderName', value );
 				} }
+				disabled={ disabled }
 			/>
 		</CreditCardFieldsWrapper>
 	);
@@ -203,7 +207,8 @@ const CVVImage = styled( CVV )`
 `;
 
 const LockIconGraphic = styled.svg`
-	width: 17px;
-	height: 17px;
+	width: 20px;
+	height: 20px;
 	display: block;
+	transform: translateY( 1px );
 `;

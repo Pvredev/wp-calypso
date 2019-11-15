@@ -59,7 +59,7 @@ export default function CheckoutStep( {
 CheckoutStep.propTypes = {
 	className: PropTypes.string,
 	stepNumber: PropTypes.number.isRequired,
-	title: PropTypes.string.isRequired,
+	title: PropTypes.node.isRequired,
 	finalStep: PropTypes.bool,
 	stepSummary: PropTypes.node,
 	stepContent: PropTypes.node,
@@ -84,7 +84,7 @@ function CheckoutStepHeader( {
 			className={ joinClasses( [ className, 'checkout-step__header' ] ) }
 		>
 			<Stepper isComplete={ isComplete } isActive={ isActive }>
-				{ isComplete ? <CheckIcon /> : stepNumber }
+				{ stepNumber }
 			</Stepper>
 			<StepTitle className="checkout-step__title" isActive={ isActive }>
 				{ title }
@@ -106,7 +106,7 @@ function CheckoutStepHeader( {
 CheckoutStepHeader.propTypes = {
 	className: PropTypes.string,
 	stepNumber: PropTypes.number.isRequired,
-	title: PropTypes.string.isRequired,
+	title: PropTypes.node.isRequired,
 	isActive: PropTypes.bool,
 	isComplete: PropTypes.bool,
 	onEdit: PropTypes.func,
@@ -114,13 +114,16 @@ CheckoutStepHeader.propTypes = {
 
 function Stepper( { isComplete, isActive, className, children } ) {
 	return (
-		<StepNumber
-			isComplete={ isComplete }
-			isActive={ isActive }
-			className={ joinClasses( [ className, 'checkout-step__stepper' ] ) }
-		>
-			{ children }
-		</StepNumber>
+		<StepNumberOuterWrapper className={ joinClasses( [ className, 'checkout-step__stepper' ] ) }>
+			<StepNumberInnerWrapper isComplete={ isComplete }>
+				<StepNumber isComplete={ isComplete } isActive={ isActive }>
+					{ children }
+				</StepNumber>
+				<StepNumberCompleted>
+					<CheckIcon />
+				</StepNumberCompleted>
+			</StepNumberInnerWrapper>
+		</StepNumberOuterWrapper>
 	);
 }
 
@@ -144,9 +147,9 @@ const StepWrapper = styled.div`
 const StepTitle = styled.span`
 	color: ${props =>
 		props.isActive ? props.theme.colors.textColorDark : props.theme.colors.textColor};
-	margin-right: 5px;
 	font-weight: ${props =>
 		props.isActive ? props.theme.weights.bold : props.theme.weights.normal};
+	flex: 1;
 `;
 
 const StepHeader = styled.h2`
@@ -157,32 +160,40 @@ const StepHeader = styled.h2`
 	margin: 0 0 ${props => ( props.isComplete || props.isActive ? '8px' : '0' )};
 `;
 
-const StepNumber = styled.span`
+const StepNumberOuterWrapper = styled.div`
+	position: relative;
+	width: 27px;
+	height: 27px;
+	margin-right: 8px;
+`;
+
+const StepNumberInnerWrapper = styled.div`
+	position: relative;
+	transform-origin: center center;
+	transition: transform 0.3s 0.1s ease-out;
+	transform-style: preserve-3d;
+	transform: ${props => ( props.isComplete ? 'rotateY(180deg)' : 'rotateY(0)' )};
+`;
+
+const StepNumber = styled.div`
 	background: ${getStepNumberBackgroundColor};
 	font-weight: normal;
 	width: 27px;
 	height: 27px;
-	box-sizing: border-box;
-	padding: 0;
-	text-align: center;
-	display: block;
-	border-radius: 50%;
-	margin-right: 8px;
-	color: ${getStepNumberForegroundColor};
-	position: relative;
 	line-height: 27px;
+	box-sizing: border-box;
+	text-align: center;
+	border-radius: 50%;
+	color: ${getStepNumberForegroundColor};
+	position: absolute;
+	top: 0;
+	left: 0;
+	backface-visibility: hidden;
+`;
 
-	:after {
-		position: absolute;
-		top: 0;
-		left: 0;
-		content: '';
-		display: block;
-		width: 27px;
-		height: 27px;
-		border-radius: 50%;
-		box-sizing: border-box;
-	}
+const StepNumberCompleted = styled( StepNumber )`
+	background: ${props => props.theme.colors.success};
+	transform: rotateY( 180deg );
 
 	svg {
 		margin-top: 4px;

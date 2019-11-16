@@ -193,9 +193,13 @@ class DomainRegistrationSuggestion extends React.Component {
 			comment: 'Shown next to a domain that has a special discounted sale price',
 		} );
 		const infoPopoverSize = isFeatured ? 22 : 18;
+		const titleWrapperClassName = classNames( 'domain-registration-suggestion__title-wrapper', {
+			'domain-registration-suggestion__title-domain-copy-test':
+				this.props.showTestCopy && ! this.props.isFeatured,
+		} );
 
 		return (
-			<div className="domain-registration-suggestion__title-wrapper">
+			<div className={ titleWrapperClassName }>
 				<h3 className="domain-registration-suggestion__title">{ title }</h3>
 				{ productSaleCost && paidDomain && <Badge>{ saleBadgeText }</Badge> }
 				{ showHstsNotice && (
@@ -237,7 +241,7 @@ class DomainRegistrationSuggestion extends React.Component {
 
 		let title, progressBarProps;
 		if ( isRecommended ) {
-			title = translate( 'Best Match' );
+			title = this.props.showTestCopy ? 'Our Recommendation' : translate( 'Best Match' );
 			progressBarProps = {
 				color: NOTICE_GREEN,
 				title,
@@ -254,6 +258,18 @@ class DomainRegistrationSuggestion extends React.Component {
 		}
 
 		if ( title ) {
+			if ( this.props.showTestCopy ) {
+				const badgeClassName = classNames( '', {
+					success: isRecommended,
+					blue: isBestAlternative,
+				} );
+				return (
+					<div className="domain-registration-suggestion__progress-bar">
+						<Badge type={ badgeClassName }>{ title }</Badge>
+					</div>
+				);
+			}
+
 			return (
 				<div className="domain-registration-suggestion__progress-bar">
 					<ProgressBar { ...progressBarProps } />
@@ -264,6 +280,10 @@ class DomainRegistrationSuggestion extends React.Component {
 	}
 
 	renderMatchReason() {
+		if ( this.props.showTestCopy ) {
+			return null;
+		}
+
 		const {
 			suggestion: { domain_name: domain },
 			isFeatured,
@@ -313,6 +333,8 @@ class DomainRegistrationSuggestion extends React.Component {
 				domainsWithPlansOnly={ domainsWithPlansOnly }
 				onButtonClick={ this.onButtonClick }
 				{ ...this.getButtonProps() }
+				showTestCopy={ this.props.showTestCopy }
+				isFeatured={ isFeatured }
 			>
 				{ this.renderDomain() }
 				{ this.renderProgressBar() }
@@ -334,6 +356,7 @@ const mapStateToProps = ( state, props ) => {
 	};
 };
 
-export default connect( mapStateToProps, { recordTracksEvent } )(
-	localize( DomainRegistrationSuggestion )
-);
+export default connect(
+	mapStateToProps,
+	{ recordTracksEvent }
+)( localize( DomainRegistrationSuggestion ) );

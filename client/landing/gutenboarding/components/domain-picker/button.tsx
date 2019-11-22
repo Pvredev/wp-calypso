@@ -2,9 +2,9 @@
  * External dependencies
  */
 import React, { FunctionComponent, useState } from 'react';
+import { __ as NO__ } from '@wordpress/i18n';
 import { Button, Popover, Dashicon } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { head, partition } from 'lodash';
 import classnames from 'classnames';
 
 /**
@@ -25,9 +25,7 @@ const DomainPickerButton: FunctionComponent = () => {
 	// User can search for a domain
 	const [ domainSearch, setDomainSearch ] = useState( '' );
 
-	const [ isDomainPopoverVisible, setDomainPopoverVisibility ] = useState(
-		true /* @TODO: should be `false` by default, true for dev */
-	);
+	const [ isDomainPopoverVisible, setDomainPopoverVisibility ] = useState( false );
 
 	// Without user search, we can provide recommendations based on title + vertical
 	const { siteTitle, siteVertical } = useSelect( select => select( ONBOARD_STORE ).getState() );
@@ -62,8 +60,6 @@ const DomainPickerButton: FunctionComponent = () => {
 		[ search, siteVertical ]
 	);
 
-	const [ freeDomainSuggestions, paidDomainSuggestions ] = partition( suggestions, 'is_free' );
-
 	return (
 		<>
 			<Button
@@ -73,7 +69,7 @@ const DomainPickerButton: FunctionComponent = () => {
 				className={ classnames( 'domain-picker__button', { 'is-open': isDomainPopoverVisible } ) }
 				onClick={ () => setDomainPopoverVisibility( s => ! s ) }
 			>
-				{ head( freeDomainSuggestions )?.domain_name ?? '\u00a0' }
+				{ NO__( 'Choose a domain' ) }
 				<Dashicon icon="arrow-down-alt2" />
 			</Button>
 			{ isDomainPopoverVisible && (
@@ -81,7 +77,7 @@ const DomainPickerButton: FunctionComponent = () => {
 					<DomainPicker
 						domainSearch={ domainSearch }
 						setDomainSearch={ setDomainSearch }
-						suggestions={ paidDomainSuggestions }
+						suggestions={ suggestions }
 					/>
 				</Popover>
 			) }

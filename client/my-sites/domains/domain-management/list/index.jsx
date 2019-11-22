@@ -181,7 +181,7 @@ export class List extends React.Component {
 
 				{ this.domainCreditsInfoNotice() }
 
-				<SectionHeader label={ headerText }>{ this.headerButtons() }</SectionHeader>
+				<SectionHeader>{ this.headerButtons() }</SectionHeader>
 
 				<div className="domain-management-list__items">
 					{ this.notice() }
@@ -201,11 +201,11 @@ export class List extends React.Component {
 
 		return (
 			domain &&
-			domain.registrationMoment &&
+			domain.registrationDate &&
 			this.props
 				.moment()
 				.subtract( 1, 'day' )
-				.isBefore( domain.registrationMoment )
+				.isBefore( this.props.moment( domain.registrationDate ) )
 		);
 	}
 

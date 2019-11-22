@@ -142,6 +142,9 @@ export function createSiteWithCart( callback, dependencies, stepData, reduxStore
 	const siteSegment = getSiteTypePropertyValue( 'slug', siteType, 'id' );
 	const siteTypeTheme = getSiteTypePropertyValue( 'slug', siteType, 'theme' );
 
+	// flowName isn't always passed in
+	const flowToCheck = flowName || lastKnownFlow;
+
 	const newSiteParams = {
 		blog_title: siteTitle,
 		options: {
@@ -158,15 +161,16 @@ export function createSiteWithCart( callback, dependencies, stepData, reduxStore
 			site_information: {
 				title: siteTitle,
 			},
+			site_creation_flow: flowToCheck,
 		},
 		public: getNewSitePublicSetting( state ),
 		validate: false,
 	};
 
-	// flowName isn't always passed in
-	const flowToCheck = flowName || lastKnownFlow;
+	const shouldSkipDomainStep = ! siteUrl && isDomainStepSkippable( flowToCheck );
+	const shouldHideFreePlan = get( getSignupDependencyStore( state ), 'shouldHideFreePlan', false );
 
-	if ( ! siteUrl && isDomainStepSkippable( flowToCheck ) ) {
+	if ( shouldSkipDomainStep || shouldHideFreePlan ) {
 		newSiteParams.blog_name =
 			get( user.get(), 'username' ) ||
 			get( getSignupDependencyStore( state ), 'username' ) ||
@@ -657,24 +661,6 @@ export function isSiteTopicFulfilled( stepName, defaultDependencies, nextProps )
 	if ( shouldExcludeStep( stepName, fulfilledDependencies ) ) {
 		flows.excludeStep( stepName );
 	}
-}
-
-/**
- * Creates a user account using an email only and logs them in immediately.
- * It differs from `createPasswordlessUser` in that we don't require a verification step before the user can continue with onboarding.
- * Returns the dependencies for the step.
- *
- * @param {Function} callback API callback function
- * @param {object}   data     An object sent via POST to WPCOM API with the following values: `email`
- */
-export function createUserAccountFromEmailAddress( callback, { email } ) {
-	wpcom
-		.undocumented()
-		.createUserAccountFromEmailAddress( { email }, null )
-		.then( response =>
-			callback( null, { username: response.username, bearer_token: response.token.access_token } )
-		)
-		.catch( err => callback( err ) );
 }
 
 /**

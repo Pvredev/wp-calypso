@@ -3,16 +3,19 @@
  */
 import { __ as NO__ } from '@wordpress/i18n';
 import { Button, Icon, IconButton } from '@wordpress/components';
-import { useSelect } from '@wordpress/data';
+import { useDispatch, useSelect } from '@wordpress/data';
 import React, { FunctionComponent } from 'react';
+import { useDebounce } from 'use-debounce';
 
 /**
  * Internal dependencies
  */
-import { STORE_KEY } from '../../stores/onboard';
+import { STORE_KEY as DOMAIN_STORE } from '../../stores/domain-suggestions';
+import { STORE_KEY as ONBOARD_STORE } from '../../stores/onboard';
 import './style.scss';
 import { DomainPickerButton } from '../domain-picker';
 import { isFilledFormValue } from '../../stores/onboard/types';
+import { selectorDebounce } from '../../constants';
 
 interface Props {
 	isEditorSidebarOpened: boolean;
@@ -31,7 +34,37 @@ const Header: FunctionComponent< Props > = ( {
 	toggleGeneralSidebar,
 	toggleSidebarShortcut,
 } ) => {
-	const { siteTitle, siteVertical } = useSelect( select => select( STORE_KEY ).getState() );
+	const { domain, siteTitle, siteVertical } = useSelect( select =>
+		select( ONBOARD_STORE ).getState()
+	);
+	const { setDomain } = useDispatch( ONBOARD_STORE );
+
+	const [ domainSearch ] = useDebounce(
+		// eslint-disable-next-line no-nested-ternary
+		domain // If we know a domain, do not search.
+			? null
+			: isFilledFormValue( siteTitle ) // If we have a siteTitle, use it.
+			? siteTitle
+			: // Otherwise, do not search.
+			  null,
+		selectorDebounce
+	);
+	const freeDomainSuggestion = useSelect(
+		select => {
+			if ( ! domainSearch ) {
+				return;
+			}
+			return select( DOMAIN_STORE ).getDomainSuggestions( domainSearch, {
+				// Avoid `only_wordpressdotcom` — it seems to fail to find results sometimes
+				include_wordpressdotcom: true,
+				quantity: 1,
+				...( isFilledFormValue( siteVertical ) && { vertical: siteVertical.id } ),
+			} )?.[ 0 ];
+		},
+		[ domainSearch, siteVertical ]
+	);
+
+	const currentDomain = domain ?? freeDomainSuggestion;
 
 	/* eslint-disable wpcalypso/jsx-classname-namespace */
 	return (
@@ -49,7 +82,17 @@ const Header: FunctionComponent< Props > = ( {
 					<div className="gutenboarding__site-title">
 						{ siteTitle ? siteTitle : NO__( 'Create your site' ) }
 					</div>
-					<DomainPickerButton />
+					{ currentDomain && (
+						<DomainPickerButton
+							defaultQuery={ isFilledFormValue( siteTitle ) ? siteTitle : undefined }
+							onDomainSelect={ setDomain }
+							queryParameters={
+								isFilledFormValue( siteVertical ) ? { vertical: siteVertical.id } : undefined
+							}
+						>
+							{ currentDomain.domain_name }
+						</DomainPickerButton>
+					) }
 				</div>
 			</div>
 			<div className="gutenboarding__header-section">

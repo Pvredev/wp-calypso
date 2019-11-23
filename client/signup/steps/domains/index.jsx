@@ -50,7 +50,6 @@ import { fetchUsernameSuggestion } from 'state/signup/optional-dependencies/acti
 import { isSitePreviewVisible } from 'state/signup/preview/selectors';
 import { hideSitePreview, showSitePreview } from 'state/signup/preview/actions';
 import { abtest } from 'lib/abtest';
-import config from 'config';
 
 /**
  * Style dependencies
@@ -125,7 +124,6 @@ class DomainsStep extends React.Component {
 
 		if (
 			false !== this.props.shouldShowDomainTestCopy &&
-			config.isEnabled( 'domain-step-copy-update' ) &&
 			'variantShowUpdates' === abtest( 'domainStepCopyUpdates' )
 		) {
 			this.showTestCopy = true;
@@ -206,14 +204,51 @@ class DomainsStep extends React.Component {
 		return `${ repo }/${ themeSlug }`;
 	};
 
-	handleSkip = () => {
-		const domainItem = undefined;
+	handleSkip = ( googleAppsCartItem, shouldHideFreePlan = false ) => {
+		const hideFreePlanTracksProp = this.showTestCopy
+			? { should_hide_free_plan: shouldHideFreePlan }
+			: {};
 
-		this.props.submitSignupStep( { stepName: this.props.stepName, domainItem }, { domainItem } );
-		this.props.goToNextStep();
+		const tracksProperties = Object.assign(
+			{
+				section: this.getAnalyticsSection(),
+				flow: this.props.flowName,
+				step: this.props.stepName,
+			},
+			hideFreePlanTracksProp
+		);
+
+		this.props.recordTracksEvent( 'calypso_signup_skip_step', tracksProperties );
+
+		this.submitWithDomain( googleAppsCartItem, shouldHideFreePlan );
 	};
 
 	submitWithDomain = ( googleAppsCartItem, shouldHideFreePlan = false ) => {
+		const shouldHideFreePlanItem = this.showTestCopy ? { shouldHideFreePlan } : {};
+
+		if ( shouldHideFreePlan ) {
+			let domainItem, isPurchasingItem, siteUrl;
+
+			this.props.submitSignupStep(
+				Object.assign(
+					{
+						stepName: this.props.stepName,
+						domainItem,
+						googleAppsCartItem,
+						isPurchasingItem,
+						siteUrl,
+						stepSectionName: this.props.stepSectionName,
+					},
+					this.getThemeArgs()
+				),
+				Object.assign( { domainItem }, shouldHideFreePlanItem )
+			);
+
+			this.props.goToNextStep();
+
+			return;
+		}
+
 		const suggestion = this.props.step.suggestion;
 
 		const isPurchasingItem = suggestion && Boolean( suggestion.product_slug );
@@ -230,8 +265,6 @@ class DomainsStep extends React.Component {
 					productSlug: suggestion.product_slug,
 			  } )
 			: undefined;
-
-		const shouldHideFreePlanItem = this.showTestCopy ? { shouldHideFreePlan } : {};
 
 		suggestion && this.props.submitDomainStepSelection( suggestion, this.getAnalyticsSection() );
 
@@ -438,7 +471,7 @@ class DomainsStep extends React.Component {
 				showSkipButton={ this.props.showSkipButton }
 				vertical={ this.props.vertical }
 				onSkip={ this.handleSkip }
-				hideFreePlan={ this.submitWithDomain }
+				hideFreePlan={ this.handleSkip }
 			/>
 		);
 	};
@@ -698,6 +731,7 @@ export default connect(
 		setDesignType,
 		saveSignupStep,
 		submitSignupStep,
+		recordTracksEvent,
 		fetchUsernameSuggestion,
 		hideSitePreview,
 		showSitePreview,

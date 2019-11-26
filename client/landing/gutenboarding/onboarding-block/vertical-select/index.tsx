@@ -32,13 +32,13 @@ const VerticalSelect: FunctionComponent< InjectedStepProps > = ( {
 		NO__( 'Digital Marketing' ),
 		NO__( 'Cameras & Photography' ),
 		NO__( 'Website Designer' ),
-		NO__( 'Restaurants' ),
+		NO__( 'Restaurant' ),
 		NO__( 'Fashion Designer' ),
 		NO__( 'Real Estate Agent' ),
 	];
 
 	const [ inputValue, setInputValue ] = useState( '' );
-	const [ suggestionsVisibility, setsuggestionsVisibility ] = useState( false );
+	const [ dirty, setDirty ] = useState( false );
 
 	/**
 	 * Ref to the <Suggestions />, necessary for handling input events
@@ -61,13 +61,14 @@ const VerticalSelect: FunctionComponent< InjectedStepProps > = ( {
 	);
 
 	const { siteVertical } = useSelect( select => select( STORE_KEY ).getState() );
-	const { setSiteVertical } = useDispatch( STORE_KEY );
+	const { setSiteVertical, resetSiteVertical } = useDispatch( STORE_KEY );
 
-	const showSuggestions = () => setsuggestionsVisibility( true );
-	const hideSuggestions = () => setsuggestionsVisibility( false );
-
-	const handleSuggestionChangeEvent = ( e: React.ChangeEvent< HTMLInputElement > ) =>
+	const handleSuggestionChangeEvent = ( e: React.ChangeEvent< HTMLInputElement > ) => {
+		if ( e.target.value !== inputValue && ! dirty ) {
+			setDirty( true );
+		}
 		setInputValue( e.target.value );
+	};
 
 	const handleSuggestionKeyDown = ( e: React.KeyboardEvent< HTMLInputElement > ) => {
 		if ( suggestionRef.current ) {
@@ -81,12 +82,17 @@ const VerticalSelect: FunctionComponent< InjectedStepProps > = ( {
 
 	const handleSelect = ( vertical: SiteVertical ) => {
 		setSiteVertical( vertical );
-		hideSuggestions();
+		setDirty( false );
 		onSelect();
 	};
 
-	const value =
-		suggestionsVisibility || ! isFilledFormValue( siteVertical ) ? inputValue : siteVertical.label;
+	const handleBlur = () => {
+		if ( dirty ) {
+			resetSiteVertical();
+		}
+		setDirty( false );
+		onSelect();
+	};
 
 	const loadingMessage = [
 		{
@@ -96,10 +102,12 @@ const VerticalSelect: FunctionComponent< InjectedStepProps > = ( {
 	];
 
 	const suggestions = ! inputValue.length
-		? popular.map( label => ( {
-				...verticals.find( vertical => vertical.label.includes( label ) ),
-				category: NO__( 'Popular' ),
-		  } ) )
+		? popular
+				.map( label => ( {
+					...verticals.find( vertical => vertical.label === label ),
+					category: NO__( 'Popular' ),
+				} ) )
+				.filter( x => Object.prototype.hasOwnProperty.call( x, 'label' ) )
 		: verticals.filter( x => x.label.toLowerCase().includes( inputValue.toLowerCase() ) );
 
 	const label = NO__( 'My site is about' );
@@ -128,11 +136,10 @@ const VerticalSelect: FunctionComponent< InjectedStepProps > = ( {
 					className={ inputClass }
 					placeholder={ NO__( 'enter a topic' ) }
 					onChange={ handleSuggestionChangeEvent }
-					onFocus={ showSuggestions }
-					onBlur={ hideSuggestions }
+					onBlur={ handleBlur }
 					onKeyDown={ handleSuggestionKeyDown }
 					autoComplete="off"
-					value={ value }
+					value={ inputValue }
 				/>
 				<Suggestions
 					ref={ suggestionRef }

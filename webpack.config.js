@@ -69,18 +69,21 @@ const nodeModulesToTranspile = [
 	'd3-array/',
 	'd3-scale/',
 	'debug/',
+	'escape-string-regexp/',
 	'filesize/',
 	'prismjs/',
 	'react-spring/',
 	'regenerate-unicode-properties/',
 	'regexpu-core/',
+	'striptags',
 	'unicode-match-property-ecmascript/',
 	'unicode-match-property-value-ecmascript/',
 ];
 /**
  * Check to see if we should transpile certain files in node_modules
- * @param {String} filepath the path of the file to check
- * @returns {Boolean} True if we should transpile it, false if not
+ *
+ * @param {string} filepath the path of the file to check
+ * @returns {boolean} True if we should transpile it, false if not
  *
  * We had a thought to try to find the package.json and use the engines property
  * to determine what we should transpile, but not all libraries set engines properly

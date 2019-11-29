@@ -8,42 +8,22 @@ import '@wordpress/nux';
 import { __, sprintf } from '@wordpress/i18n';
 import { compose } from '@wordpress/compose';
 import { Button, Modal, Spinner, IconButton } from '@wordpress/components';
-import { registerPlugin } from '@wordpress/plugins';
-import {
-	withDispatch,
-	withSelect,
-	select as wpSelect,
-	dispatch as wpDispatch,
-	subscribe,
-} from '@wordpress/data';
+import { withDispatch, withSelect } from '@wordpress/data';
 import { Component } from '@wordpress/element';
 import { parse as parseBlocks } from '@wordpress/blocks';
-import { PluginDocumentSettingPanel } from '@wordpress/edit-post';
+
 /**
  * Internal dependencies
  */
 import './styles/starter-page-templates-editor.scss';
 import TemplateSelectorControl from './components/template-selector-control';
 import TemplateSelectorPreview from './components/template-selector-preview';
-import { trackDismiss, trackSelection, trackView, initializeWithIdentity } from './utils/tracking';
+import { trackDismiss, trackSelection, trackView } from './utils/tracking';
 import replacePlaceholders from './utils/replace-placeholders';
 import ensureAssets from './utils/ensure-assets';
-import SidebarTemplatesPlugin from './components/sidebar-modal-opener';
 /* eslint-enable import/no-extraneous-dependencies */
 
 const DEFAULT_HOMEPAGE_TEMPLATE = 'maywood';
-
-// Load config passed from backend.
-const {
-	templates = [],
-	vertical,
-	segment,
-	tracksUserData,
-	siteInformation = {},
-	screenAction,
-	theme,
-	isFrontPage,
-} = window.starterPageTemplatesConfig;
 
 class PageTemplateModal extends Component {
 	state = {
@@ -74,10 +54,10 @@ class PageTemplateModal extends Component {
 
 		// Parse templates blocks and store them into the state.
 		const blocksByTemplateSlug = reduce(
-			templates,
+			this.props.templates,
 			( prev, { slug, content } ) => {
 				prev[ slug ] = content
-					? parseBlocks( replacePlaceholders( content, siteInformation ) )
+					? parseBlocks( replacePlaceholders( content, this.props.siteInformation ) )
 					: [];
 				return prev;
 			},
@@ -93,16 +73,16 @@ class PageTemplateModal extends Component {
 		let previouslyChosenTemplate = props._starter_page_template;
 
 		// Usally the "new page" case.
-		if ( ! isFrontPage && ! previouslyChosenTemplate ) {
+		if ( ! props.isFrontPage && ! previouslyChosenTemplate ) {
 			return blankTemplate;
 		}
 
 		// Normalize "home" slug into the current theme.
 		if ( previouslyChosenTemplate === 'home' ) {
-			previouslyChosenTemplate = theme;
+			previouslyChosenTemplate = props.theme;
 		}
 
-		const slug = previouslyChosenTemplate || theme;
+		const slug = previouslyChosenTemplate || props.theme;
 
 		if ( find( props.templates, { slug } ) ) {
 			return slug;
@@ -203,10 +183,10 @@ class PageTemplateModal extends Component {
 		} );
 
 		const currentThemeTemplate =
-			find( this.props.templates, { slug: theme } ) ||
+			find( this.props.templates, { slug: this.props.theme } ) ||
 			find( this.props.templates, { slug: DEFAULT_HOMEPAGE_TEMPLATE } );
 
-		if ( ! isFrontPage || ! currentThemeTemplate ) {
+		if ( ! this.props.isFrontPage || ! currentThemeTemplate ) {
 			return { homepageTemplates: sortBy( homepageTemplates, 'title' ), defaultTemplates };
 		}
 
@@ -229,7 +209,7 @@ class PageTemplateModal extends Component {
 				blocksByTemplates={ this.state.blocksByTemplateSlug }
 				onTemplateSelect={ this.previewTemplate }
 				useDynamicPreview={ false }
-				siteInformation={ siteInformation }
+				siteInformation={ this.props.siteInformation }
 				selectedTemplate={ this.state.previewedTemplate }
 				handleTemplateConfirmation={ this.handleConfirmation }
 			/>
@@ -281,7 +261,7 @@ class PageTemplateModal extends Component {
 					) : (
 						<>
 							<form className="page-template-modal__form">
-								{ isFrontPage ? (
+								{ this.props.isFrontPage ? (
 									<>
 										{ this.renderTemplatesList(
 											homepageTemplates,
@@ -380,58 +360,3 @@ export const PageTemplatesPlugin = compose(
 		};
 	} )
 )( PageTemplateModal );
-
-if ( tracksUserData ) {
-	initializeWithIdentity( tracksUserData );
-}
-
-// Open plugin only if we are creating new page.
-if ( screenAction === 'add' ) {
-	registerPlugin( 'page-templates', {
-		render: () => {
-			return (
-				<PageTemplatesPlugin
-					shouldPrefetchAssets={ false }
-					templates={ templates }
-					vertical={ vertical }
-					segment={ segment }
-				/>
-			);
-		},
-	} );
-}
-
-// Always register ability to open from document sidebar.
-registerPlugin( 'page-templates-sidebar', {
-	render: () => {
-		return (
-			<PluginDocumentSettingPanel
-				name="Template Modal Opener"
-				title={ __( 'Page Layout' ) }
-				className="page-template-modal__sidebar"
-				icon="admin-page"
-			>
-				<SidebarTemplatesPlugin
-					templates={ templates }
-					vertical={ vertical }
-					segment={ segment }
-					siteInformation={ siteInformation }
-				/>
-			</PluginDocumentSettingPanel>
-		);
-	},
-} );
-
-// Make sidebar plugin open by default.
-const unsubscribe = subscribe( () => {
-	if (
-		! wpSelect( 'core/edit-post' ).isEditorPanelOpened(
-			'page-templates-sidebar/Template Modal Opener'
-		)
-	) {
-		wpDispatch( 'core/edit-post' ).toggleEditorPanelOpened(
-			'page-templates-sidebar/Template Modal Opener'
-		);
-	}
-	unsubscribe();
-} );

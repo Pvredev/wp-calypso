@@ -16,7 +16,6 @@ export function generateFlows( {
 	getSignupDestination = noop,
 	getThankYouNoSiteDestination = noop,
 	getChecklistThemeDestination = noop,
-	getEditorDestination = noop,
 } = {} ) {
 	const flows = {
 		account: {
@@ -346,10 +345,10 @@ export function generateFlows( {
 
 	if ( isEnabled( 'signup/full-site-editing' ) ) {
 		flows[ 'test-fse' ] = {
-			steps: [ 'user', 'template-first-themes', 'domains', 'plans' ],
-			destination: getEditorDestination,
+			steps: [ 'user', 'fse-themes', 'domains', 'plans' ],
+			destination: getSignupDestination,
 			description: 'User testing Signup flow for Full Site Editing',
-			lastModified: '2019-11-22',
+			lastModified: '2019-12-02',
 		};
 	}
 

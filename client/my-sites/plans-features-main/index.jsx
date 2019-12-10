@@ -11,6 +11,7 @@ import { connect } from 'react-redux';
 /**
  * Internal dependencies
  */
+import AsyncLoad from 'components/async-load';
 import warn from 'lib/warn';
 import PlanFeatures from 'my-sites/plan-features';
 import {
@@ -53,7 +54,6 @@ import {
 import Button from 'components/button';
 import SegmentedControl from 'components/segmented-control';
 import PaymentMethods from 'blocks/payment-methods';
-import ProductPlanOverlapNotices from 'blocks/product-plan-overlap-notices';
 import ProductSelector from 'blocks/product-selector';
 import FormattedHeader from 'components/formatted-header';
 import HappychatConnection from 'components/happychat/connection-connected';
@@ -98,11 +98,6 @@ export class PlansFeaturesMain extends Component {
 
 	isJetpackBackupAvailable() {
 		const { displayJetpackPlans, isMultisite, jetpackSupportsBackupProducts, siteId } = this.props;
-
-		// Jetpack Backup products are currently under a feature flag
-		if ( ! isEnabled( 'plans/jetpack-backup' ) ) {
-			return false;
-		}
 
 		// Jetpack Backup does not support Multisite yet.
 		if ( isMultisite ) {
@@ -454,7 +449,12 @@ export class PlansFeaturesMain extends Component {
 					compactOnMobile
 					isSecondary
 				/>
-				<ProductPlanOverlapNotices plans={ JETPACK_PLANS } products={ JETPACK_BACKUP_PRODUCTS } />
+				<AsyncLoad
+					require="blocks/product-plan-overlap-notices"
+					placeholder={ null }
+					plans={ JETPACK_PLANS }
+					products={ JETPACK_BACKUP_PRODUCTS }
+				/>
 				<ProductSelector
 					products={ JETPACK_PRODUCTS }
 					intervalType={ intervalType }

@@ -38,6 +38,7 @@ registerBlockType( metadata.name, {
 		html: false,
 		multiple: false,
 		reusable: false,
+		inserter: false,
 	},
 	attributes: metadata.attributes,
 	edit: ( { attributes, setAttributes, clientId, isSelected } ) => {
@@ -63,7 +64,7 @@ registerBlockType( metadata.name, {
 					<Notice
 						actions={ [
 							{
-								label: __( 'Upgrade Block', 'full-site-editing' ),
+								label: __( 'Update Block', 'full-site-editing' ),
 								onClick: upgradeBlock,
 							},
 						] }
@@ -71,7 +72,7 @@ registerBlockType( metadata.name, {
 						isDismissible={ false }
 					>
 						{ __(
-							'An improved version of this block is available. Upgrade for a better, more natural way to manage your blog post listings.',
+							'An improved version of this block is available. Update for a better, more natural way to manage your blog post listings. There may be small visual changes.',
 							'full-site-editing'
 						) }
 					</Notice>

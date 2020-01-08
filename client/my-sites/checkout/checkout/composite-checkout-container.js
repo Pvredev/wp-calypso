@@ -9,7 +9,6 @@ import {
 	createApplePayMethod,
 	createExistingCardMethod,
 } from '@automattic/composite-checkout';
-import { mockPayPalExpressRequest } from '@automattic/composite-checkout-wpcom';
 import { useTranslate } from 'i18n-calypso';
 import debugFactory from 'debug';
 import { useSelector } from 'react-redux';
@@ -91,6 +90,36 @@ function formatDataForTransactionsEndpoint( {
 	};
 }
 
+function formatDataForPayPalExpressEndpoint( {
+	successUrl,
+	cancelUrl,
+	siteId,
+	country,
+	postalCode,
+	subdivisionCode,
+	phoneNumber,
+	couponId,
+	items,
+	domainDetails,
+} ) {
+	return {
+		successUrl,
+		cancelUrl,
+		cart: createCartFromLineItems( {
+			siteId,
+			country,
+			postalCode,
+			subdivisionCode,
+			phoneNumber,
+			couponId,
+			items: items.filter( item => item.type !== 'tax' ),
+		} ),
+		domainDetails,
+		country,
+		postalCode,
+	};
+}
+
 // Create cart object as required by the WPCOM transactions endpoint '/me/transactions/': WPCOM_JSON_API_Transactions_Endpoint
 export function createCartFromLineItems( {
 	siteId,
@@ -110,7 +139,7 @@ export function createCartFromLineItems( {
 		extra: [],
 		products: items.map( item => ( {
 			product_id: item.wpcom_meta?.product_id,
-			meta: '', // TODO: get this for domains, etc
+			meta: item.sublabel,
 			currency: item.amount.currency,
 			volume: 1, // TODO: get this from the item
 		} ) ),
@@ -124,19 +153,25 @@ export function createCartFromLineItems( {
 	};
 }
 
+async function makePayPalExpressRequest( transactionData ) {
+	const formattedTransactionData = formatDataForPayPalExpressEndpoint( transactionData );
+	debug( 'sending paypal transaction', formattedTransactionData );
+	return wpcom.paypalExpressUrl( formattedTransactionData );
+}
+
 function getDomainDetails() {
 	const { firstName, lastName, email, phoneNumber, address, city, state, country, postalCode } =
 		select( 'wpcom' )?.getContactInfo?.() ?? {};
 	return {
-		firstName,
-		lastName,
-		email,
-		phoneNumber,
-		address,
-		city,
-		state,
-		country,
-		postalCode,
+		firstName: firstName?.value,
+		lastName: lastName?.value,
+		email: email?.value,
+		phone: phoneNumber?.value,
+		address_1: address?.value,
+		city: city?.value,
+		state: state?.value,
+		countryCode: country?.value,
+		postalCode: postalCode?.value,
 	};
 }
 
@@ -254,7 +289,17 @@ function useCreatePaymentMethods() {
 		() =>
 			createPayPalMethod( {
 				registerStore: registerStore,
-				makePayPalExpressRequest: mockPayPalExpressRequest,
+				submitTransaction: submitData =>
+					makePayPalExpressRequest( {
+						...submitData,
+						siteId: select( 'wpcom' )?.getSiteId?.(),
+						domainDetails: getDomainDetails(),
+						couponId: null, // TODO: get couponId
+						country: select( 'wpcom' )?.getContactInfo?.()?.country?.value,
+						postalCode: select( 'wpcom' )?.getContactInfo?.()?.postalCode?.value,
+						subdivisionCode: select( 'wpcom' )?.getContactInfo?.()?.state?.value,
+						phoneNumber: select( 'wpcom' )?.getContactInfo?.()?.phoneNumber?.value,
+					} ),
 			} ),
 		[]
 	);

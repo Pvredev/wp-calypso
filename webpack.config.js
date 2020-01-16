@@ -25,6 +25,7 @@ const TranspileConfig = require( '@automattic/calypso-build/webpack/transpile' )
 const {
 	cssNameFromFilename,
 	IncrementalProgressPlugin,
+	shouldTranspileDependency,
 } = require( '@automattic/calypso-build/webpack/util' );
 const ExtensiveLodashReplacementPlugin = require( '@automattic/webpack-extensive-lodash-replacement-plugin' );
 
@@ -58,55 +59,6 @@ const extraPath = browserslistEnv === 'defaults' ? 'fallback' : browserslistEnv;
 
 if ( ! process.env.BROWSERSLIST_ENV ) {
 	process.env.BROWSERSLIST_ENV = browserslistEnv;
-}
-
-const nodeModulesToTranspile = [
-	// general form is <package-name>/.
-	// The trailing slash makes sure we're not matching these as prefixes
-	// In some cases we do want prefix style matching (lodash. for lodash.assign)
-	'@github/webauthn-json/',
-	'acorn-jsx/',
-	'chalk/',
-	'd3-array/',
-	'd3-scale/',
-	'debug/',
-	'escape-string-regexp/',
-	'filesize/',
-	'prismjs/',
-	'react-spring/',
-	'regenerate-unicode-properties/',
-	'regexpu-core/',
-	'striptags/',
-	'unicode-match-property-ecmascript/',
-	'unicode-match-property-value-ecmascript/',
-];
-/**
- * Check to see if we should transpile certain files in node_modules
- *
- * @param {string} filepath the path of the file to check
- * @returns {boolean} True if we should transpile it, false if not
- *
- * We had a thought to try to find the package.json and use the engines property
- * to determine what we should transpile, but not all libraries set engines properly
- * (see d3-array@2.0.0). Instead, we transpile libraries we know to have dropped Node 4 support
- * are likely to remain so going forward.
- */
-function shouldTranspileDependency( filepath ) {
-	// find the last index of node_modules and check from there
-	// we want <working>/node_modules/a-package/node_modules/foo/index.js to only match foo, not a-package
-	const marker = '/node_modules/';
-	const lastIndex = filepath.lastIndexOf( marker );
-	if ( lastIndex === -1 ) {
-		// we're not in node_modules
-		return false;
-	}
-
-	const checkFrom = lastIndex + marker.length;
-
-	return _.some(
-		nodeModulesToTranspile,
-		modulePart => filepath.substring( checkFrom, checkFrom + modulePart.length ) === modulePart
-	);
 }
 
 let outputFilename = '[name].[chunkhash].min.js'; // prefer the chunkhash, which depends on the chunk, not the entire build
@@ -193,7 +145,7 @@ const webpackConfig = {
 			} ),
 			TranspileConfig.loader( {
 				workerCount,
-				configFile: path.resolve( __dirname, 'babel.dependencies.config.js' ),
+				presets: [ require.resolve( '@automattic/calypso-build/babel/dependencies' ) ],
 				cacheDirectory: path.join( __dirname, 'build', '.babel-client-cache', extraPath ),
 				cacheIdentifier,
 				include: shouldTranspileDependency,
@@ -328,27 +280,22 @@ if ( isCalypsoClient && ! isDesktop ) {
 	);
 }
 
-// List of polyfills that we skip including in the evergreen bundle.
-// CoreJS polyfills are automatically dropped using the browserslist definitions; no need to include them here.
-const polyfillsSkippedInEvergreen = [
-	// Local storage used to throw errors in Safari private mode, but that's no longer the case in Safari >=11.
-	/^lib[/\\]local-storage-polyfill$/,
-	// The SVG external content polyfill (svg4everybody) isn't needed for evergreen browsers.
-	/^svg4everybody$/,
-	// The fetch polyfill isn't needed for evergreen browsers, as they all support it.
-	/^isomorphic-fetch$/,
-	// All modern browsers support the URL API.
-	/^@webcomponents[/\\]url$/,
-	// All evergreen browsers support the URLSearchParams API.
-	/^@ungap[/\\]url-search-params$/,
-];
+if ( isCalypsoClient && browserslistEnv === 'evergreen' ) {
+	// Use "evergreen" polyfill config, rather than fallback.
+	webpackConfig.plugins.push(
+		new webpack.NormalModuleReplacementPlugin(
+			/^@automattic\/calypso-polyfills$/,
+			'@automattic/calypso-polyfills/browser-evergreen'
+		)
+	);
 
-if ( browserslistEnv === 'evergreen' ) {
-	for ( const polyfill of polyfillsSkippedInEvergreen ) {
-		webpackConfig.plugins.push(
-			new webpack.NormalModuleReplacementPlugin( polyfill, 'lodash-es/noop' )
-		);
-	}
+	// Local storage used to throw errors in Safari private mode, but that's no longer the case in Safari >=11.
+	webpackConfig.plugins.push(
+		new webpack.NormalModuleReplacementPlugin(
+			/^lib[/\\]local-storage-polyfill$/,
+			'lodash-es/noop'
+		)
+	);
 }
 
 module.exports = webpackConfig;

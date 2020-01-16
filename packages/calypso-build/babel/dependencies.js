@@ -1,4 +1,4 @@
-const config = {
+module.exports = () => ( {
 	// see https://github.com/webpack/webpack/issues/4039#issuecomment-419284940
 	sourceType: 'unambiguous',
 	presets: [
@@ -7,7 +7,7 @@ const config = {
 			{
 				modules: false,
 				useBuiltIns: 'entry',
-				corejs: 2,
+				corejs: 3.6,
 				// Exclude transforms that make all code slower, see https://github.com/facebook/create-react-app/pull/5278
 				exclude: [ 'transform-typeof-symbol' ],
 			},
@@ -25,6 +25,4 @@ const config = {
 			},
 		],
 	],
-};
-
-module.exports = config;
+} );

@@ -1,19 +1,19 @@
 /**
- **** WARNING: No ES6 modules here. Not transpiled! ****
+ * **** WARNING: No ES6 modules here. Not transpiled! ****
  */
+
+/* eslint import/no-extraneous-dependencies: [ "error", { packageDir: __dirname/.. } ] */
 /* eslint-disable import/no-nodejs-modules */
 
 /**
  * External dependencies
  */
 const path = require( 'path' );
-// eslint-disable-next-line import/no-extraneous-dependencies
 const webpack = require( 'webpack' );
 const AssetsWriter = require( './server/bundler/assets-writer' );
 const ConfigFlagPlugin = require( '@automattic/webpack-config-flag-plugin' );
 const { BundleAnalyzerPlugin } = require( 'webpack-bundle-analyzer' );
 const CircularDependencyPlugin = require( 'circular-dependency-plugin' );
-// eslint-disable-next-line import/no-extraneous-dependencies
 const DuplicatePackageCheckerPlugin = require( 'duplicate-package-checker-webpack-plugin' );
 const FileConfig = require( '@automattic/calypso-build/webpack/file-loader' );
 const MomentTimezoneDataPlugin = require( 'moment-timezone-data-webpack-plugin' );
@@ -98,6 +98,7 @@ const webpackConfig = {
 	entry: {
 		'entry-main': [ path.join( __dirname, 'boot', 'app' ) ],
 		'entry-domains-landing': [ path.join( __dirname, 'landing', 'domains' ) ],
+		'entry-jetpack-cloud': [ path.join( __dirname, 'landing', 'jetpack-cloud' ) ],
 		'entry-login': [ path.join( __dirname, 'landing', 'login' ) ],
 		'entry-gutenboarding': [ path.join( __dirname, 'landing', 'gutenboarding' ) ],
 	},

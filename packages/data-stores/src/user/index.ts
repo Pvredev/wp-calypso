@@ -1,7 +1,6 @@
 /**
  * External dependencies
  */
-import { controls } from '@wordpress/data-controls';
 import { registerStore } from '@wordpress/data';
 
 /**
@@ -12,14 +11,17 @@ import reducer, { State } from './reducer';
 import * as actions from './actions';
 import * as resolvers from './resolvers';
 import * as selectors from './selectors';
+import createControls from './controls';
 import { DispatchFromMap, SelectFromMap } from '../mapped-types';
+import { WpcomClientCredentials } from '../utils';
 
 export * from './types';
 export { State };
 
 let isRegistered = false;
-export function register(): typeof STORE_KEY {
+export function register( clientCreds: WpcomClientCredentials ): typeof STORE_KEY {
 	if ( ! isRegistered ) {
+		const controls = createControls( clientCreds );
 		isRegistered = true;
 		registerStore< State >( STORE_KEY, {
 			actions,

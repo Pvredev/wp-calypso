@@ -10,6 +10,7 @@ import { parse as parseURL } from 'url';
  */
 
 // Libraries
+import config from 'config';
 import wpcom from 'lib/wp';
 /* eslint-enable no-restricted-imports */
 import userFactory from 'lib/user';
@@ -37,6 +38,7 @@ import { requestSites } from 'state/sites/actions';
 import { getProductsList } from 'state/products-list/selectors';
 import { getSelectedImportEngine, getNuxUrlInputValue } from 'state/importer-nux/temp-selectors';
 import getNewSitePublicSetting from 'state/selectors/get-new-site-public-setting';
+import getNewSiteComingSoonSetting from 'state/selectors/get-new-site-coming-soon-setting';
 
 // Current directory dependencies
 import { isValidLandingPageVertical } from './verticals';
@@ -177,6 +179,10 @@ export function createSiteWithCart( callback, dependencies, stepData, reduxStore
 		validate: false,
 	};
 
+	if ( config.isEnabled( 'coming-soon' ) ) {
+		newSiteParams.options.wpcom_coming_soon = getNewSiteComingSoonSetting( state );
+	}
+
 	const shouldSkipDomainStep = ! siteUrl && isDomainStepSkippable( flowToCheck );
 	const shouldHideFreePlan = get( signupDependencies, 'shouldHideFreePlan', false );
 
@@ -204,11 +210,6 @@ export function createSiteWithCart( callback, dependencies, stepData, reduxStore
 	// Provide the default business starter content for the FSE user testing flow.
 	if ( 'test-fse' === lastKnownFlow ) {
 		newSiteParams.options.site_segment = 1;
-	}
-
-	// Provide siteTitle from Gutenboarding
-	if ( 'frankenflow' === lastKnownFlow ) {
-		newSiteParams.blog_title = dependencies.siteTitle;
 	}
 
 	if ( isEligibleForPageBuilder( siteSegment, flowToCheck ) && shouldEnterPageBuilder() ) {
@@ -514,6 +515,10 @@ export function createSite( callback, dependencies, stepData, reduxStore ) {
 		options: { theme: themeSlugWithRepo },
 		validate: false,
 	};
+
+	if ( config.isEnabled( 'coming-soon' ) ) {
+		data.options.wpcom_coming_soon = getNewSiteComingSoonSetting( state );
+	}
 
 	wpcom.undocumented().sitesNew( data, function( errors, response ) {
 		let providedDependencies, siteSlug;

@@ -8,6 +8,7 @@ import React, { FunctionComponent, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
 import classnames from 'classnames';
 import { DomainSuggestions } from '@automattic/data-stores';
+import { useHistory } from 'react-router-dom';
 
 /**
  * Internal dependencies
@@ -19,6 +20,7 @@ import DomainPickerButton from '../domain-picker-button';
 import { selectorDebounce } from '../../constants';
 import Link from '../link';
 import { createSite } from '../../utils';
+import { Step } from '../../steps';
 
 const DOMAIN_SUGGESTIONS_STORE = DomainSuggestions.register();
 
@@ -28,11 +30,13 @@ interface Props {
 
 const Header: FunctionComponent< Props > = ( { prev } ) => {
 	const currentUser = useSelect( select => select( USER_STORE ).getCurrentUser() );
-	const { domain, selectedDesign, siteTitle, siteVertical } = useSelect( select =>
+	const { domain, selectedDesign, siteTitle, siteVertical, shouldCreate } = useSelect( select =>
 		select( ONBOARD_STORE ).getState()
 	);
 	const hasSelectedDesign = !! selectedDesign;
-	const { setDomain } = useDispatch( ONBOARD_STORE );
+	const { setDomain, resetOnboardStore, setShouldCreate, setIsCreatingSite } = useDispatch(
+		ONBOARD_STORE
+	);
 
 	const [ domainSearch ] = useDebounce( siteTitle, selectorDebounce );
 	const freeDomainSuggestion = useSelect(
@@ -55,6 +59,8 @@ const Header: FunctionComponent< Props > = ( { prev } ) => {
 			setDomain( undefined );
 		}
 	}, [ siteTitle, setDomain ] );
+
+	const history = useHistory();
 
 	const currentDomain = domain ?? freeDomainSuggestion;
 
@@ -81,6 +87,25 @@ const Header: FunctionComponent< Props > = ( { prev } ) => {
 		siteVertical,
 		...( siteUrl && { siteUrl } ),
 		...( selectedDesign?.slug && { theme: selectedDesign?.slug } ),
+	};
+
+	const handleCreateSite = () => {
+		setIsCreatingSite( true );
+		history.push( Step.CreateSite );
+		createSite( siteCreationData ).then( siteSlug => {
+			resetOnboardStore();
+			window.location.href = `/block-editor/page/${ siteSlug }/home?is-gutenboarding`;
+		} );
+	};
+
+	if ( shouldCreate && currentUser ) {
+		handleCreateSite();
+		setShouldCreate( false );
+	}
+
+	const handleSignup = () => {
+		setShouldCreate( true );
+		history.push( Step.Signup );
 	};
 
 	return (
@@ -121,7 +146,8 @@ const Header: FunctionComponent< Props > = ( { prev } ) => {
 							className="gutenboarding__header-next-button"
 							isPrimary
 							isLarge
-							onClick={ () => createSite( siteCreationData ) }
+							onClick={ () => ( currentUser ? handleCreateSite() : handleSignup() ) }
+							disabled={ shouldCreate }
 						>
 							{ NO__( 'Create my site' ) }
 						</Button>

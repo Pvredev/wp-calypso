@@ -16,6 +16,7 @@ import StepperWizard from './stepper-wizard';
 import VerticalSelect from './vertical-select';
 import SignupForm from './signup-form';
 import SiteTitle from './site-title';
+import CreateSite from './create-site';
 import { Attributes } from './types';
 import { Step } from '../steps';
 import './style.scss';
@@ -23,7 +24,7 @@ import VerticalBackground from './vertical-background';
 import Link from '../components/link';
 
 const OnboardingEdit: FunctionComponent< BlockEditProps< Attributes > > = () => {
-	const { siteVertical, siteTitle, selectedDesign } = useSelect( select =>
+	const { siteVertical, siteTitle, selectedDesign, isCreatingSite } = useSelect( select =>
 		select( STORE_KEY ).getState()
 	);
 
@@ -69,6 +70,9 @@ const OnboardingEdit: FunctionComponent< BlockEditProps< Attributes > > = () => 
 				</Route>
 				<Route exact path={ Step.Signup }>
 					<SignupForm />
+				</Route>
+				<Route exact path={ Step.CreateSite }>
+					{ ! isCreatingSite ? <Redirect to={ Step.IntentGathering } /> : <CreateSite /> }
 				</Route>
 			</Switch>
 		</>

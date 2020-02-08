@@ -18,6 +18,14 @@ import Spinner from 'components/spinner';
 export default class SitesBlock extends Component {
 	state = {};
 
+	onSubmit = event => {
+		event.preventDefault();
+
+		this.props.onSubmit( event );
+
+		return false;
+	};
+
 	renderFauxSiteSelector() {
 		const { onUrlChange, url } = this.props;
 		const { error } = this.state;
@@ -30,22 +38,24 @@ export default class SitesBlock extends Component {
 						{ this.props.loadingSourceSite && <Spinner /> }
 					</div>
 					<div className="sites-block__faux-site-selector-info">
-						<FormLabel
-							className="sites-block__faux-site-selector-label"
-							htmlFor="sites-block__faux-site-selector-url-input"
-						>
-							Import from...
-						</FormLabel>
-						<div className="sites-block__faux-site-selector-url">
-							<FormTextInput
-								isError={ isError }
-								onChange={ onUrlChange }
-								value={ url }
-								placeholder="example.com"
-								id="sites-block__faux-site-selector-url-input"
-								name="sites-block__faux-site-selector-url-input"
-							/>
-						</div>
+						<form onSubmit={ this.onSubmit }>
+							<FormLabel
+								className="sites-block__faux-site-selector-label"
+								htmlFor="sites-block__faux-site-selector-url-input"
+							>
+								Import from...
+							</FormLabel>
+							<div className="sites-block__faux-site-selector-url">
+								<FormTextInput
+									isError={ isError }
+									onChange={ onUrlChange }
+									value={ url }
+									placeholder="example.com"
+									id="sites-block__faux-site-selector-url-input"
+									name="sites-block__faux-site-selector-url-input"
+								/>
+							</div>
+						</form>
 					</div>
 				</div>
 			</div>
@@ -53,25 +63,22 @@ export default class SitesBlock extends Component {
 	}
 
 	getSourceSiteOrInput = () => {
-		const { sourceSite } = this.props;
+		const { sourceSite, sourceSiteInfo } = this.props;
 
-		if ( ! sourceSite ) {
+		if ( ! sourceSite && ! sourceSiteInfo ) {
 			return this.renderFauxSiteSelector();
 		}
 
-		return (
-			<Site
-				site={ this.convertSourceSiteObjectToSiteComponent( sourceSite ) }
-				indicator={ false }
-			/>
-		);
+		const site = sourceSite || this.convertSourceSiteInfoToSourceSite( sourceSiteInfo );
+
+		return <Site site={ site } indicator={ false } />;
 	};
 
-	convertSourceSiteObjectToSiteComponent = sourceSite => {
-		const { hostname } = getUrlParts( sourceSite.site_url );
+	convertSourceSiteInfoToSourceSite = sourceSiteInfo => {
+		const { hostname } = getUrlParts( sourceSiteInfo.site_url );
 		return {
-			icon: { img: sourceSite.site_favicon },
-			title: sourceSite.site_title,
+			icon: { img: sourceSiteInfo.site_favicon },
+			title: sourceSiteInfo.site_title,
 			domain: hostname,
 		};
 	};
@@ -96,7 +103,10 @@ export default class SitesBlock extends Component {
 }
 
 SitesBlock.propTypes = {
+	sourceSiteInfo: PropTypes.object,
 	sourceSite: PropTypes.object,
 	loadingSourceSite: PropTypes.bool,
 	targetSite: PropTypes.object.isRequired,
+	onUrlChange: PropTypes.func,
+	onSubmit: PropTypes.func,
 };

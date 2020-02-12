@@ -9,7 +9,7 @@ references:
     CIRCLE_TEST_REPORTS: /tmp/test_results
 
   docker-image: &docker-image
-    - image: circleci/node:12.14.1-browsers
+    - image: circleci/node:12.15.0-browsers
 
   setup-results-and-artifacts: &setup-results-and-artifacts
     name: Create Directories for Results and Artifacts
@@ -337,13 +337,12 @@ jobs:
   test-full-site-editing:
     <<: *defaults
     parallelism: 1
-    working_directory: ~/wp-calypso/apps/full-site-editing
     steps:
       - prepare
       - run:
           name: Run Full Site Editing client tests
           command: |
-            npm run test:unit
+            npx lerna run test:js --scope='@automattic/full-site-editing' --stream --no-prefix
   test-client:
     <<: *defaults
     parallelism: 6

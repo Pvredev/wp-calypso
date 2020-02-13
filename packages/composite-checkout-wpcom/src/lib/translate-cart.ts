@@ -38,6 +38,7 @@ export function translateWpcomCartToCheckoutCart(
 		coupon,
 		coupon_discounts_integer,
 		is_coupon_applied,
+		tax,
 	} = serverCart;
 
 	const taxLineItem: CheckoutCartItem = {
@@ -110,7 +111,7 @@ export function translateWpcomCartToCheckoutCart(
 				localizeCurrency
 			)
 		),
-		tax: taxLineItem,
+		tax: tax.display_taxes ? taxLineItem : null,
 		coupon: is_coupon_applied ? couponLineItem : null,
 		total: totalItem,
 		subtotal: subtotalItem,
@@ -137,7 +138,7 @@ function translateWpcomCartItemToCheckoutCartItem(
 	coupon_discounts_integer: number[],
 	localizeCurrency: ( string, number ) => string
 ): ( ResponseCartProduct, number ) => WPCOMCartItem {
-	return ( serverCartItem: ResponseCartProduct, index: number ) => {
+	return ( serverCartItem: ResponseCartProduct ) => {
 		const {
 			product_id,
 			product_name,
@@ -148,6 +149,7 @@ function translateWpcomCartItemToCheckoutCartItem(
 			meta,
 			extra,
 			volume,
+			uuid,
 		} = serverCartItem;
 
 		// Sublabel is the domain name for registrations
@@ -160,7 +162,7 @@ function translateWpcomCartItemToCheckoutCartItem(
 		const displayValue = localizeCurrency( currency, value );
 
 		return {
-			id: String( index ),
+			id: uuid,
 			label: product_name,
 			sublabel: sublabel,
 			type: product_slug,
@@ -170,11 +172,12 @@ function translateWpcomCartItemToCheckoutCartItem(
 				displayValue,
 			},
 			wpcom_meta: {
-				uuid: String( index ),
+				uuid: uuid,
 				meta: typeof meta === 'string' ? meta : undefined,
 				product_id,
 				extra,
 				volume,
+				is_domain_registration,
 			},
 		};
 	};

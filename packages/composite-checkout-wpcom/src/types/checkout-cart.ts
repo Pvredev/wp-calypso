@@ -36,12 +36,13 @@ export type WPCOMCartItem = CheckoutCartItem & {
 		product_id: number;
 		extra: object;
 		volume?: number;
+		is_domain_registration?: boolean;
 	};
 };
 
 export interface WPCOMCart {
 	items: WPCOMCartItem[];
-	tax: CheckoutCartItem;
+	tax: CheckoutCartItem | null;
 	total: CheckoutCartItem;
 	subtotal: CheckoutCartItem;
 	coupon: CheckoutCartItem | null;

@@ -131,7 +131,8 @@ export function generateFlows( {
 			],
 			destination: getSignupDestination,
 			description: 'The improved onboarding flow.',
-			lastModified: '2019-06-20',
+			lastModified: '2020-02-05',
+			showRecaptcha: true,
 		},
 
 		desktop: {
@@ -353,7 +354,7 @@ export function generateFlows( {
 
 	if ( isEnabled( 'gutenboarding' ) ) {
 		flows.frankenflow = {
-			steps: [ 'domains-launch', 'plans-launch', 'launch' ],
+			steps: [ 'plans-launch', 'launch' ],
 			destination: getLaunchDestination,
 			description: 'Frankenflow launch for a site created from Gutenboarding',
 			lastModified: '2020-01-22',

@@ -32,7 +32,7 @@ export interface RequestCart {
 	locale: string;
 	is_coupon_applied: boolean;
 	temporary: false;
-	extra: string; // TODO: fix this
+	extra: string;
 }
 
 /**
@@ -42,6 +42,7 @@ export interface RequestCartProduct {
 	product_slug: string;
 	product_id: number;
 	meta: string;
+	extra: object;
 }
 
 /**
@@ -119,11 +120,13 @@ export const prepareRequestCartProduct: ( ResponseCartProduct ) => RequestCartPr
 	product_slug,
 	meta,
 	product_id,
+	extra,
 }: ResponseCartProduct ) => {
 	return {
 		product_slug,
 		meta,
 		product_id,
+		extra,
 	} as RequestCartProduct;
 };
 
@@ -251,5 +254,23 @@ function addUUIDToResponseCartProduct(
 	return {
 		...product,
 		uuid,
+	};
+}
+
+export function replaceItemInResponseCart(
+	responseCart: ResponseCart,
+	uuidToReplace: string,
+	newProductId: number,
+	newProductSlug: string
+) {
+	return {
+		...responseCart,
+		products: responseCart.products.map( item => {
+			if ( item.uuid === uuidToReplace ) {
+				item.product_id = newProductId;
+				item.product_slug = newProductSlug;
+			}
+			return item;
+		} ),
 	};
 }

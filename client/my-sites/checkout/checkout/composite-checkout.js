@@ -4,6 +4,7 @@
 import page from 'page';
 import wp from 'lib/wp';
 import React, { useMemo, useEffect, useState, useCallback } from 'react';
+import styled from '@emotion/styled';
 import { useTranslate } from 'i18n-calypso';
 import PropTypes from 'prop-types';
 import debugFactory from 'debug';
@@ -25,6 +26,7 @@ import {
 	createExistingCardMethod,
 } from '@automattic/composite-checkout';
 import { Card } from '@automattic/components';
+import { recordTracksEvent } from 'state/analytics/actions';
 
 /**
  * Internal dependencies
@@ -67,6 +69,10 @@ import { getThankYouPageUrl } from './composite-checkout-thank-you';
 import { getSelectedSite } from 'state/ui/selectors';
 import isEligibleForSignupDestination from 'state/selectors/is-eligible-for-signup-destination';
 import getPreviousPath from 'state/selectors/get-previous-path.js';
+import { getPlan, findPlansKeys } from 'lib/plans';
+import { GROUP_WPCOM, TERM_ANNUALLY, TERM_BIENNIALLY, TERM_MONTHLY } from 'lib/plans/constants';
+import { computeProductsWithPrices } from 'state/products-list/selectors';
+import { requestProductsList } from 'state/products-list/actions';
 
 const debug = debugFactory( 'calypso:composite-checkout' );
 
@@ -213,11 +219,13 @@ export default function CompositeCheckout( {
 		submitCoupon,
 		updateLocation,
 		couponStatus,
-		changePlanLength,
+		changeItemVariant,
 		errors,
 		subtotal,
 		isLoading,
 		allowedPaymentMethods: serverAllowedPaymentMethods,
+		variantRequestStatus,
+		variantSelectOverride,
 	} = useShoppingCart(
 		siteSlug,
 		setCart || wpcomSetCart,
@@ -226,10 +234,13 @@ export default function CompositeCheckout( {
 		showAddCouponSuccessMessage
 	);
 
+	const reduxDispatch = useDispatch();
+	const recordEvent = useCallback( getCheckoutEventHandler( reduxDispatch ), [] );
+
 	const { registerStore, dispatch } = registry;
 	useWpcomStore(
 		registerStore,
-		handleCheckoutEvent,
+		recordEvent,
 		validateDomainContactDetails || wpcomValidateDomainContactInformation
 	);
 
@@ -446,6 +457,11 @@ export default function CompositeCheckout( {
 		);
 	};
 
+	const getItemVariants = useWpcomProductVariants( {
+		siteId,
+		productSlug: getPlanProductSlugs( items )[ 0 ],
+	} );
+
 	return (
 		<React.Fragment>
 			<TestingBanner />
@@ -457,7 +473,7 @@ export default function CompositeCheckout( {
 				showErrorMessage={ showErrorMessage }
 				showInfoMessage={ showInfoMessage }
 				showSuccessMessage={ showSuccessMessage }
-				onEvent={ handleCheckoutEvent }
+				onEvent={ recordEvent }
 				paymentMethods={ paymentMethods }
 				registry={ registry }
 				isLoading={ isLoading || isLoadingStoredCards }
@@ -467,13 +483,16 @@ export default function CompositeCheckout( {
 					updateLocation={ updateLocation }
 					submitCoupon={ submitCoupon }
 					couponStatus={ couponStatus }
-					changePlanLength={ changePlanLength }
+					changePlanLength={ changeItemVariant }
 					siteId={ siteId }
 					siteUrl={ siteSlug }
 					CountrySelectMenu={ CountrySelectMenu }
 					countriesList={ countriesList }
 					StateSelect={ StateSelect }
 					renderDomainContactFields={ renderDomainContactFields }
+					variantRequestStatus={ variantRequestStatus }
+					variantSelectOverride={ variantSelectOverride }
+					getItemVariants={ getItemVariants }
 				/>
 			</CheckoutProvider>
 		</React.Fragment>
@@ -568,9 +587,41 @@ function createItemToAddToCart( { planSlug, plan, isJetpackNotAtomic } ) {
 	return cartItem;
 }
 
-function handleCheckoutEvent( action ) {
-	debug( 'checkout event', action );
-	// TODO: record stats
+function getCheckoutEventHandler( dispatch ) {
+	return action => {
+		debug( 'heard checkout event', action );
+		switch ( action.type ) {
+			case 'a8c_checkout_error':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_error', {
+						error_type: action.payload.type,
+						error_field: action.payload.field,
+						error_message: action.payload.message,
+					} )
+				);
+			case 'a8c_checkout_add_coupon':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_coupon_add_submit', {
+						coupon: action.payload.coupon,
+					} )
+				);
+			case 'a8c_checkout_add_coupon_error':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_coupon_add_error', {
+						error_type: action.payload.type,
+					} )
+				);
+			case 'a8c_checkout_add_coupon_button_clicked':
+				return dispatch( recordTracksEvent( 'calypso_checkout_composite_add_coupon_clicked', {} ) );
+			case 'STEP_NUMBER_CHANGE_EVENT':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_step_changed', { step: action.payload } )
+				);
+			default:
+				debug( 'unknown checkout event: not recording', action );
+				return;
+		}
+	};
 }
 
 function useRedirectIfCartEmpty( items, redirectUrl ) {
@@ -667,3 +718,153 @@ function TestingBanner() {
 		</Card>
 	);
 }
+
+function getTermText( term, translate ) {
+	switch ( term ) {
+		case TERM_BIENNIALLY:
+			return translate( 'Two years' );
+
+		case TERM_ANNUALLY:
+			return translate( 'One year' );
+
+		case TERM_MONTHLY:
+			return translate( 'One month' );
+	}
+}
+
+// TODO: replace this with a real localize function
+function localizeCurrency( amount ) {
+	const decimalAmount = ( amount / 100 ).toFixed( 2 );
+	return `$${ decimalAmount }`;
+}
+
+function useWpcomProductVariants( { siteId, productSlug, credits, couponDiscounts } ) {
+	const translate = useTranslate();
+	const dispatch = useDispatch();
+
+	const availableVariants = useVariantWpcomPlanProductSlugs( productSlug );
+
+	const productsWithPrices = useSelector( state => {
+		return computeProductsWithPrices(
+			state,
+			siteId,
+			availableVariants, // : WPCOMProductSlug[]
+			credits || 0, // : number
+			couponDiscounts || {} // object of product ID / absolute amount pairs
+		);
+	} );
+
+	const [ haveFetchedProducts, setHaveFetchedProducts ] = useState( false );
+	const shouldFetchProducts = ! productsWithPrices;
+
+	useEffect( () => {
+		// Trigger at most one HTTP request
+		debug( 'deciding whether to request product variant data' );
+		if ( shouldFetchProducts && ! haveFetchedProducts ) {
+			debug( 'dispatching request for product variant data' );
+			dispatch( requestPlans() );
+			dispatch( requestProductsList() );
+			setHaveFetchedProducts( true );
+		}
+	}, [ shouldFetchProducts, haveFetchedProducts, dispatch ] );
+
+	return anyProductSlug => {
+		if ( anyProductSlug !== productSlug ) {
+			return [];
+		}
+
+		const highestMonthlyPrice = Math.max(
+			...productsWithPrices.map( variant => {
+				return variant.priceMonthly;
+			} )
+		);
+
+		const percentSavings = monthlyPrice => {
+			const savings = Math.round( 100 * ( 1 - monthlyPrice / highestMonthlyPrice ) );
+			return savings > 0 ? <Discount>-{ savings.toString() }%</Discount> : null;
+		};
+
+		// What the customer would pay if using the
+		// most expensive schedule
+		const highestTermPrice = term => {
+			if ( term !== TERM_BIENNIALLY ) {
+				return;
+			}
+			const annualPrice = Math.round( 100 * 24 * highestMonthlyPrice );
+			return <DoNotPayThis>{ localizeCurrency( annualPrice, 'USD' ) }</DoNotPayThis>;
+		};
+
+		return productsWithPrices.map( variant => {
+			const label = getTermText( variant.plan.term, translate );
+			const price = (
+				<React.Fragment>
+					{ percentSavings( variant.priceMonthly ) }
+					{ highestTermPrice( variant.plan.term ) }
+					{ variant.product.cost_display }
+				</React.Fragment>
+			);
+
+			return {
+				variantLabel: label,
+				variantDetails: price,
+				productSlug: variant.planSlug,
+				productId: variant.product.product_id,
+			};
+		} );
+	};
+}
+
+function useVariantWpcomPlanProductSlugs( productSlug ) {
+	const dispatch = useDispatch();
+
+	const chosenPlan = getPlan( productSlug );
+
+	const [ haveFetchedPlans, setHaveFetchedPlans ] = useState( false );
+	const shouldFetchPlans = ! chosenPlan;
+
+	useEffect( () => {
+		// Trigger at most one HTTP request
+		debug( 'deciding whether to request plan variant data' );
+		if ( shouldFetchPlans && ! haveFetchedPlans ) {
+			debug( 'dispatching request for plan variant data' );
+			dispatch( requestPlans() );
+			dispatch( requestProductsList() );
+			setHaveFetchedPlans( true );
+		}
+	}, [ haveFetchedPlans, shouldFetchPlans, dispatch ] );
+
+	if ( ! chosenPlan ) {
+		return [];
+	}
+
+	// Only construct variants for WP.com plans
+	if ( chosenPlan.group !== GROUP_WPCOM ) {
+		return [];
+	}
+
+	// : WPCOMProductSlug[]
+	return findPlansKeys( {
+		group: chosenPlan.group,
+		type: chosenPlan.type,
+	} );
+}
+
+function getPlanProductSlugs(
+	items // : WPCOMCart
+) /* : WPCOMCartItem[] */ {
+	return items
+		.filter( item => {
+			return item.type !== 'tax' && getPlan( item.wpcom_meta.product_slug );
+		} )
+		.map( item => item.wpcom_meta.product_slug );
+}
+
+const Discount = styled.span`
+	color: ${props => props.theme.colors.discount};
+	margin-right: 8px;
+`;
+
+const DoNotPayThis = styled.span`
+	text-decoration: line-through;
+	margin-right: 8px;
+`;

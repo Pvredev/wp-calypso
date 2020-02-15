@@ -14,6 +14,7 @@ import {
 	useDispatch,
 	useMessages,
 	useLineItems,
+	useEvents,
 	renderDisplayValueMarkdown,
 } from '../../public-api';
 import { sprintf, useLocalize } from '../localize';
@@ -222,12 +223,14 @@ function ExistingCardPayButton( { disabled, id } ) {
 	);
 	const { formStatus, setFormReady, setFormComplete, setFormSubmitting } = useFormStatus();
 	const { stripeConfiguration } = useStripe();
+	const onEvent = useEvents();
 
 	useEffect( () => {
 		if ( transactionStatus === 'error' ) {
 			showErrorMessage(
 				transactionError || localize( 'An error occurred during the transaction' )
 			);
+			onEvent( { type: 'EXISTING_CARD_TRANSACTION_ERROR', payload: transactionError || '' } );
 			setFormReady();
 		}
 		if ( transactionStatus === 'complete' ) {
@@ -240,6 +243,7 @@ function ExistingCardPayButton( { disabled, id } ) {
 			window.location = redirectUrl;
 		}
 	}, [
+		onEvent,
 		redirectUrl,
 		setFormReady,
 		setFormComplete,
@@ -269,6 +273,7 @@ function ExistingCardPayButton( { disabled, id } ) {
 					showErrorMessage(
 						localize( 'Authorization failed for that card. Please try a different payment method.' )
 					);
+					onEvent( { type: 'EXISTING_CARD_TRANSACTION_ERROR', payload: error } );
 					isSubscribed && resetTransaction();
 					isSubscribed && setFormReady();
 				} );
@@ -276,6 +281,7 @@ function ExistingCardPayButton( { disabled, id } ) {
 
 		return () => ( isSubscribed = false );
 	}, [
+		onEvent,
 		resetTransaction,
 		setTransactionComplete,
 		setFormReady,
@@ -303,6 +309,7 @@ function ExistingCardPayButton( { disabled, id } ) {
 					beginCardTransaction,
 					setFormSubmitting,
 					resetTransaction,
+					onEvent,
 				} )
 			}
 			buttonState={ disabled ? 'disabled' : 'primary' }
@@ -341,9 +348,11 @@ async function submitExistingCardPayment( {
 	setFormSubmitting,
 	setFormReady,
 	resetTransaction,
+	onEvent,
 } ) {
 	debug( 'submitting existing card payment with the id', id );
 	try {
+		onEvent( { type: 'EXISTING_CARD_TRANSACTION_BEGIN' } );
 		setFormSubmitting();
 		beginCardTransaction( {
 			items,
@@ -352,6 +361,7 @@ async function submitExistingCardPayment( {
 	} catch ( error ) {
 		resetTransaction();
 		setFormReady();
+		onEvent( { type: 'EXISTING_CARD_TRANSACTION_ERROR', payload: String( error ) } );
 		showErrorMessage( error );
 		return;
 	}

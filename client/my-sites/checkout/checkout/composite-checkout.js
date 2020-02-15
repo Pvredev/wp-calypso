@@ -25,7 +25,6 @@ import {
 	createApplePayMethod,
 	createExistingCardMethod,
 } from '@automattic/composite-checkout';
-import { Card } from '@automattic/components';
 import { recordTracksEvent } from 'state/analytics/actions';
 
 /**
@@ -174,10 +173,15 @@ export default function CompositeCheckout( {
 		cart,
 	] );
 
+	const reduxDispatch = useDispatch();
+	const recordEvent = useCallback( getCheckoutEventHandler( reduxDispatch ), [] );
+
 	const onPaymentComplete = useCallback( () => {
 		debug( 'payment completed successfully' );
-		page.redirect( getThankYouUrl() );
-	}, [ getThankYouUrl ] );
+		const url = getThankYouUrl();
+		recordEvent( { type: 'PAYMENT_COMPLETE', payload: { url } } );
+		page.redirect( url );
+	}, [ recordEvent, getThankYouUrl ] );
 
 	const showErrorMessage = useCallback(
 		error => {
@@ -231,11 +235,9 @@ export default function CompositeCheckout( {
 		setCart || wpcomSetCart,
 		getCart || wpcomGetCart,
 		translate,
-		showAddCouponSuccessMessage
+		showAddCouponSuccessMessage,
+		recordEvent
 	);
-
-	const reduxDispatch = useDispatch();
-	const recordEvent = useCallback( getCheckoutEventHandler( reduxDispatch ), [] );
 
 	const { registerStore, dispatch } = registry;
 	useWpcomStore(
@@ -464,7 +466,6 @@ export default function CompositeCheckout( {
 
 	return (
 		<React.Fragment>
-			<TestingBanner />
 			<CheckoutProvider
 				locale={ 'en-us' }
 				items={ itemsForCheckout }
@@ -591,6 +592,18 @@ function getCheckoutEventHandler( dispatch ) {
 	return action => {
 		debug( 'heard checkout event', action );
 		switch ( action.type ) {
+			case 'PAYMENT_COMPLETE':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_payment_complete', {
+						redirect_url: action.payload.url,
+					} )
+				);
+			case 'CART_ERROR':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_cart_error', {
+						error_message: action.payload.error,
+					} )
+				);
 			case 'a8c_checkout_error':
 				return dispatch(
 					recordTracksEvent( 'calypso_checkout_composite_error', {
@@ -617,9 +630,63 @@ function getCheckoutEventHandler( dispatch ) {
 				return dispatch(
 					recordTracksEvent( 'calypso_checkout_composite_step_changed', { step: action.payload } )
 				);
+			case 'STRIPE_TRANSACTION_BEGIN':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_stripe_submit_clicked', {} )
+				);
+			case 'STRIPE_TRANSACTION_ERROR':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_stripe_transaction_error', {
+						error_message: String( action.payload ),
+					} )
+				);
+			case 'PAYPAL_TRANSACTION_BEGIN':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_paypal_submit_clicked', {} )
+				);
+			case 'PAYPAL_TRANSACTION_ERROR':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_paypal_transaction_error', {
+						error_message: String( action.payload ),
+					} )
+				);
+			case 'FULL_CREDITS_TRANSACTION_BEGIN':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_full_credits_submit_clicked', {} )
+				);
+			case 'FULL_CREDITS_TRANSACTION_ERROR':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_full_credits_error', {
+						error_message: String( action.payload ),
+					} )
+				);
+			case 'EXISTING_CARD_TRANSACTION_BEGIN':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_existing_card_submit_clicked', {} )
+				);
+			case 'EXISTING_CARD_TRANSACTION_ERROR':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_existing_card_error', {
+						error_message: String( action.payload ),
+					} )
+				);
+			case 'APPLE_PAY_TRANSACTION_BEGIN':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_apple_pay_submit_clicked', {} )
+				);
+			case 'APPLE_PAY_TRANSACTION_ERROR':
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_apple_pay_error', {
+						error_message: String( action.payload ),
+					} )
+				);
 			default:
-				debug( 'unknown checkout event: not recording', action );
-				return;
+				debug( 'unknown checkout event', action );
+				return dispatch(
+					recordTracksEvent( 'calypso_checkout_composite_unknown_error', {
+						error_type: String( action.type ),
+					} )
+				);
 		}
 	};
 }
@@ -703,19 +770,6 @@ function CountrySelectMenu( {
 				aria-describedby={ countrySelectorDescriptionId }
 			/>
 		</FormFieldAnnotation>
-	);
-}
-
-function TestingBanner() {
-	return (
-		<Card
-			className="composite-checkout__testing-banner"
-			highlight="warning"
-			href="https://github.com/Automattic/wp-calypso/issues/new?title=New%20checkout&body=%3C!--%20Thanks%20for%20filling%20your%20bug%20report%20for%20our%20New%20checkout!%20Pick%20a%20clear%20title%20(%22New%20checkout%3A%20Continue%20button%20not%20working%22)%20and%20proceed.%20--%3E%0A%0A%23%23%23%23%20Steps%20to%20reproduce%0A1.%20Starting%20at%20URL%3A%0A2.%0A3.%0A4.%0A%0A%23%23%23%23%20What%20I%20expected%0A%0A%0A%23%23%23%23%20What%20happened%20instead%0A%0A%0A%23%23%23%23%20Browser%20%2F%20OS%20version%0A%0A%0A%23%23%23%23%20Screenshot%20%2F%20Video%20(Optional)%0A%0A%40sirbrillig%2C%20%40nbloomf%2C%20%40fditrapani%20%0A"
-		>
-			Warning! This checkout is a new feature still in testing. If you encounter issues, please
-			click here to report them.
-		</Card>
 	);
 }
 

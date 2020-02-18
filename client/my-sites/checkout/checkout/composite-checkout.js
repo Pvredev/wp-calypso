@@ -38,7 +38,7 @@ import {
 	jetpackProductItem,
 } from 'lib/cart-values/cart-items';
 import { requestPlans } from 'state/plans/actions';
-import { getPlanBySlug } from 'state/plans/selectors';
+import { getPlanBySlug, getPlans } from 'state/plans/selectors';
 import {
 	useStoredCards,
 	getDomainDetails,
@@ -72,6 +72,7 @@ import { getPlan, findPlansKeys } from 'lib/plans';
 import { GROUP_WPCOM, TERM_ANNUALLY, TERM_BIENNIALLY, TERM_MONTHLY } from 'lib/plans/constants';
 import { computeProductsWithPrices } from 'state/products-list/selectors';
 import { requestProductsList } from 'state/products-list/actions';
+import PageViewTracker from 'lib/analytics/page-view-tracker';
 
 const debug = debugFactory( 'calypso:composite-checkout' );
 
@@ -100,6 +101,7 @@ export default function CompositeCheckout( {
 	overrideCountryList,
 	redirectTo,
 	feature,
+	plan,
 	purchaseId,
 	cart,
 	// TODO: handle these also
@@ -176,6 +178,11 @@ export default function CompositeCheckout( {
 	const reduxDispatch = useDispatch();
 	const recordEvent = useCallback( getCheckoutEventHandler( reduxDispatch ), [] );
 
+	useEffect( () => {
+		debug( 'composite checkout has loaded' );
+		recordEvent( { type: 'CHECKOUT_LOADED' } );
+	}, [ recordEvent ] );
+
 	const onPaymentComplete = useCallback( () => {
 		debug( 'payment completed successfully' );
 		const url = getThankYouUrl();
@@ -212,6 +219,11 @@ export default function CompositeCheckout( {
 
 	const countriesList = useCountryList( overrideCountryList || [] );
 
+	const { productForCart, canInitializeCart } = usePrepareProductForCart(
+		planSlug,
+		isJetpackNotAtomic
+	);
+
 	const {
 		items,
 		tax,
@@ -219,7 +231,6 @@ export default function CompositeCheckout( {
 		total,
 		credits,
 		removeItem,
-		addItem,
 		submitCoupon,
 		updateLocation,
 		couponStatus,
@@ -232,6 +243,8 @@ export default function CompositeCheckout( {
 		variantSelectOverride,
 	} = useShoppingCart(
 		siteSlug,
+		canInitializeCart,
+		productForCart,
 		setCart || wpcomSetCart,
 		getCart || wpcomGetCart,
 		translate,
@@ -247,8 +260,6 @@ export default function CompositeCheckout( {
 	);
 
 	useDisplayErrors( errors, showErrorMessage );
-
-	useAddProductToCart( planSlug, isJetpackNotAtomic, addItem );
 
 	const itemsForCheckout = ( items.length ? [ ...items, tax, couponItem ] : [] ).filter( Boolean );
 	debug( 'items for checkout', itemsForCheckout );
@@ -464,8 +475,17 @@ export default function CompositeCheckout( {
 		productSlug: getPlanProductSlugs( items )[ 0 ],
 	} );
 
+	const { analyticsPath, analyticsProps } = getAnalyticsPath(
+		purchaseId,
+		product,
+		siteSlug,
+		feature,
+		plan
+	);
+
 	return (
 		<React.Fragment>
+			<PageViewTracker path={ analyticsPath } title="Checkout" properties={ analyticsProps } />
 			<CheckoutProvider
 				locale={ 'en-us' }
 				items={ itemsForCheckout }
@@ -510,27 +530,10 @@ CompositeCheckout.propTypes = {
 	allowedPaymentMethods: PropTypes.array,
 	redirectTo: PropTypes.string,
 	feature: PropTypes.string,
+	plan: PropTypes.string,
 	cart: PropTypes.object,
 	transaction: PropTypes.object,
 };
-
-function useAddProductToCart( planSlug, isJetpackNotAtomic, addItem ) {
-	const dispatch = useDispatch();
-	const plan = useSelector( state => getPlanBySlug( state, planSlug ) );
-
-	useEffect( () => {
-		if ( ! planSlug ) {
-			return;
-		}
-		if ( ! plan ) {
-			debug( 'there is a request to add a plan but no plan was found', planSlug );
-			dispatch( requestPlans() );
-			return;
-		}
-		debug( 'adding item as requested in url', { planSlug, plan, isJetpackNotAtomic } );
-		addItem( createItemToAddToCart( { planSlug, plan, isJetpackNotAtomic } ) );
-	}, [ dispatch, planSlug, plan, isJetpackNotAtomic, addItem ] );
-}
 
 function useDisplayErrors( errors, displayError ) {
 	useEffect( () => {
@@ -557,10 +560,8 @@ function isNotCouponError( error ) {
 function createItemToAddToCart( { planSlug, plan, isJetpackNotAtomic } ) {
 	let cartItem, cartMeta;
 
-	if ( planSlug ) {
-		cartItem = planItem( planSlug );
-		cartItem.product_id = plan.product_id;
-	}
+	cartItem = planItem( planSlug );
+	cartItem.product_id = plan.product_id;
 
 	if ( planSlug.startsWith( 'theme' ) ) {
 		cartMeta = planSlug.split( ':' )[ 1 ];
@@ -592,6 +593,8 @@ function getCheckoutEventHandler( dispatch ) {
 	return action => {
 		debug( 'heard checkout event', action );
 		switch ( action.type ) {
+			case 'CHECKOUT_LOADED':
+				return dispatch( recordTracksEvent( 'calypso_checkout_composite_loaded', {} ) );
 			case 'PAYMENT_COMPLETE':
 				return dispatch(
 					recordTracksEvent( 'calypso_checkout_composite_payment_complete', {
@@ -922,3 +925,58 @@ const DoNotPayThis = styled.span`
 	text-decoration: line-through;
 	margin-right: 8px;
 `;
+
+function usePrepareProductForCart( planSlug, isJetpackNotAtomic ) {
+	const plans = useSelector( state => getPlans( state ) );
+	const plan = useSelector( state => getPlanBySlug( state, planSlug ) );
+	const reduxDispatch = useDispatch();
+	const [ canInitializeCart, setCanInitializeCart ] = useState( ! planSlug );
+	const [ productForCart, setProductForCart ] = useState();
+
+	// Fetch plans if they are not loaded
+	useEffect( () => {
+		if ( ! planSlug ) {
+			return;
+		}
+		if ( ! plans || plans.length < 1 ) {
+			debug( 'there is a request to add a plan but no plans are loaded; fetching plans' );
+			reduxDispatch( requestPlans() );
+			return;
+		}
+		if ( ! plan ) {
+			debug( 'there is a request to add a plan but no plan was found' );
+			setCanInitializeCart( true );
+			return;
+		}
+		debug( 'preparing item that was requested in url', { planSlug, plan, isJetpackNotAtomic } );
+		setProductForCart( createItemToAddToCart( { planSlug, plan, isJetpackNotAtomic } ) );
+		setCanInitializeCart( true );
+	}, [ reduxDispatch, planSlug, plan, plans, isJetpackNotAtomic ] );
+
+	return { productForCart, canInitializeCart };
+}
+
+function getAnalyticsPath( purchaseId, product, selectedSiteSlug, selectedFeature, plan ) {
+	debug( 'getAnalyticsPath', { purchaseId, product, selectedSiteSlug, selectedFeature, plan } );
+	let analyticsPath = '';
+	let analyticsProps = {};
+	if ( purchaseId && product ) {
+		analyticsPath = '/checkout/:product/renew/:purchase_id/:site';
+		analyticsProps = { product, purchase_id: purchaseId, site: selectedSiteSlug };
+	} else if ( selectedFeature && plan ) {
+		analyticsPath = '/checkout/features/:feature/:site/:plan';
+		analyticsProps = { feature: selectedFeature, plan, site: selectedSiteSlug };
+	} else if ( selectedFeature && ! plan ) {
+		analyticsPath = '/checkout/features/:feature/:site';
+		analyticsProps = { feature: selectedFeature, site: selectedSiteSlug };
+	} else if ( product && ! purchaseId ) {
+		analyticsPath = '/checkout/:site/:product';
+		analyticsProps = { product, site: selectedSiteSlug };
+	} else if ( selectedSiteSlug ) {
+		analyticsPath = '/checkout/:site';
+		analyticsProps = { site: selectedSiteSlug };
+	} else {
+		analyticsPath = '/checkout/no-site';
+	}
+	return { analyticsPath, analyticsProps };
+}

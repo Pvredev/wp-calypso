@@ -27,10 +27,10 @@ export default {
 		allowExistingUsers: true,
 	},
 	showCompositeCheckout: {
-		datestamp: '20200214',
+		datestamp: '20200219',
 		variations: {
-			composite: 0,
-			regular: 100,
+			composite: 10,
+			regular: 90,
 		},
 		defaultVariation: 'regular',
 		allowExistingUsers: true,
@@ -116,16 +116,6 @@ export default {
 		allowExistingUsers: true,
 		localeTargets: 'any',
 		localeExceptions: [ 'en' ],
-	},
-	readerFreeToPaidPlanNudge: {
-		datestamp: '20200102',
-		variations: {
-			display: 50,
-			control: 50,
-		},
-		defaultVariation: 'control',
-		allowExistingUsers: false,
-		localeTargets: 'any',
 	},
 	sidebarUpsellNudgeUnification: {
 		datestamp: '20200127',

@@ -49,12 +49,48 @@ const shouldEmitStats = process.env.EMIT_STATS && process.env.EMIT_STATS !== 'fa
 const shouldShowProgress = process.env.PROGRESS && process.env.PROGRESS !== 'false';
 const shouldEmitStatsWithReasons = process.env.EMIT_STATS === 'withreasons';
 const shouldCheckForCycles = process.env.CHECK_CYCLES === 'true';
+const shouldConcatenateModules = process.env.CONCATENATE_MODULES !== 'false';
 const isCalypsoClient = process.env.BROWSERSLIST_ENV !== 'server';
 const isDesktop = calypsoEnv === 'desktop' || calypsoEnv === 'desktop-development';
 
 const defaultBrowserslistEnv = isCalypsoClient && ! isDesktop ? 'evergreen' : 'defaults';
 const browserslistEnv = process.env.BROWSERSLIST_ENV || defaultBrowserslistEnv;
 const extraPath = browserslistEnv === 'defaults' ? 'fallback' : browserslistEnv;
+
+function filterEntrypoints( entrypoints ) {
+	/* eslint-disable no-console */
+	if ( ! process.env.ENTRY_LIMIT ) {
+		return entrypoints;
+	}
+
+	const allowedEntrypoints = process.env.ENTRY_LIMIT.split( ',' );
+
+	console.warn( '[entrylimit] Limiting build to %s', allowedEntrypoints.join( ', ' ) );
+
+	const validEntrypoints = allowedEntrypoints.filter( ep => {
+		if ( entrypoints.hasOwnProperty( ep ) ) {
+			return true;
+		}
+		console.warn( '[entrylimit] Invalid entrypoint: %s. Valid entries are:', ep );
+		Object.keys( entrypoints ).forEach( e => console.warn( '\t' + e ) );
+		return false;
+	} );
+
+	if ( validEntrypoints.length === 0 ) {
+		console.warn( '[entrylimit] No matches found!' );
+		throw new Error( 'No valid entrypoints' );
+	}
+
+	const allowed = {};
+	Object.entries( entrypoints ).forEach( ( [ key, val ] ) => {
+		if ( validEntrypoints.includes( key ) ) {
+			allowed[ key ] = val;
+		}
+	} );
+
+	return allowed;
+	/* eslint-enable no-console */
+}
 
 if ( ! process.env.BROWSERSLIST_ENV ) {
 	process.env.BROWSERSLIST_ENV = browserslistEnv;
@@ -97,13 +133,13 @@ const fileLoader = FileConfig.loader(
 const webpackConfig = {
 	bail: ! isDevelopment,
 	context: __dirname,
-	entry: {
+	entry: filterEntrypoints( {
 		'entry-main': [ path.join( __dirname, 'boot', 'app' ) ],
 		'entry-domains-landing': [ path.join( __dirname, 'landing', 'domains' ) ],
 		'entry-jetpack-cloud': [ path.join( __dirname, 'landing', 'jetpack-cloud' ) ],
 		'entry-login': [ path.join( __dirname, 'landing', 'login' ) ],
 		'entry-gutenboarding': [ path.join( __dirname, 'landing', 'gutenboarding' ) ],
-	},
+	} ),
 	mode: isDevelopment ? 'development' : 'production',
 	devtool: process.env.SOURCEMAP || ( isDevelopment ? '#eval' : false ),
 	output: {
@@ -115,6 +151,7 @@ const webpackConfig = {
 		devtoolModuleFilenameTemplate: 'app:///[resource-path]',
 	},
 	optimization: {
+		concatenateModules: ! isDevelopment && shouldConcatenateModules,
 		splitChunks: {
 			chunks: 'all',
 			name: !! ( isDevelopment || shouldEmitStats ),

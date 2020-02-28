@@ -21,6 +21,7 @@ import TemplateSelectorPreview from './components/template-selector-preview';
 import { trackDismiss, trackSelection, trackView } from './utils/tracking';
 import replacePlaceholders from './utils/replace-placeholders';
 import ensureAssets from './utils/ensure-assets';
+import mapBlocksRecursively from './utils/map-blocks-recursively';
 /* eslint-enable import/no-extraneous-dependencies */
 
 const DEFAULT_HOMEPAGE_TEMPLATE = 'maywood';
@@ -51,6 +52,37 @@ class PageTemplateModal extends Component {
 			{}
 		)
 	);
+
+	getBlocksForPreview = memoize( previewedTemplate => {
+		const blocks = this.getBlocksByTemplateSlug( previewedTemplate );
+
+		// Modify the existing blocks returning new block object references.
+		return mapBlocksRecursively( blocks, function modifyBlocksForPreview( block ) {
+			// `jetpack/contact-form` has a placeholder to configure form settings
+			// we need to disable this to show the full form in the preview
+			if (
+				'jetpack/contact-form' === block.name &&
+				undefined !== block.attributes.hasFormSettingsSet
+			) {
+				block.attributes.hasFormSettingsSet = true;
+			}
+
+			return block;
+		} );
+	} );
+
+	getBlocksForSelection = selectedTemplate => {
+		const blocks = this.getBlocksByTemplateSlug( selectedTemplate );
+		// Modify the existing blocks returning new block object references.
+		return mapBlocksRecursively( blocks, function modifyBlocksForSelection( block ) {
+			// Ensure that core/button doesn't link to external template site
+			if ( 'core/button' === block.name && undefined !== block.attributes.url ) {
+				block.attributes.url = '#';
+			}
+
+			return block;
+		} );
+	};
 
 	static getDerivedStateFromProps( props, state ) {
 		// The only time `state.previewedTemplate` isn't set is before `templates`
@@ -129,7 +161,7 @@ class PageTemplateModal extends Component {
 		const isHomepageTemplate = find( this.props.templates, { slug, category: 'home' } );
 
 		// Load content.
-		const blocks = this.getBlocksByTemplateSlug( slug );
+		const blocks = this.getBlocksForSelection( slug );
 		// Only overwrite the page title if the template is not one of the Homepage Layouts
 		const title = isHomepageTemplate ? null : this.getTitleByTemplateSlug( slug );
 
@@ -374,7 +406,7 @@ class PageTemplateModal extends Component {
 									) }
 							</form>
 							<TemplateSelectorPreview
-								blocks={ this.getBlocksByTemplateSlug( previewedTemplate ) }
+								blocks={ this.getBlocksForPreview( previewedTemplate ) }
 								viewportWidth={ 960 }
 								title={ this.getTitleByTemplateSlug( previewedTemplate ) }
 							/>

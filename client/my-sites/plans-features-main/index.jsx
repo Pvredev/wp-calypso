@@ -70,6 +70,7 @@ import {
 import { getTld } from 'lib/domains';
 import { isDiscountActive } from 'state/selectors/get-active-discount.js';
 import { selectSiteId as selectHappychatSiteId } from 'state/help/actions';
+import PlanTestimonials from '../plan-testimonials';
 
 /**
  * Style dependencies
@@ -119,6 +120,7 @@ export class PlansFeaturesMain extends Component {
 			isJetpack,
 			isLandingPage,
 			isLaunchPage,
+			isEligibleForPlanStepTest,
 			onUpgradeClick,
 			selectedFeature,
 			selectedPlan,
@@ -164,6 +166,7 @@ export class PlansFeaturesMain extends Component {
 					isInSignup={ isInSignup }
 					isLandingPage={ isLandingPage }
 					isLaunchPage={ isLaunchPage }
+					isEligibleForPlanStepTest={ isEligibleForPlanStepTest }
 					onUpgradeClick={ onUpgradeClick }
 					plans={ plans }
 					redirectTo={ redirectTo }
@@ -179,6 +182,7 @@ export class PlansFeaturesMain extends Component {
 					} ) }
 					siteId={ siteId }
 				/>
+				{ isEligibleForPlanStepTest && <PlanTestimonials /> }
 			</div>
 		);
 	}

@@ -1,9 +1,8 @@
 /**
  * External dependencies
  */
-import uid from 'uid';
+import { v4 as uuidv4 } from 'uuid';
 import WPError from 'wp-error';
-import event from 'component-event';
 import ProgressEvent from 'progress-event';
 import debugFactory from 'debug';
 
@@ -112,8 +111,8 @@ const request = ( originalParams, fn ) => {
 		install();
 	}
 
-	// generate a uid for this API request
-	const id = uid();
+	// generate a uuid for this API request
+	const id = uuidv4();
 	params.callback = id;
 	params.supports_args = true; // supports receiving variable amount of arguments
 	params.supports_error_obj = true; // better Error object info
@@ -156,9 +155,9 @@ const request = ( originalParams, fn ) => {
 			fn( error, null, e.headers );
 		};
 
-		event.bind( xhr, 'load', xhrOnLoad );
-		event.bind( xhr, 'abort', xhrOnError );
-		event.bind( xhr, 'error', xhrOnError );
+		xhr.addEventListener( 'load', xhrOnLoad );
+		xhr.addEventListener( 'abort', xhrOnError );
+		xhr.addEventListener( 'error', xhrOnError );
 	}
 
 	if ( loaded ) {
@@ -261,7 +260,7 @@ function install() {
 	buffered = [];
 
 	// listen to messages sent to `window`
-	event.bind( window, 'message', onmessage );
+	window.addEventListener( 'message', onmessage );
 
 	// create the <iframe>
 	iframe = document.createElement( 'iframe' );
@@ -286,7 +285,7 @@ const reloadProxy = () => {
  */
 function uninstall() {
 	debug( 'uninstall()' );
-	event.unbind( window, 'message', onmessage );
+	window.removeEventListener( 'message', onmessage );
 	document.body.removeChild( iframe );
 	loaded = false;
 	iframe = null;

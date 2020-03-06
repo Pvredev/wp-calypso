@@ -124,16 +124,6 @@ export default {
 		defaultVariation: 'control',
 		allowExistingUsers: true,
 	},
-	customerHomeAll: {
-		datestamp: '20200224',
-		variations: {
-			showCustomerHome: 10,
-			control: 90,
-		},
-		defaultVariation: 'control',
-		allowExistingUsers: true,
-		localeTargets: 'any',
-	},
 	planStepCopyUpdates: {
 		datestamp: '20200221',
 		variations: {
@@ -141,6 +131,15 @@ export default {
 			control: 50,
 		},
 		defaultVariation: 'control',
+		allowExistingUsers: true,
+	},
+	peerReferralEarnCard: {
+		datestamp: '20200305',
+		variations: {
+			show: 50,
+			holdout: 50,
+		},
+		defaultVariation: 'holdout',
 		allowExistingUsers: true,
 	},
 };

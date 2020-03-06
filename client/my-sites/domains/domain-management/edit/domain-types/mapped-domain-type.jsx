@@ -28,6 +28,8 @@ import CompactFormToggle from 'components/forms/form-toggle/compact';
 import { isSubdomain } from 'lib/domains';
 import { MAP_EXISTING_DOMAIN, MAP_SUBDOMAIN } from 'lib/url/support';
 import RenewButton from 'my-sites/domains/domain-management/edit/card/renew-button';
+import isSiteAutomatedTransfer from 'state/selectors/is-site-automated-transfer';
+import { isJetpackSite } from 'state/sites/selectors';
 
 class MappedDomainType extends React.Component {
 	getVerticalNavigation() {
@@ -136,63 +138,60 @@ class MappedDomainType extends React.Component {
 			return null;
 		}
 
+		let noticeText;
+		let subscriptionId;
+		let customLabel;
+		let tracksProps;
+
 		if ( domain.bundledPlanSubscriptionId ) {
-			return (
-				<div>
-					<p>
-						{ translate(
-							'Your domain mapping will expire with your plan in {{strong}}%(days)s{{/strong}}. Please renew your plan before it expires or it will stop working.',
-							{
-								components: {
-									strong: <strong />,
-								},
-								args: {
-									days: moment.utc( expiry ).fromNow( true ),
-								},
-							}
-						) }
-					</p>
-					<RenewButton
-						primary={ true }
-						selectedSite={ this.props.selectedSite }
-						subscriptionId={ parseInt( domain.bundledPlanSubscriptionId, 10 ) }
-						customLabel={ translate( 'Renew your plan ' ) }
-						tracksProps={ { source: 'mapped-domain-status', mapping_status: 'expiring-soon-plan' } }
-					/>
-				</div>
+			noticeText = translate(
+				'Your domain mapping will expire with your plan in {{strong}}%(days)s{{/strong}}. Please renew your plan before it expires or it will stop working.',
+				{
+					components: {
+						strong: <strong />,
+					},
+					args: {
+						days: moment.utc( expiry ).fromNow( true ),
+					},
+				}
 			);
+			subscriptionId = domain.bundledPlanSubscriptionId;
+			customLabel = translate( 'Renew your plan' );
+			tracksProps = { source: 'mapped-domain-status', mapping_status: 'expiring-soon-plan' };
+		} else {
+			noticeText = translate(
+				'Your domain mapping will expire in {{strong}}%(days)s{{/strong}}. Please renew it before it expires or it will stop working.',
+				{
+					components: {
+						strong: <strong />,
+					},
+					args: {
+						days: moment.utc( expiry ).fromNow( true ),
+					},
+				}
+			);
+			subscriptionId = domain.subscriptionId;
+			customLabel = null;
+			tracksProps = { source: 'mapped-domain-status', mapping_status: 'expiring-soon' };
 		}
+
 		return (
 			<div>
-				<p>
-					{ translate(
-						'Your domain mapping will expire in {{strong}}%(days)s{{/strong}}. Please renew it before it expires or it will stop working.',
-						{
-							components: {
-								strong: <strong />,
-							},
-							args: {
-								days: moment.utc( expiry ).fromNow( true ),
-							},
-						}
-					) }
-				</p>
+				<p>{ noticeText }</p>
 				<RenewButton
 					primary={ true }
 					selectedSite={ this.props.selectedSite }
-					subscriptionId={ parseInt( domain.subscriptionId, 10 ) }
-					tracksProps={ { source: 'mapped-domain-status', mapping_status: 'expiring-soon' } }
+					subscriptionId={ parseInt( subscriptionId, 10 ) }
+					customLabel={ customLabel }
+					tracksProps={ tracksProps }
 				/>
 			</div>
 		);
 	}
 
 	renderSettingUpNameservers() {
-		const { domain, selectedSite, translate } = this.props;
-		if (
-			selectedSite.jetpack ||
-			( selectedSite.options && selectedSite.options.is_automated_transfer )
-		) {
+		const { domain, translate } = this.props;
+		if ( this.props.isJetpackSite || this.props.isAutomatedTransferSite ) {
 			return null;
 		}
 
@@ -208,7 +207,7 @@ class MappedDomainType extends React.Component {
 
 		if ( isSubdomain( domain.name ) ) {
 			primaryMessage = translate(
-				'Your subdomain mapping has not been setup. You need to create the correct CNAME or NS records at your current DNS provider. {{learnMoreLink}}Learn how to do that in our support guide for mapping subdomains{{/learnMoreLink}}.',
+				'Your subdomain mapping has not been set up. You need to create the correct CNAME or NS records at your current DNS provider. {{learnMoreLink}}Learn how to do that in our support guide for mapping subdomains{{/learnMoreLink}}.',
 				{
 					components: {
 						strong: <strong />,
@@ -226,13 +225,13 @@ class MappedDomainType extends React.Component {
 			);
 		} else {
 			primaryMessage = translate(
-				'Your domain mapping has not been setup. You need to update your nameservers, at the company you purchased your domain, to:',
+				'Your domain mapping has not been set up. You need to update your name servers at the company where you purchased the domain to:',
 				{
 					context: 'Notice for mapped domain notice with NS records pointing to somewhere else',
 				}
 			);
 			secondaryMessage = translate(
-				"Please note that it can take up to 72 hours for your changes to become available. If you're still not seeing your site loading at %(domainName)s, please wait a few more hours, clear your browser cache, and try again. {{learnMoreLink}}Learn all about mapping existing domain in our support docs{{/learnMoreLink}}.",
+				"Please note that it can take up to 72 hours for your changes to become available. If you're still not seeing your site loading at %(domainName)s, please wait a few more hours, clear your browser cache, and try again. {{learnMoreLink}}Learn all about mapping an existing domain in our support docs{{/learnMoreLink}}.",
 				{
 					components: { learnMoreLink: learnMoreLink( MAP_EXISTING_DOMAIN ) },
 					args: { domainName: domain.name },
@@ -252,7 +251,7 @@ class MappedDomainType extends React.Component {
 						</ul>
 					) }
 				</div>
-				<div>{ secondaryMessage }</div>
+				<div className="mapped-domain-type__small-message">{ secondaryMessage }</div>
 			</React.Fragment>
 		);
 	}
@@ -264,18 +263,18 @@ class MappedDomainType extends React.Component {
 			return null;
 		}
 
+		let subscriptionId;
+		let customLabel;
+		let tracksProps;
+
 		if ( domain.bundledPlanSubscriptionId ) {
-			return (
-				<div>
-					<RenewButton
-						compact={ true }
-						selectedSite={ this.props.selectedSite }
-						subscriptionId={ parseInt( domain.bundledPlanSubscriptionId, 10 ) }
-						customLabel={ translate( 'Renew your plan' ) }
-						tracksProps={ { source: 'mapped-domain-status', mapping_status: 'active-plan' } }
-					/>
-				</div>
-			);
+			subscriptionId = domain.bundledPlanSubscriptionId;
+			customLabel = translate( 'Renew your plan' );
+			tracksProps = { source: 'mapped-domain-status', mapping_status: 'active-plan' };
+		} else {
+			subscriptionId = domain.subscriptionId;
+			customLabel = null;
+			tracksProps = { source: 'mapped-domain-status', mapping_status: 'active' };
 		}
 
 		return (
@@ -283,8 +282,9 @@ class MappedDomainType extends React.Component {
 				<RenewButton
 					compact={ true }
 					selectedSite={ this.props.selectedSite }
-					subscriptionId={ parseInt( domain.subscriptionId, 10 ) }
-					tracksProps={ { source: 'mapped-domain-status', mapping_status: 'active' } }
+					subscriptionId={ parseInt( subscriptionId, 10 ) }
+					customLabel={ customLabel }
+					tracksProps={ tracksProps }
 				/>
 			</div>
 		);
@@ -309,6 +309,23 @@ class MappedDomainType extends React.Component {
 		const { statusText, statusClass, icon } = this.resolveStatus();
 
 		const newStatusDesignAutoRenew = config.isEnabled( 'domains/new-status-design/auto-renew' );
+		let expiresText;
+
+		if ( ! domain.expiry ) {
+			expiresText = translate( 'Expires: Never' );
+		} else if ( domain.bundledPlanSubscriptionId ) {
+			expiresText = translate( 'Expires with your plan on %(expiry_date)s', {
+				args: {
+					expiry_date: moment.utc( domain.expiry ).format( 'LL' ),
+				},
+			} );
+		} else {
+			expiresText = translate( 'Expires: %(expiry_date)s', {
+				args: {
+					expiry_date: moment.utc( domain.expiry ).format( 'LL' ),
+				},
+			} );
+		}
 
 		return (
 			<div className="domain-types__container">
@@ -322,21 +339,9 @@ class MappedDomainType extends React.Component {
 					{ this.renderExpiringSoon() }
 				</DomainStatus>
 				<Card compact={ true } className="domain-types__expiration-row">
-					<div>
-						{ domain.bundledPlanSubscriptionId
-							? translate( 'Expires with your plan on %(expiry_date)s', {
-									args: {
-										expiry_date: moment( domain.expiry ).format( 'LL' ),
-									},
-							  } )
-							: translate( 'Expires: %(expiry_date)s', {
-									args: {
-										expiry_date: moment( domain.expiry ).format( 'LL' ),
-									},
-							  } ) }
-					</div>
+					<div>{ expiresText }</div>
 					{ this.renderDefaultRenewButton() }
-					{ ! newStatusDesignAutoRenew && (
+					{ ! newStatusDesignAutoRenew && domain.subscriptionId && (
 						<div>
 							<SubscriptionSettings
 								type={ domain.type }
@@ -355,6 +360,14 @@ class MappedDomainType extends React.Component {
 	}
 }
 
-export default connect( null, {
-	recordPaymentSettingsClick,
-} )( withLocalizedMoment( localize( MappedDomainType ) ) );
+export default connect(
+	( state, ownProps ) => {
+		return {
+			isSiteAutomatedTransfer: isSiteAutomatedTransfer( state, ownProps.selectedSite.ID ),
+			isJetpackSite: isJetpackSite( state, ownProps.selectedSite.ID ),
+		};
+	},
+	{
+		recordPaymentSettingsClick,
+	}
+)( withLocalizedMoment( localize( MappedDomainType ) ) );

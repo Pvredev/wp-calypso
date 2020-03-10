@@ -17,7 +17,7 @@ import { useTranslate } from 'i18n-calypso';
  */
 import joinClasses from './join-classes';
 import Button from './button';
-import { useHasDomainsInCart } from '../hooks/has-domains';
+import { useHasDomainsInCart, isLineItemADomain } from '../hooks/has-domains';
 import { ItemVariationPicker } from './item-variation-picker';
 
 export function WPOrderReviewSection( { children, className } ) {
@@ -59,9 +59,9 @@ function WPLineItem( {
 
 	return (
 		<div className={ joinClasses( [ className, 'checkout-line-item' ] ) }>
-			<ProductTitle id={ itemSpanId }>{ item.label }</ProductTitle>
+			<LineItemTitle id={ itemSpanId } item={ item } />
 			<span aria-labelledby={ itemSpanId }>
-				{ renderDisplayValueMarkdown( item.amount.displayValue ) }
+				<LineItemPrice lineItem={ item } />
 			</span>
 			{ hasDeleteButton && formStatus === 'ready' && (
 				<React.Fragment>
@@ -129,6 +129,33 @@ WPLineItem.propTypes = {
 	onChangePlanLength: PropTypes.func,
 };
 
+function LineItemTitle( { item, id } ) {
+	const translate = useTranslate();
+	return (
+		<LineItemTitleUI>
+			{ isLineItemADomain( item ) && item.sublabel ? (
+				<ProductTitleUI id={ id }>{ item.sublabel }</ProductTitleUI>
+			) : (
+				<ProductTitleUI id={ id }>{ item.label }</ProductTitleUI>
+			) }
+			{ isLineItemADomain( item ) && item.wpcom_meta?.is_bundled && item.amount.value === 0 && (
+				<BundledDomainFreeUI>{ translate( 'First year free with your plan' ) }</BundledDomainFreeUI>
+			) }
+		</LineItemTitleUI>
+	);
+}
+
+function LineItemPrice( { lineItem } ) {
+	if ( lineItem.amount.value < lineItem.wpcom_meta?.product_cost_integer ) {
+		return (
+			<span>
+				<s>{ lineItem.wpcom_meta.product_cost_display }</s> { lineItem.amount.displayValue }
+			</span>
+		);
+	}
+	return renderDisplayValueMarkdown( lineItem.amount.displayValue );
+}
+
 const LineItemUI = styled( WPLineItem )`
 	display: flex;
 	flex-wrap: wrap;
@@ -143,7 +170,15 @@ const LineItemUI = styled( WPLineItem )`
 	margin-right: 30px;
 `;
 
-const ProductTitle = styled.span`
+const LineItemTitleUI = styled.div`
+	flex: 1;
+`;
+
+const BundledDomainFreeUI = styled.div`
+	color: ${props => props.theme.colors.success};
+`;
+
+const ProductTitleUI = styled.div`
 	flex: 1;
 `;
 
@@ -210,6 +245,7 @@ export function WPOrderReviewLineItems( {
 	className,
 	isSummaryVisible,
 	removeItem,
+	removeCoupon,
 	variantRequestStatus,
 	variantSelectOverride,
 	getItemVariants,
@@ -223,7 +259,7 @@ export function WPOrderReviewLineItems( {
 						isSummaryVisible={ isSummaryVisible }
 						item={ item }
 						hasDeleteButton={ canItemBeDeleted( item ) }
-						removeItem={ removeItem }
+						removeItem={ item.type === 'coupon' ? removeCoupon : removeItem }
 						variantRequestStatus={ variantRequestStatus }
 						variantSelectOverride={ variantSelectOverride }
 						getItemVariants={ getItemVariants }
@@ -239,6 +275,7 @@ WPOrderReviewLineItems.propTypes = {
 	className: PropTypes.string,
 	isSummaryVisible: PropTypes.bool,
 	removeItem: PropTypes.func,
+	removeCoupon: PropTypes.func,
 	items: PropTypes.arrayOf(
 		PropTypes.shape( {
 			label: PropTypes.string,
@@ -294,6 +331,12 @@ function returnModalCopy( product, translate, hasDomainsInCart ) {
 				'When you press Continue, we will remove your domain from the cart and you will have no claim for the domain name you picked.'
 			);
 			break;
+		case 'coupon':
+			modalCopy.title = translate( 'You are about to remove your coupon from the cart' );
+			modalCopy.description = translate(
+				'When you press Continue, we will need you to confirm your payment details.'
+			);
+			break;
 		default:
 			modalCopy.title = translate( 'You are about to remove your product from the cart' );
 			modalCopy.description = translate(
@@ -305,6 +348,6 @@ function returnModalCopy( product, translate, hasDomainsInCart ) {
 }
 
 function canItemBeDeleted( item ) {
-	const itemTypesThatCannotBeDeleted = [ 'tax', 'coupon', 'credits', 'wordpress-com-credits' ];
+	const itemTypesThatCannotBeDeleted = [ 'tax', 'credits', 'wordpress-com-credits' ];
 	return ! itemTypesThatCannotBeDeleted.includes( item.type );
 }

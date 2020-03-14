@@ -15,7 +15,6 @@ import { Verticals } from '@automattic/data-stores';
 import { SiteVertical } from '../../stores/onboard/types';
 import { StepProps } from '../stepper-wizard';
 import Question from '../question';
-import { __TodoAny__ } from '../../../../types';
 import AnimatedPlaceholder from '../animated-placeholder';
 
 /**
@@ -53,7 +52,7 @@ const VerticalSelect: FunctionComponent< StepProps > = ( {
 	 *
 	 * Using `Suggestions` here would effectively be `any`.
 	 */
-	const suggestionRef = createRef< __TodoAny__ >();
+	const suggestionRef = createRef< any >();
 
 	const verticals = useSelect( select =>
 		select( VERTICALS_STORE )
@@ -111,6 +110,15 @@ const VerticalSelect: FunctionComponent< StepProps > = ( {
 		) {
 			// User-supplied verticals don't have IDs.
 			suggestions.unshift( { label: inputValue.trim() } );
+		}
+
+		// If there is only one suggestion and that suggestion matches the user input value,
+		// do not show any suggestions.
+		if (
+			suggestions.length === 1 &&
+			suggestions[ 0 ].label.toLowerCase() === normalizedInputValue
+		) {
+			suggestions = [];
 		}
 	}
 

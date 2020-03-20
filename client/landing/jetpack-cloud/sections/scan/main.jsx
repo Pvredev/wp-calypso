@@ -3,12 +3,13 @@
  */
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Button } from '@automattic/components';
+import { Button, ProgressBar } from '@automattic/components';
 import { numberFormat, translate } from 'i18n-calypso';
 
 /**
  * Internal dependencies
  */
+import DocumentHead from 'components/data/document-head';
 import { getSelectedSite, getSelectedSiteSlug } from 'state/ui/selectors';
 import { withLocalizedMoment } from 'components/localized-moment';
 import SecurityIcon from 'landing/jetpack-cloud/components/security-icon';
@@ -16,6 +17,8 @@ import StatsFooter from 'landing/jetpack-cloud/components/stats-footer';
 import ThreatItem from '../../components/threat-item';
 import { isEnabled } from 'config';
 import ThreatDialog from '../../components/threat-dialog';
+import Main from 'components/main';
+import SidebarNavigation from 'my-sites/sidebar-navigation';
 
 import './style.scss';
 
@@ -63,7 +66,7 @@ class ScanPage extends Component {
 
 		return (
 			<>
-				<SecurityIcon className="scan__icon" />
+				<SecurityIcon />
 				<h1 className="scan__header scan__header--okay">
 					{ translate( 'Don’t worry about a thing' ) }
 				</h1>
@@ -85,7 +88,21 @@ class ScanPage extends Component {
 	}
 
 	renderScanning() {
-		return <p>Scanning!</p>;
+		return (
+			<>
+				<SecurityIcon icon="in-progress" />
+				<h1 className="scan__header scan__header--okay">{ translate( 'Preparing to scan' ) }</h1>
+				<ProgressBar value={ 1 } total={ 100 } color="#069E08" />
+				<p>
+					Welcome to Jetpack Scan, we are taking a first look at your site now and the results will
+					be with you soon.
+				</p>
+				<p>
+					We will send you an email once the scan completes, in the meantime feel free to continue
+					to use your site as normal, you can check back on progress at any time.
+				</p>
+			</>
+		);
 	}
 
 	renderThreats() {
@@ -93,6 +110,7 @@ class ScanPage extends Component {
 
 		return (
 			<>
+				<SecurityIcon icon="error" />
 				<h1 className="scan__header">{ translate( 'Your site may be at risk' ) }</h1>
 				<p>
 					{ translate(
@@ -132,7 +150,7 @@ class ScanPage extends Component {
 
 		return (
 			<>
-				<SecurityIcon className="scan__icon" icon="scan-error" />
+				<SecurityIcon icon="scan-error" />
 				<h1 className="scan__header">{ translate( 'Something went wrong' ) }</h1>
 				<p>
 					The scan did not complete successfully. In order to complete the scan you need to contact
@@ -166,7 +184,9 @@ class ScanPage extends Component {
 		const { threats, site } = this.props;
 
 		return (
-			<div className="scan__main">
+			<Main className="scan__main">
+				<DocumentHead title="Scanner" />
+				<SidebarNavigation />
 				<div className="scan__content">
 					{ this.renderScanState() }
 					<ComponentToTestDialogs threat={ threats[ 0 ] } siteName={ site.name } />
@@ -181,7 +201,7 @@ class ScanPage extends Component {
 					noticeText="Failing to plan is planning to fail. Regular backups ensure that should the worst happen, you are prepared. Jetpack Backups has you covered."
 					noticeLink="https://jetpack/upgrade/backups"
 				/>
-			</div>
+			</Main>
 		);
 	}
 }

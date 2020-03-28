@@ -26,10 +26,6 @@
 		}
 	}
 
-	&__upsells {
-		@include grid-column( 1, 12 );
-	}
-
 	&__main .banner.card {
 		@include grid-column( 1, 12 );
 		@include grid-row( 3, 1 );
@@ -134,28 +130,6 @@
 		}
 		@include breakpoint( '800px-1040px' ) {
 			@include card-col-right-two-col;
-		}
-	}
-	&__card-support {
-		display: flex;
-		justify-content: space-between;
-
-		img {
-			margin: 0 7% 0 0;
-			width: 137px;
-			height: 119px;
-
-			@include breakpoint( '>960px' ) {
-				display: none;
-			}
-		}
-
-		.vertical-nav {
-			width: 60%;
-
-			@include breakpoint( '>960px' ) {
-				width: 100%;
-			}
 		}
 	}
 

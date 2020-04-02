@@ -47,6 +47,10 @@ export const togglePageLayout = ( pageLayout: Template ) => ( {
 	pageLayout,
 } );
 
+export const resetFonts = () => ( {
+	type: 'RESET_FONTS' as const,
+} );
+
 export const setFonts = ( fonts: FontPair | undefined ) => ( {
 	type: 'SET_FONTS' as const,
 	fonts,
@@ -82,13 +86,18 @@ export function* createSite(
 		options: {
 			site_vertical: siteVertical?.id,
 			site_vertical_name: siteVertical?.label,
+			// untranslated vertical slug
+			// so we can match directories in
+			// https://github.com/Automattic/wp-calypso/tree/master/static/page-templates/verticals
+			// TODO: determine default vertical should user input match no official vertical
+			site_vertical_slug: siteVertical?.slug || 'football',
 			site_information: {
 				title: siteTitle,
 			},
 			site_creation_flow: 'gutenboarding',
-			theme: `pub/${ selectedDesign?.slug || 'twentytwenty' }`,
+			theme: `pub/${ selectedDesign?.theme || 'twentytwenty' }`,
 			timezone_string: guessTimezone(),
-			template: selectedDesign?.slug || 'twentytwenty',
+			template: selectedDesign?.template || 'twentytwenty',
 			...( selectedFonts && {
 				font_base: selectedFonts.base,
 				font_headings: selectedFonts.headings,
@@ -103,6 +112,7 @@ export function* createSite(
 }
 
 export type OnboardAction = ReturnType<
+	| typeof resetFonts
 	| typeof resetOnboardStore
 	| typeof resetSiteVertical
 	| typeof setDomain

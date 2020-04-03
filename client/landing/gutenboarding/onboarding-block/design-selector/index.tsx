@@ -12,7 +12,7 @@ import { Spring, animated } from 'react-spring/renderprops';
  * Internal dependencies
  */
 import { STORE_KEY as ONBOARD_STORE } from '../../stores/onboard';
-import designs from '../../available-designs.json';
+import designs from '../../available-designs';
 import { usePath, Step } from '../../path';
 import { isEnabled } from '../../../../config';
 import Link from '../../components/link';
@@ -24,28 +24,33 @@ type Design = import('../../stores/onboard/types').Design;
 
 // Values for springs:
 const ZOOM_OFF = { transform: 'scale(1)' };
-const ZOOM_ON = { transform: 'scale(1.03)' };
-const SHADOW_OFF = { boxShadow: '0 0 0px rgba(0,0,0,.2)' };
-const SHADOW_ON = { boxShadow: '0 0 15px rgba(0,0,0,.2)' };
+const ZOOM_ON = { transform: 'scale(1.015)' };
+const SHADOW_OFF = { boxShadow: '0 0px 0px rgba(0,0,0,.12)' };
+const SHADOW_ON = { boxShadow: '0 2px 12px rgba(0,0,0,.12)' };
 
 const DesignSelector: React.FunctionComponent = () => {
 	const { __: NO__ } = useI18n();
 	const { push } = useHistory();
 	const makePath = usePath();
-	const { setSelectedDesign, resetFonts, resetOnboardStore } = useDispatch( ONBOARD_STORE );
-
-	const handleStartOverButtonClick = () => {
-		resetOnboardStore();
-	};
+	const { setSelectedDesign, setFonts, resetOnboardStore } = useDispatch( ONBOARD_STORE );
 
 	const getDesignUrl = ( design: Design ) => {
+		// We temporarily show pre-generated screenshots until we can generate tall versions dynamically using mshots.
+		// See `bin/generate-gutenboarding-design-thumbnails.js` for generating screenshots.
+		// https://github.com/Automattic/mShots/issues/16
+		// https://github.com/Automattic/wp-calypso/issues/40564
+		if ( ! isEnabled( 'gutenboarding/mshot-preview' ) ) {
+			return `/calypso/page-templates/design-screenshots/${ design.slug }_${ design.template }_${ design.theme }.jpg`;
+		}
+
 		const mshotsUrl = 'https://s.wordpress.com/mshots/v1/';
 		const previewUrl = addQueryArgs( design.src, {
-			font_headings: design.fonts[ 0 ],
-			font_base: design.fonts[ 1 ],
+			font_headings: design.fonts.headings,
+			font_base: design.fonts.base,
 		} );
 		return mshotsUrl + encodeURIComponent( previewUrl );
 	};
+
 	// Track hover/focus
 	const [ hoverDesign, setHoverDesign ] = React.useState< string >();
 	const [ focusDesign, setFocusDesign ] = React.useState< string >();
@@ -63,7 +68,7 @@ const DesignSelector: React.FunctionComponent = () => {
 				</div>
 				<Link
 					className="design-selector__start-over-button"
-					onClick={ handleStartOverButtonClick }
+					onClick={ () => resetOnboardStore() }
 					to={ makePath( Step.IntentGathering ) }
 					isLink
 				>
@@ -94,9 +99,8 @@ const DesignSelector: React.FunctionComponent = () => {
 										onClick={ () => {
 											setSelectedDesign( design );
 
-											// Our design selector shows each template's default fonts, so the user expects to see those
-											// in the style preview. To match that expectation, we reset any previously user-selected fonts.
-											resetFonts();
+											// Update fonts to the design defaults
+											setFonts( design.fonts );
 
 											if ( isEnabled( 'gutenboarding/style-preview' ) ) {
 												push( makePath( Step.Style ) );

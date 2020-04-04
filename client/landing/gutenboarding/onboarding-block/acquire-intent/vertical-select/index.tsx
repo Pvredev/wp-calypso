@@ -58,13 +58,25 @@ const VerticalSelect: React.FunctionComponent = () => {
 	const { siteVertical, siteTitle } = useSelect( select => select( ONBOARD_STORE ).getState() );
 	const { setSiteVertical, resetSiteVertical } = useDispatch( ONBOARD_STORE );
 
-	const inputText = inputRef?.current?.innerText || '';
+	const inputText = inputRef.current.innerText || '';
 	const isInputEmpty = ! inputText.length;
 	const showArrow = ! siteTitle && ! siteVertical && inputText.length > 2;
 
 	const animatedPlaceholder = useTyper(
-		[ NO__( 'football' ), NO__( 'shopping' ), NO__( 'cars' ), NO__( 'design' ), NO__( 'travel' ) ],
-		isInputEmpty
+		[
+			NO__( 'photography' ),
+			NO__( 'blogging' ),
+			NO__( 'travel' ),
+			NO__( 'marketing' ),
+			NO__( 'fashion' ),
+			NO__( 'shopping' ),
+			NO__( 'design' ),
+			NO__( 'real estate' ),
+			NO__( 'food' ),
+			NO__( 'sports' ),
+		],
+		isInputEmpty,
+		{ delayBetweenWords: 800, delayBetweenCharacters: 110 }
 	);
 
 	const updateSuggestions = ( inputValue: string ) => {
@@ -189,7 +201,7 @@ const VerticalSelect: React.FunctionComponent = () => {
 						{ isFocused && !! verticals.length && (
 							<Suggestions
 								ref={ suggestionRef }
-								query={ inputRef?.current?.innerText }
+								query={ inputText }
 								suggestions={ suggestions }
 								suggest={ handleSelect }
 								title={ NO__( 'Suggestions' ) }

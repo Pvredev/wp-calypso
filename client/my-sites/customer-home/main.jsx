@@ -89,17 +89,21 @@ const Home = ( {
 					</div>
 				) }
 			</div>
-			<Notices checklistMode={ checklistMode } />
-			{ layout && <Upsells cards={ layout.upsells } /> }
-			{ hasChecklistData && layout ? (
-				<div className="customer-home__layout">
-					<div className="customer-home__layout-col customer-home__layout-col-left">
-						<Primary cards={ layout.primary } checklistMode={ checklistMode } />
-					</div>
-					<div className="customer-home__layout-col customer-home__layout-col-right">
-						<Secondary cards={ layout.secondary } />
-					</div>
-				</div>
+			{ layout ? (
+				<>
+					<Notices cards={ layout.notices } checklistMode={ checklistMode } />
+					<Upsells cards={ layout.upsells } />
+					{ hasChecklistData && (
+						<div className="customer-home__layout">
+							<div className="customer-home__layout-col customer-home__layout-col-left">
+								<Primary cards={ layout.primary } checklistMode={ checklistMode } />
+							</div>
+							<div className="customer-home__layout-col customer-home__layout-col-right">
+								<Secondary cards={ layout.secondary } />
+							</div>
+						</div>
+					) }
+				</>
 			) : (
 				<div className="customer-home__loading-placeholder"></div>
 			) }
@@ -109,7 +113,7 @@ const Home = ( {
 
 Home.propTypes = {
 	checklistMode: PropTypes.string,
-	layout: PropTypes.object.isRequired,
+	layout: PropTypes.object,
 	site: PropTypes.object.isRequired,
 	siteId: PropTypes.number.isRequired,
 	siteSlug: PropTypes.string.isRequired,

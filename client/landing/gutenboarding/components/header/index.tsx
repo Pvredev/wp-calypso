@@ -25,8 +25,7 @@ import {
 	getRecommendedDomainSuggestion,
 } from '../../utils/domain-suggestions';
 import { PAID_DOMAINS_TO_SHOW } from '../../constants';
-import { useCurrentStep } from '../../path';
-
+import { usePath, useCurrentStep, Step } from '../../path';
 import wp from '../../../../lib/wp';
 
 type DomainSuggestion = import('@automattic/data-stores').DomainSuggestions.DomainSuggestion;
@@ -73,16 +72,11 @@ const Header: FunctionComponent = () => {
 
 	const newSite = useSelect( select => select( SITE_STORE ).getNewSite() );
 
-	const { domain, siteTitle, siteWasCreatedForDomainPurchase } = useSelect( select =>
-		select( ONBOARD_STORE ).getState()
-	);
+	const { domain, siteTitle } = useSelect( select => select( ONBOARD_STORE ).getState() );
 
-	const {
-		createSite,
-		setDomain,
-		resetOnboardStore,
-		setSiteWasCreatedForDomainPurchase,
-	} = useDispatch( ONBOARD_STORE );
+	const makePath = usePath();
+
+	const { createSite, setDomain, resetOnboardStore } = useDispatch( ONBOARD_STORE );
 
 	const allSuggestions = useDomainSuggestions( siteTitle );
 	const paidSuggestions = getPaidDomainSuggestions( allSuggestions )?.slice(
@@ -102,14 +96,25 @@ const Header: FunctionComponent = () => {
 	const [ isRedirecting, setIsRedirecting ] = useState( false );
 
 	const {
-		location: { pathname },
+		location: { pathname, search },
+		push,
 	} = useHistory();
+
 	useEffect( () => {
-		// Dialogs usually close naturally when the user clicks the browser's
-		// back/forward buttons because their parent is unmounted. However
-		// this header isn't unmounted on route changes so we need to
-		// explicitly hide the dialog.
-		setShowSignupDialog( false );
+		// This handles opening the signup modal when there is a ?signup query parameter
+		// then removes the parameter.
+		// The use case is a user clicking "Create account" from login
+		// TODO: We can remove this condition when we've converted signup into it's own page
+		if ( ! showSignupDialog && new URLSearchParams( search ).has( 'signup' ) ) {
+			setShowSignupDialog( true );
+			push( makePath( Step[ currentStep ] ) );
+		} else {
+			// Dialogs usually close naturally when the user clicks the browser's
+			// back/forward buttons because their parent is unmounted. However
+			// this header isn't unmounted on route changes so we need to
+			// explicitly hide the dialog.
+			setShowSignupDialog( false );
+		}
 	}, [ pathname, setShowSignupDialog ] );
 
 	/* eslint-disable wpcalypso/jsx-classname-namespace */
@@ -140,16 +145,6 @@ const Header: FunctionComponent = () => {
 		setShowSignupDialog( false );
 	};
 
-	const setFreeDomain = ( selectedDomain: DomainSuggestion ) => {
-		setDomain( selectedDomain );
-		setSiteWasCreatedForDomainPurchase( false );
-	};
-
-	const setPaidDomain = ( selectedDomain: DomainSuggestion ) => {
-		setDomain( selectedDomain );
-		setSiteWasCreatedForDomainPurchase( true );
-	};
-
 	useEffect( () => {
 		if ( newUser && newUser.bearerToken && newUser.username ) {
 			handleCreateSite( newUser.username, newUser.bearerToken );
@@ -159,7 +154,7 @@ const Header: FunctionComponent = () => {
 	useEffect( () => {
 		// isRedirecting check this is needed to make sure we don't overwrite the first window.location.replace() call
 		if ( newSite && ! isRedirecting ) {
-			if ( siteWasCreatedForDomainPurchase ) {
+			if ( ! domain?.is_free ) {
 				// I'd rather not make my own product, but this works.
 				// lib/cart-items helpers did not perform well.
 				const domainProduct = {
@@ -188,7 +183,7 @@ const Header: FunctionComponent = () => {
 			resetOnboardStore();
 			window.location.replace( `/block-editor/page/${ newSite.site_slug }/home?is-gutenboarding` );
 		}
-	}, [ domain, siteWasCreatedForDomainPurchase, newSite, resetOnboardStore, isRedirecting ] );
+	}, [ domain, newSite, resetOnboardStore, isRedirecting ] );
 
 	return (
 		<div
@@ -217,8 +212,7 @@ const Header: FunctionComponent = () => {
 							className="gutenboarding__header-domain-picker-button"
 							disabled={ ! currentDomain }
 							currentDomain={ currentDomain }
-							onDomainSelect={ setFreeDomain }
-							onDomainPurchase={ setPaidDomain }
+							onDomainSelect={ setDomain }
 						>
 							{ domainElement }
 						</DomainPickerButton>

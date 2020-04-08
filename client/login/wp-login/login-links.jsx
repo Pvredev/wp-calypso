@@ -27,6 +27,7 @@ import { login } from 'lib/paths';
 import { recordTracksEventWithClientId as recordTracksEvent } from 'state/analytics/actions';
 import { resetMagicLoginRequestForm } from 'state/login/magic-login/actions';
 import { isDomainConnectAuthorizePath } from 'lib/domains/utils';
+import GUTENBOARDING_BASE_NAME from 'landing/gutenboarding/basename.json';
 
 export class LoginLinks extends React.Component {
 	static propTypes = {
@@ -83,7 +84,7 @@ export class LoginLinks extends React.Component {
 		if ( this.props.currentRoute === '/log-in/jetpack' ) {
 			loginParameters.twoFactorAuthType = 'jetpack/link';
 		} else if ( this.props.isGutenboarding ) {
-			loginParameters.twoFactorAuthType = 'gutenboarding/link';
+			loginParameters.twoFactorAuthType = `${ GUTENBOARDING_BASE_NAME }/link`;
 		}
 
 		page( login( loginParameters ) );
@@ -255,8 +256,6 @@ export class LoginLinks extends React.Component {
 			locale,
 		} = this.props;
 
-		const langFragment = locale && locale !== 'en' ? `/${ locale }` : '';
-
 		let signupUrl = config( 'signup_url' );
 		const signupFlow = get( currentQuery, 'signup_flow' );
 		if (
@@ -311,7 +310,8 @@ export class LoginLinks extends React.Component {
 		}
 
 		if ( isGutenboarding ) {
-			signupUrl = '/gutenboarding' + langFragment;
+			const langFragment = locale && locale !== 'en' ? `/${ locale }` : '';
+			signupUrl = this.props.signupUrl || '/gutenboarding' + langFragment;
 		}
 
 		return (

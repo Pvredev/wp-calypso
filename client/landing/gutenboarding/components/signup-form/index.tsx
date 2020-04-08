@@ -13,10 +13,11 @@ import { recordTracksEvent } from '@automattic/calypso-analytics';
  */
 import { USER_STORE } from '../../stores/user';
 import { STORE_KEY as ONBOARD_STORE } from '../../stores/onboard';
-import { useLangRouteParam, usePath, Step } from '../../path';
+import { useLangRouteParam, usePath, Step, useCurrentStep } from '../../path';
 import ModalSubmitButton from '../modal-submit-button';
 import './style.scss';
 import SignupFormHeader from './header';
+import GUTENBOARDING_BASE_NAME from '../../basename.json';
 
 // TODO: deploy this change to @types/wordpress__element
 declare module '@wordpress/element' {
@@ -41,6 +42,7 @@ const SignupForm = ( { onRequestClose }: Props ) => {
 	const { siteTitle, siteVertical } = useSelect( select => select( ONBOARD_STORE ) ).getState();
 	const langParam = useLangRouteParam();
 	const makePath = usePath();
+	const currentStep = useCurrentStep();
 
 	const closeModal = () => {
 		clearErrors();
@@ -103,12 +105,13 @@ const SignupForm = ( { onRequestClose }: Props ) => {
 	}
 
 	const langFragment = lang ? `/${ lang }` : '';
-	const loginRedirectUrl = `${ window.location.origin }/gutenboarding${ makePath(
-		Step.CreateSite
-	) }?new`;
-	const loginUrl = `/log-in/gutenboarding${ langFragment }?redirect_to=${ encodeURIComponent(
-		loginRedirectUrl
-	) }`;
+	const loginRedirectUrl = encodeURIComponent(
+		`${ window.location.origin }/${ GUTENBOARDING_BASE_NAME }${ makePath( Step.CreateSite ) }?new`
+	);
+	const signupUrl = encodeURIComponent(
+		`/${ GUTENBOARDING_BASE_NAME }${ makePath( Step[ currentStep ] ) }?signup`
+	);
+	const loginUrl = `/log-in/${ GUTENBOARDING_BASE_NAME }${ langFragment }?redirect_to=${ loginRedirectUrl }&signup_url=${ signupUrl }`;
 
 	return (
 		<Modal

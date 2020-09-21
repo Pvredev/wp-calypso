@@ -249,7 +249,7 @@
 		"jest-junit": "9.0.0",
 		"lerna": "3.20.2",
 		"loader-utils": "1.2.3",
-		"lodash": "4.17.15",
+		"lodash": "4.17.19",
 		"md5-file": "4.0.0",
 		"micromatch": "4.0.2",
 		"mixedindentlint": "1.2.0",
